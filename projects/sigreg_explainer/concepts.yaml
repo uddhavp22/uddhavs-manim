@@ -1,0 +1,355 @@
+# Typed concept graph — SIGReg explainer.  Deliverable 4 of EXPLAINER_PROCESS.md.
+#
+# ONE graph. Prerequisite chains, visual maps and proof-dependency views are
+# generated from this (tools/concept_graph.py), never maintained separately.
+#
+# status:       ASSUME | REFRESH | TEACH | DEFER    (the audience contract)
+# proof_status: exact_derivation | full_proof | proof_sketch | theorem_statement
+#               | intuition_only | analogy | empirical_observation
+# origin:       source | derived | ours | simplification
+#   source        -- stated in the blog/paper
+#   derived       -- follows mathematically from source claims
+#   ours          -- our verification or construction, not in the source
+#   simplification-- deliberately not what the source does (must be declared)
+
+meta:
+  project: sigreg_explainer
+  source: https://rezabyt.github.io/blogposts/sigreg-tutorial.html
+  paper: arXiv:2511.08544
+  built_out_of_order: true   # Chapter B predates this file; retrofit 2026-08-06
+
+# ---------------------------------------------------------------- prerequisites
+nodes:
+  complex_plane:
+    kind: concept
+    label: a complex number is a point, hence an arrow from the origin
+    status: REFRESH
+    scene: b01
+
+  unit_arrow:
+    kind: concept
+    label: e^{i theta} is the unit arrow at angle theta
+    status: REFRESH
+    scene: b01
+    note: >
+      Introduced by this property alone. No Taylor series, no Euler identity as
+      a result to be admired. The only property Chapter B ever uses.
+
+  arrow_average:
+    kind: concept
+    label: arrows add tip-to-tail, so a set of arrows has an average
+    status: TEACH
+    scene: b01
+    central: true
+
+  cancellation:
+    kind: claim
+    label: agreeing arrows give a long average; evenly spread arrows cancel to zero
+    proof_status: exact_derivation
+    origin: ours
+    scene: b01
+    fact: roots_of_unity_cancel
+
+  expectation:
+    kind: concept
+    label: expectation as a weighted average / balance point
+    status: ASSUME
+    note: Chapter A would TEACH this; Chapter B assumes it.
+
+  vectors_covariance:
+    kind: concept
+    label: unit vectors, projection, covariance eigenvalues
+    status: ASSUME
+    note: Needed only from Chapter C onward.
+
+  fourier_transform:
+    kind: concept
+    label: the CF as the Fourier transform of a density
+    status: DEFER
+    note: >
+      Correct and useless as a first mental object. PLAN.md forbids it as the
+      introduction. May be named once, late, as a connection.
+
+# ------------------------------------------------------------------- the core
+  phase:
+    kind: concept
+    label: a sample x becomes an angle t*x
+    status: TEACH
+    scene: b02
+    central: true
+
+  wrapping:
+    kind: visual_model
+    label: wrap the number line around the circle; t sets how tightly
+    status: TEACH
+    scene: b02
+    central: true
+    fact: roll_is_exact
+
+  ecf:
+    kind: concept
+    label: empirical characteristic function, phi_N(t) = (1/N) sum e^{i t z_n}
+    status: TEACH
+    scene: b02
+    central: true
+    origin: source
+
+  three_panel_rig:
+    kind: visual_model
+    label: numbers on a line <-> arrows on a circle <-> phi(t) vs t
+    scene: b02
+    central: true
+    translation_rule: >
+      sample x on the number line -> angle t*x -> arrow e^{itx} -> average arrow
+      -> the HORIZONTAL POSITION of that average IS the height of the curve.
+      The dashed link line draws this correspondence rather than asserting it.
+
+  re_im:
+    kind: concept
+    label: Re phi = how far right on average; Im phi = how far up on average
+    status: TEACH
+    scene: b05
+    origin: source           # C(t), S(t) in the blog
+
+  symmetry_real:
+    kind: claim
+    label: X symmetric about 0  =>  Im phi(t) = 0 for every t
+    proof_status: exact_derivation
+    origin: derived
+    scene: b05
+    fact: symmetric_batch_is_real
+    justifies: [gaussian_cf_is_real]
+
+  phi_at_zero:
+    kind: claim
+    label: phi(0) = 1 for every distribution
+    proof_status: exact_derivation
+    origin: derived
+    scene: b07
+    note: >
+      The argument never mentions the data, which is exactly why it holds for
+      every batch. Used later to fix the ODE integration constant.
+
+  aliasing:
+    kind: misconception
+    label: one wrapping speed is enough
+    scene: b06a
+    fails_when: every value is a multiple of 2*pi/t
+    fact: aliased_batch_looks_collapsed
+
+# ------------------------------------------------- which frequencies, and why
+  low_t_blind:
+    kind: claim
+    label: low t sees only location and spread, not shape
+    proof_status: empirical_observation
+    origin: ours
+    scene: b08
+    fact: low_t_is_blind
+
+  noise_floor:
+    kind: claim
+    label: with N samples the empirical CF has a floor, E|phi_N(t)|^2 -> 1/N
+    proof_status: empirical_observation
+    origin: source          # stated as a limitation in the blog
+    verified_by: ours
+    scene: b08
+    fact: noise_floor_is_one_over_n
+
+  weighting:
+    kind: concept
+    label: w(t) = e^{-t^2/(2 lambda^2)} suppresses high frequencies
+    status: TEACH
+    origin: source
+    scene: b08
+    proof_status: intuition_only
+    caution: >
+      lambda IS a tuning knob -- the source calls it a bandwidth parameter.
+      What finite N forces is the EXISTENCE of high-frequency suppression, not
+      any particular lambda. b08 originally overclaimed here; fixed 2026-08-06.
+
+  integration_range:
+    kind: claim
+    label: at lambda = 1 the practical range is [0.2, 4]
+    proof_status: empirical_observation
+    origin: source
+    scene: b08
+    fact: window_holds_the_mass
+    caution: the range is the TRUNCATION, not the weighting; they are different objects
+
+# --------------------------------------------------------------- completeness
+  uniqueness:
+    kind: claim
+    label: phi_X = phi_Y  =>  X and Y are equal in distribution
+    proof_status: theorem_statement      # cited, never proved
+    origin: source
+    scene: b09
+    blocking: >
+      Must never be narrated with "therefore", "we have shown" or "proves".
+      b09 says out loud that the proof is skipped. Chapter C.9 leans on this.
+
+  sound_analogy:
+    kind: analogy
+    label: a sound is determined by its tones, as a distribution is by its CF
+    proof_status: analogy
+    scene: b09
+    mapping: tone amplitude <-> phi(t) at one frequency
+    caution: >
+      One of the two analogies PLAN.md licenses. Its mapping is exact (both are
+      Fourier), which is why it is allowed to carry weight.
+
+  histogram_fails:
+    kind: claim
+    label: histograms are arbitrary, fragile, and non-differentiable
+    proof_status: empirical_observation
+    origin: ours
+    scene: b10
+    facts: [bins_are_arbitrary, bins_delete_structure, bins_are_a_staircase]
+    motivates: [differentiability]
+
+  differentiability:
+    kind: claim
+    label: d/dx e^{itx} = it e^{itx} -- defined everywhere, never zero
+    proof_status: exact_derivation
+    origin: derived
+    scene: b10
+    central: true
+    note: the actual reason the arrow construction was chosen over any alternative
+
+# ------------------------------------------------------------------ the target
+  gaussian_cf:
+    kind: equation
+    label: phi_0(t) = e^{-t^2/2}
+    proof_status: exact_derivation
+    origin: simplification
+    scene: b11
+    fact: gaussian_cf_solves_ode
+    declared_divergence: >
+      The source completes the square and shifts a contour (Cauchy). We use the
+      ODE route p' = -x p  =>  phi' = -t phi. Same answer, no complex analysis.
+      Declared in SOURCE_MAP.md 6d so it is never mistaken for the source's proof.
+
+  gaussian_cf_is_real:
+    kind: claim
+    label: the Gaussian target curve is purely real
+    proof_status: derived
+    scene: b11
+    proved_using: [symmetry_real]
+
+# --------------------------------------------------------------------- the loss
+  squared_gap:
+    kind: concept
+    label: at each t, two fingerprints are two POINTS; the gap is the distance
+    status: TEACH
+    scene: b12
+    central: true
+    translation_rule: >
+      |phi_hat(t) - phi_0(t)|^2 is the squared length of the red segment in the
+      complex plane; the curve on the right plots that length against t; the
+      area under it is the accumulated score.
+
+  epps_pulley:
+    kind: equation
+    label: "T = N * integral w(t) |phi_N(t) - phi_0(t)|^2 dt"
+    proof_status: theorem_statement
+    origin: source
+    scene: b12
+    fact: score_separates_batches
+    caution: >
+      The N prefactor is part of the named statistic. b12 originally omitted it
+      while calling the formula Epps-Pulley; fixed 2026-08-06. As a LOSS the
+      prefactor is a constant and does not move the argmin -- say so rather than
+      dropping it silently.
+
+# ---------------------------------------------------- Chapter C (not yet built)
+  cramer_wold:
+    kind: claim
+    label: every 1-D projection determines the joint distribution
+    proof_status: theorem_statement
+    origin: source
+    scene: c06
+    proved_using: [uniqueness]
+
+  diagonal_trap:
+    kind: misconception
+    label: passing coordinate-wise normality tests means the cloud is fine
+    scene: c06
+    fails_when: "Z = [X, X] -- both marginals exactly N(0,1), covariance eigenvalues (2, 0)"
+    fact: diagonal_is_rank_one
+
+  anticollapse:
+    kind: claim
+    label: SIGReg(Z) = 0  =>  Cov = I  =>  full rank  =>  not collapsed
+    proof_status: proof_sketch
+    origin: source
+    scene: c09
+    proved_using: [cramer_wold, uniqueness]
+
+# ------------------------------------------------------------------- relations
+edges:
+  - [complex_plane, requires, unit_arrow]
+  - [unit_arrow, visualizes, phase]
+  - [phase, formalizes, wrapping]
+  - [wrapping, visualizes, ecf]
+  - [arrow_average, formalizes, ecf]
+  - [cancellation, motivates, ecf]
+  - [ecf, generalizes, three_panel_rig]
+  - [ecf, requires, expectation]
+  - [re_im, formalizes, ecf]
+  - [symmetry_real, justifies, gaussian_cf_is_real]
+  - [phi_at_zero, used_by, gaussian_cf]
+  - [aliasing, fails_when, ecf]
+  - [aliasing, motivates, integration_range]
+  - [low_t_blind, motivates, weighting]
+  - [noise_floor, motivates, weighting]
+  - [weighting, approximates, integration_range]
+  - [histogram_fails, contrasts_with, differentiability]
+  - [differentiability, justifies, ecf]
+  - [uniqueness, justifies, squared_gap]
+  - [sound_analogy, visualizes, uniqueness]
+  - [gaussian_cf, used_by, squared_gap]
+  - [squared_gap, formalizes, epps_pulley]
+  - [uniqueness, proved_using, fourier_transform]
+  - [cramer_wold, proved_using, uniqueness]
+  - [diagonal_trap, motivates, cramer_wold]
+  - [anticollapse, proved_using, cramer_wold]
+  - [epps_pulley, used_by, anticollapse]
+
+# --------------------------------------------- where an animation could mislead
+false_inference_risks:
+  - node: three_panel_rig
+    risk: >
+      Panel 3 plots Re phi only. The viewer may infer the displayed curve
+      determines the distribution. It does not -- Im phi is also needed.
+    mitigation: b05 introduces Im phi explicitly before uniqueness is claimed in b09.
+    status: mitigated
+
+  - node: ecf
+    risk: >
+      Sweeping t and watching the average arrow shrink suggests |phi| decreases
+      monotonically. It does not -- arrows realign and it comes back up.
+    mitigation: >
+      b06 (two-point, phi = cos t) shows an oscillating curve, and b06a shows
+      |phi(3.0)| returning to exactly 1.0000 on an aliased batch.
+    status: mitigated
+
+  - node: weighting
+    risk: >
+      Presenting [0.2, 4] as "the weighting" implies the weight is a hard window.
+      It is a smooth Gaussian; the range is a truncation.
+    mitigation: b08 narration corrected 2026-08-06; both objects now named.
+    status: mitigated
+
+  - node: epps_pulley
+    risk: >
+      Showing a formula containing w_lambda(t) over an animation that never
+      constructed it implies the picture computed the displayed quantity.
+    mitigation: b12 now builds the formula in two steps, unweighted first.
+    status: mitigated
+
+  - node: anticollapse
+    risk: >
+      Watching gradient descent open a collapsed cloud implies convergence is
+      guaranteed. The source explicitly guarantees the GLOBAL MINIMUM ONLY.
+    mitigation: not yet built -- Chapter C.9 must state this out loud.
+    status: OPEN
+    severity: high

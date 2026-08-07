@@ -1,0 +1,18 @@
+# Manim writes everything it generates under media/: rendered scenes, the
+# LaTeX and Text glyph caches, section files, partial movie files, and the
+# text-to-speech cache. All of it is reproducible from source, and the partial
+# movie files alone run to hundreds of megabytes per chapter.
+media/
+
+# Chapter masters used to land in videos/ under manimgl. Ignored so an old
+# working copy does not start committing 180 MB of renders after a pull.
+videos/
+
+# Secrets. .env holds ELEVEN_API_KEY; .env.example is the tracked template.
+.env
+!.env.example
+
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store

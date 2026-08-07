@@ -1,0 +1,43 @@
+[project]
+name = "uddhavs-manim"
+version = "0.1.0"
+description = "Explainer animations built on Manim Community Edition — chiefly the SIGReg explainer."
+requires-python = ">=3.12,<3.13"
+
+dependencies = [
+    "manim>=0.20.1",
+
+    # Pinned below 2.5 on purpose. numba (pulled in by stable-ts via
+    # openai-whisper) has no wheel compatible with numpy 2.5 yet, and the
+    # resolver's escape route is to walk numba back to 0.53, whose last release
+    # supports Python 3.9 and fails to build here. Lifting this pin without
+    # checking numba first will produce a long, confusing build failure.
+    "numpy<2.5",
+
+    # Narration. pydub mixes the music bed and measures clip durations;
+    # stable-ts (imported as `stable_whisper`) recovers word-level timings so
+    # <bookmark> marks land on the right word instead of by linear
+    # interpolation. It brings torch with it, which is most of the install size.
+    "pydub>=0.25",
+    "stable-ts>=2.19",
+
+    # Fallback text-to-speech. The default draft voice is the macOS `say`
+    # binary, which needs nothing; gTTS is the cross-platform stand-in.
+    "gtts>=2.5",
+]
+
+[project.optional-dependencies]
+# Nothing here needs a client library: the ElevenLabs and OpenAI services in
+# voiceover/services/ call the REST endpoints through urllib rather than take
+# an SDK dependency. Listed as a reminder, not an omission.
+
+[tool.uv]
+# This repo is an application, not a distributable package -- there is no
+# importable top-level module to build, and the scene files are loaded by path.
+package = false
+
+# manim is consumed from the sibling clone rather than PyPI so the engine can be
+# read and patched alongside the project. Drop this block to track the released
+# package instead; nothing in the project depends on it being editable.
+[tool.uv.sources]
+manim = { path = "../manim-ce", editable = true }
