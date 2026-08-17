@@ -129,7 +129,8 @@ def main() -> int:
     base = pathlib.Path(mod["CHAPTER"])
     total = 0
     for stem, edits in mod["EDITS"].items():
-        # "{stem}_*" not "{stem}*": b06 must not match b06a_one_speed_fails.py.
+        # Keep the underscore boundary so a future suffixed scene cannot be
+        # selected by a shorter numeric prefix.
         path = next(base.glob(f"{stem}_*.py"))
         n = apply(path, edits)
         if n < 0:

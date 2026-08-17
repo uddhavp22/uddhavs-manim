@@ -28,7 +28,20 @@ BOOKMARK = re.compile(r"<bookmark\s+mark=['\"]([^'\"]*)['\"]\s*/>")
 # Calls whose first string argument lands on screen. Kept in step with
 # narration_audit.onscreen_text -- both need to know what counts as the second
 # channel (NARRATION_SPEC.md 7.2).
-ONSCREEN_CALLS = ("Text", "words", "statement", "label", "caption", "curve_label")
+ONSCREEN_CALLS = (
+    "Text", "MathTex", "maths", "words", "statement", "label", "caption",
+    "curve_label",
+)
+
+# `build.sh` deliberately plays Chapter B as an argument rather than filename
+# order. Keep the generated master script in that same order, so a reader is
+# reviewing what will actually be rendered and concatenated.
+PLAYBACK_ORDER = {
+    "chapterB": (
+        "b00", "b01", "b02", "b03", "b04", "b05", "b06", "b07",
+        "b08", "b09", "b10", "b11",
+    ),
+}
 
 
 def _const_str(node: ast.AST) -> str | None:
@@ -96,6 +109,26 @@ def duration(scene_stem: str, chapter_dir: pathlib.Path) -> float | None:
         return None
 
 
+def playback_files(chapter: pathlib.Path) -> list[pathlib.Path]:
+    """Return scene sources in the build order when the chapter defines one."""
+    files = sorted(chapter.glob("[abc][0-9][0-9]*_*.py"))
+    order = PLAYBACK_ORDER.get(chapter.name)
+    if not order:
+        return files
+    by_prefix = {f.stem.split("_")[0]: f for f in files}
+    missing = [prefix for prefix in order if prefix not in by_prefix]
+    if missing:
+        raise ValueError(
+            f"{chapter.name} playback order names missing scenes: {', '.join(missing)}"
+        )
+    extras = sorted(set(by_prefix) - set(order))
+    if extras:
+        raise ValueError(
+            f"{chapter.name} playback order omits scenes: {', '.join(extras)}"
+        )
+    return [by_prefix[prefix] for prefix in order]
+
+
 def mmss(seconds: float) -> str:
     return f"{int(seconds) // 60}:{int(seconds) % 60:02d}"
 
@@ -107,7 +140,11 @@ def main() -> int:
     args = ap.parse_args()
 
     chapter = pathlib.Path(args.chapter)
-    files = sorted(chapter.glob("[abc][0-9][0-9]*_*.py"))
+    try:
+        files = playback_files(chapter)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 2
     if not files:
         print(f"no scene files under {chapter}", file=sys.stderr)
         return 2
@@ -140,7 +177,8 @@ def main() -> int:
     w("channel — [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) §7.2 treats it as")
     w("one, and a line cut from the voice and left on screen is not cut.")
     w("")
-    w("Ordering within a scene is source order, which tracks playback order but")
+    w("Scenes follow the chapter's playback order. Ordering within a scene is")
+    w("source order, which tracks playback order but")
     w("is not guaranteed to equal it: on-screen text is often constructed a few")
     w("lines before the passage that reveals it.")
     w("")

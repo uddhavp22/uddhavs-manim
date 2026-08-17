@@ -5,8 +5,8 @@
 
 `tools/dead_air.py` detects a BLANK screen. It is structurally unable to detect
 a screen that is full and motionless -- and that is the defect this repo keeps
-shipping: `b01` once closed on fourteen seconds of six unmoving arrows while the
-voice made a claim about a range of values, and `b07`'s payoff frame was held
+shipping: `b02` once closed on fourteen seconds of six unmoving arrows while the
+voice made a claim about a range of values, and `b06`'s payoff frame was held
 for twenty-five seconds across three sentences. Both passed every gate.
 
 ffmpeg's own `freezedetect` is not usable here. It thresholds the mean absolute

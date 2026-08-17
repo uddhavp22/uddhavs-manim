@@ -125,7 +125,7 @@ def dead_runs(series, min_seconds: float):
 
 
 # There was a third level here -- "sparse", meaning something is drawn but
-# almost nothing, aimed at cases like b08's bare axes under narration. Every
+# almost nothing, aimed at cases like b09's bare axes under narration. Every
 # threshold tried flagged frames with three full panels on them, because "how
 # much is on screen" does not reduce to mean luminance: a dense dark diagram and
 # a nearly empty frame measure the same. It is deleted rather than shipped

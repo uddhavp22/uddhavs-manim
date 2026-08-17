@@ -19,7 +19,7 @@ asks the installed engine to resolve the path with its own config machinery.
 Importing manim also picks up manim.cfg from the working directory, exactly as a
 real render does, so an override there is honoured here too.
 
-    python3 tools/output_path.py projects/.../b01_arrows.py B01 -ql
+    python3 tools/output_path.py projects/.../b02_arrows.py B02 -ql
 
 Prints one absolute path. Exits 2 on an unrecognised quality flag rather than
 guessing, because a wrong path here silently disables the freshness guard.

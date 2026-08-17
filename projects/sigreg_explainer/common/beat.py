@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import os
 
-from manim import FadeOut, Group, Write
+from manim import FadeOut, Group, Write, config
+from manim_vision import ManimVision
 
 from voiceover import VoiceoverScene
 from voiceover.services.elevenlabs import ElevenLabsService
@@ -17,6 +18,17 @@ from voiceover.services.say import SayService
 from . import type as ty
 from .layout import act_title
 
+# Off by default: ManimVision runs a background collision-check executor
+# alongside the real render, and it is beta software (docs/PLUGINS.md) with a
+# geometry engine that has not been exercised against every mobject type this
+# project uses. A diagnostic pass must never be able to break the final
+# ElevenLabs render, so it only attaches when explicitly requested --
+# `SIGREG_VISION=1 ./render.sh ...` -- mirroring how SIGREG_VOICE is read
+# below. Both `monitor` and `shutdown` are wrapped in `except Exception` for
+# the same reason: a crash in the diagnostic must degrade to "no report", not
+# take the scene down with it.
+VISION = os.environ.get("SIGREG_VISION", "0") == "1"
+
 # Voice is a build setting, not a source edit: `build.sh --voice eleven` selects
 # Archer for the final narration pass.  Audio is cached by passage text plus its
 # service settings, so unchanged passages do not call ElevenLabs again. This
@@ -24,6 +36,7 @@ from .layout import act_title
 # 20,510 characters, not the obsolete 10k free-tier budget once documented here.
 ARCHER = "Fahco4VZzobUeiPqni1S"  # Archer - Conversational
 VOICE = os.environ.get("SIGREG_VOICE", "draft")
+DRAFT_VOICE = os.environ.get("SIGREG_DRAFT_VOICE", "Evan (Enhanced)")
 # The default settings produced audible breaks and choppiness across the Archer
 # pass. Make the delivery settings explicit and steadier; including them in the
 # service configuration deliberately creates a fresh cache key for this cut.
@@ -33,7 +46,6 @@ ARCHER_SETTINGS = {
     "style": 0.0,
     "use_speaker_boost": True,
 }
-
 
 class ActScene(VoiceoverScene):
     """Common beat plumbing.
@@ -49,8 +61,13 @@ class ActScene(VoiceoverScene):
 
     def setup(self):
         super().setup()
+        if VISION:
+            try:
+                ManimVision.monitor(self)
+            except Exception:
+                pass
         if VOICE == "draft":
-            service = SayService(voice="Evan (Enhanced)", rate=170,
+            service = SayService(voice=DRAFT_VOICE, rate=170,
                                  transcription_model="base")
         elif VOICE == "eleven":
             service = ElevenLabsService(voice_id=ARCHER,
@@ -106,6 +123,28 @@ class ActScene(VoiceoverScene):
         else:
             self.wait(seconds)
 
+    def freeze(self, *mobs) -> None:
+        """Freeze live mobjects at the trackers' exact current values.
+
+        Manim 0.20.1 normally runs a zero-time updater pass after animation
+        cleanup. Doing it here as well makes the invariant local: even after a
+        direct tracker mutation, an ``always_redraw`` object is rebuilt once at
+        the current value before its updater is detached.
+        """
+        for mob in mobs:
+            mob.update(0)
+            mob.clear_updaters(recursive=True)
+
+    def settle_frame(self) -> None:
+        """Render one exact endpoint frame after a match cut or final fade.
+
+        The render loop samples ``[0, run_time)``; ``finish()`` reaches alpha 1
+        in memory but does not write that endpoint. A one-frame static wait
+        makes the endpoint the actual last frame of the scene.
+        """
+        self.update_mobjects(0)
+        self.wait(1 / config.frame_rate)
+
     def clear_beat(self, run_time: float = 0.7) -> None:
         """Fade everything currently on screen.
 
@@ -116,9 +155,27 @@ class ActScene(VoiceoverScene):
         mobs = list(self.mobjects)
         if not mobs:
             return
-        for m in mobs:
-            m.clear_updaters(recursive=True)
+        self.freeze(*mobs)
         self.play(FadeOut(Group(*mobs)), run_time=run_time)
+        self.settle_frame()
+
+    def clear_overlay(self, *mobs, run_time: float = 0.5) -> None:
+        """Fade only the named overlay mobjects; leave the rig standing.
+
+        For a match-cut seam (VISUAL_SYSTEM.md section 7): the next scene's
+        `mount()` picks up exactly where this frame leaves off, so the rig
+        itself must survive to the last frame. `mount()`'s own `always_redraw`
+        wrappers can't be enumerated from here, so the caller names whatever
+        text/UI it authored on top of the rig -- the same reason `clear_beat`
+        cannot be reused with a partial mobject list.
+        """
+        mobs = [m for m in mobs if m is not None]
+        if not mobs:
+            return
+        self.freeze(*mobs)
+        self.play(FadeOut(Group(*mobs)), run_time=run_time)
+        self.remove(*mobs)
+        self.settle_frame()
 
     def open_act(self, title: str, hold: float = 1.2) -> None:
         card = ty.title(title)
@@ -131,3 +188,16 @@ class ActScene(VoiceoverScene):
         group = Group(act_title(text))
         self.add(group)
         return group
+
+    def tear_down(self):
+        # Manim's own Scene.render() calls setup() -> construct() ->
+        # tear_down(), in that order, so this is the one place that runs
+        # after every scene's construct() regardless of which beats it has --
+        # flushing here means no scene file has to remember to call
+        # ManimVision.shutdown() itself.
+        if VISION:
+            try:
+                ManimVision.shutdown(self)
+            except Exception:
+                pass
+        super().tear_down()

@@ -1,8 +1,8 @@
-"""Chapter B.1 — complex numbers as arrows.
+"""Chapter B.2 — complex numbers as arrows.
 
 The one prerequisite the rest of Chapter B leans on, and nothing more:
 
-    a complex number is an arrow from the origin
+    a complex number can be pictured as an arrow from the origin
     e^{i theta} is the unit arrow at angle theta
     adding arrows is tip-to-tail, so averaging them is a centroid
     arrows that agree give a long average; arrows that spread cancel
@@ -12,7 +12,7 @@ used downstream is that e^{i theta} is a unit arrow at angle theta, so that is
 the only property introduced. Everything after this scene is arrows.
 
 Render:
-    ./render.sh projects/sigreg_explainer/chapterB/b01_arrows.py B01 -ql
+    ./render.sh projects/sigreg_explainer/chapterB/b02_arrows.py B02 -ql
 """
 
 import os
@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.anim import lagged_map
 from common import layout
 from common.beat import ActScene
-from common.palette import CLOUD, COLLAPSE, EMPIRICAL, FAINT, MUTED, TARGET
+from common.palette import AVERAGE, CLOUD, COLLAPSE, EMPIRICAL, FAINT, MUTED, TARGET
 from common import type as ty
 
 
@@ -63,7 +63,7 @@ def arrow_to(angle, r=RADIUS, centre=CENTRE, colour=CLOUD, width=5):
     return arrow_to_point(tip, centre, colour, width)
 
 
-class B01(ActScene):
+class B02(ActScene):
     chain_link = "arrows"
 
     def construct(self):
@@ -74,16 +74,45 @@ class B01(ActScene):
 
     # ------------------------------------------------------------------ 1
     def arrow_beat(self):
-        """A complex number is a point, which is to say an arrow.
+        """Answer B01's on-screen unknown, then make direction precise."""
+        # Match B01's closing frame so the cut continues the same question.
+        sample_track = NumberLine(
+            x_range=(-3, 3, 0.5), length=9.4, include_numbers=False,
+            include_tip=False,
+        ).set_stroke(MUTED, 2).move_to([0.0, -0.9, 0.0])
+        sample_dot = Dot(sample_track.n2p(1.45), radius=0.085).set_fill(TARGET, 1)
+        sample_label = ty.maths(R"x_i", size=ty.EQ, color=TARGET)
+        sample_label.next_to(sample_dot, DOWN, buff=0.13)
+        unknown = ty.maths(R"x_i \longmapsto\ ?", size=ty.EQ_DISPLAY,
+                           color=TARGET).move_to([0.0, 1.25, 0.0])
+        answer = ty.maths(
+            R"x_i \longmapsto \text{a direction}",
+            size=ty.EQ_DISPLAY, color=TARGET,
+        ).move_to(unknown)
 
-        Every mobject here is live off `z`, and `z` keeps moving. The previous
-        cut drew this beat with fixed run_times inside a voiceover block, so the
-        block's tail played over a motionless picture: measured on the rev-3
-        master, 00:33-00:43 was a bare complex plane and 00:48-00:56 was an
-        unchanging arrow -- eighteen seconds of the scene's first twenty-three.
-        A point that keeps moving with its arrow and its two shadows attached
-        IS the sentence being spoken (RENDER_REVIEW_SPEC.md section 10.2).
-        """
+        # B01 leaves this frame standing. Mount it immediately rather than
+        # fading a duplicate in from black, then give the cut a short breath
+        # before the answer arrives.
+        self.add(sample_track, sample_dot, sample_label, unknown)
+        self.settle_frame()
+        self.wait(0.18)
+
+        with self.voiceover(
+            text="What we can do is let each sample represent a direction."
+        ) as tracker:
+            self.play(ReplacementTransform(unknown, answer),
+                      run_time=0.75, rate_func=smooth)
+            self.play(
+                AnimationGroup(
+                    Indicate(sample_dot, color=TARGET, scale_factor=1.08),
+                    Indicate(answer, color=TARGET, scale_factor=1.025),
+                    lag_ratio=0.25,
+                ),
+                run_time=0.75,
+            )
+
+        self.inspect(0.5)
+
         pan = plane()
         re_lab = ty.words("real", size=ty.TICK, color=MUTED)
         re_lab.next_to(pan, RIGHT, buff=0.12).shift(0.3 * DOWN)
@@ -91,35 +120,29 @@ class B01(ActScene):
         im_lab.next_to(pan, UP, buff=0.12).shift(0.2 * RIGHT)
         labs = VGroup(re_lab, im_lab)
 
-        # Was: "Come back to the toy batches..." over a plane with no batch on
-        # it. The batch is genuinely returned to in b02, on the rig, where it
-        # can be wrapped; saying it here bought a reference the frame could not
-        # honour. This scene's job is the one property b02 needs, and it says so
-        # in terms of what the batch will be asked for.
-        with self.voiceover(
-            text="Each sample is about to be asked for a direction, so the "
-                 "answers are going to live in the plane: sideways counts the "
-                 "real part, upward the imaginary part."
-        ) as tracker:
-            self.play(Create(pan), run_time=1.6)
-            self.across(tracker, FadeIn(labs, shift=0.12 * DOWN), floor=0.7)
-
-        # One complex number, held in a tracker so the arrow, the drop lines and
-        # the label all follow it. `path` is where it goes: three positions that
-        # differ in both coordinates, so "two coordinates make a point" is
-        # something the viewer watches rather than reads.
+        # One complex number, with every dependent mark driven by one tracker.
         z = ValueTracker(0.0)
         path = [0.62 + 0.55j, -0.48 + 0.72j, 0.80 - 0.42j]
 
         def point_at(u):
             k = min(int(u), len(path) - 2)
             a, b = path[k], path[k + 1]
-            w = a + (u - k) * (b - a)
+            # The original piecewise-linear path made an instantaneous turn at
+            # its middle waypoint. Hermite interpolation keeps the waypoint
+            # while matching the incoming and outgoing velocity there.
+            s = u - k
+            m_a = path[1] - path[0] if k == 0 else (path[2] - path[0]) / 2
+            m_b = (path[2] - path[0]) / 2 if k == 0 else path[2] - path[1]
+            w = ((2 * s**3 - 3 * s**2 + 1) * a
+                 + (s**3 - 2 * s**2 + s) * m_a
+                 + (-2 * s**3 + 3 * s**2) * b
+                 + (s**3 - s**2) * m_b)
             return CENTRE + RADIUS * np.array([w.real, w.imag, 0.0])
 
         tip_of = lambda: point_at(z.get_value())
         vec = always_redraw(lambda: arrow_to_point(tip_of()))
-        dot = always_redraw(lambda: Dot(tip_of(), radius=0.09)
+        dot = always_redraw(lambda: Dot(
+            tip_of(), radius=layout.ARROW_TIP_DOT_RADIUS)
                             .set_fill(CLOUD, 1))
         zlab = ty.maths("a + bi", size=ty.EQ, color=CLOUD)
         zlab.add_updater(lambda m: m.next_to(dot, UR, buff=0.15))
@@ -138,28 +161,42 @@ class B01(ActScene):
         drop = always_redraw(drops)
 
         with self.voiceover(
-            text="Put one of those answers here. Its two coordinates fix a "
-                 "point, and <bookmark mark='arrow'/>the picture that will "
-                 "matter is the arrow from the origin out to it: move the "
-                 "point and the arrow turns with it."
+            text="The natural home for those two answers is the "
+                 "<bookmark mark='plane'/>complex plane. A "
+                 "point here is written A, plus B I. A gives its horizontal "
+                 "coordinate, and B gives its vertical coordinate."
         ) as tracker:
-            self.add(dot, drop, zlab)
-            self.play(FadeIn(dot), Create(drop), Write(zlab),
-                      run_time=1.1)
-            self.wait_until_bookmark("arrow")
+            self.wait_until_bookmark("plane")
+            self.play(
+                FadeOut(VGroup(sample_track, sample_dot, sample_label, answer)),
+                Create(pan), FadeIn(labs, shift=0.12 * DOWN),
+                run_time=0.62,
+            )
+            self.play(
+                FadeIn(dot), Create(drop), Write(zlab),
+                run_time=0.72, rate_func=smooth,
+            )
+            self.across(tracker, z.animate.set_value(0.45),
+                        floor=0.8, rate_func=smooth)
+
+        self.inspect(0.55, z.animate.set_value(0.35), rate_func=smooth)
+
+        with self.voiceover(
+            text="Now draw an arrow from the origin to that point. As the "
+                 "point moves, the direction changes smoothly with it."
+        ) as tracker:
             # Grow a throwaway copy, then hand over to the live one. GrowArrow
             # on an always_redraw mobject fights its own updater, and adding the
             # live arrow without removing the seed leaves two arrows on screen.
             seed = arrow_to_point(tip_of())
-            self.play(GrowArrow(seed), run_time=0.8)
+            self.play(GrowArrow(seed), run_time=0.75)
             self.remove(seed)
             self.add(vec)
             self.across(tracker, z.animate.set_value(2.0), floor=1.6,
                         rate_func=smooth)
 
         self.pan, self.labs = pan, labs
-        for m in (vec, dot, drop, zlab):
-            m.clear_updaters(recursive=True)
+        self.freeze(vec, dot, drop, zlab)
         self.play(FadeOut(VGroup(dot, zlab, drop, vec)), run_time=0.6)
         self.remove(vec, dot, drop, zlab)
 
@@ -172,7 +209,7 @@ class B01(ActScene):
         tip_dot = always_redraw(lambda: Dot(
             CENTRE + RADIUS * np.array([np.cos(theta.get_value()),
                                         np.sin(theta.get_value()), 0.0]),
-            radius=0.09).set_fill(CLOUD, 1))
+            radius=layout.ARROW_TIP_DOT_RADIUS).set_fill(CLOUD, 1))
 
         # Arc from the real axis round to the arrow, so theta is a thing you
         # watch open rather than a symbol.
@@ -198,16 +235,18 @@ class B01(ActScene):
         # the arrow parked at 0.9 rad until the voice reached the word; the name
         # arriving a beat early costs nothing, and the arrow never stops.
         with self.voiceover(
-            text="Restrict to arrows of length one and each is determined "
-                 "by a single number, its angle. The unit arrow at angle theta "
-                 "is written e to the i theta, and raising theta walks it round "
-                 "the circle at a steady rate."
+            text="Suppose only the direction matters. Then we can set the "
+                 "arrow's length to one, so a single angle, theta, determines "
+                 "it. We write this unit direction as e to the i theta."
         ) as tracker:
             self.add(vec, tip_dot, arc, arc_lab)
-            self.play(theta.animate.set_value(0.9), run_time=1.1)
-            self.play(Write(rule), theta.animate.set_value(1.6), run_time=1.1)
-            self.across(tracker, theta.animate.set_value(1.6 + TAU),
-                        floor=2.5, rate_func=linear)
+            self.across(
+                tracker,
+                theta.animate.set_value(2.4),
+                Succession(Wait(0.8), Write(rule, run_time=1.0)),
+                floor=2.8,
+                rate_func=linear,
+            )
 
         self.theta = theta
         self.rule = rule
@@ -224,8 +263,7 @@ class B01(ActScene):
         #
         # Updaters first: an always_redraw mobject rebuilds itself every frame,
         # which resets the opacity FadeOut is animating and leaves it visible.
-        for m in (self.arc, self.arc_lab):
-            m.clear_updaters(recursive=True)
+        self.freeze(self.arc, self.arc_lab)
         self.play(FadeOut(self.arc), FadeOut(self.arc_lab), run_time=0.5)
         self.remove(self.arc, self.arc_lab)
 
@@ -267,29 +305,47 @@ class B01(ActScene):
         # the same point where it is actually earned.
         # The bookmark wait here was four seconds of a stopped arrow with its
         # two shadows frozen under it -- the one frame in the beat where the
-        # shadows changing IS the sentence. The arrow now walks while the
-        # components are named, and the identity is written over that motion.
+        # shadows changing IS the sentence. One forward sweep now drives the
+        # entire beat; the old back-forward-back sequence made the arrow jerk
+        # at every sentence boundary.
+        seed_parts = shadows()
         with self.voiceover(
-            text="Its sideways and upward components are the cosine and "
-                 "the sine of theta: Euler's identity, read off the picture as "
-                 "how far right the arrow reaches, and how far up."
+            text="The tip gives us two numbers: the cosine of theta "
+                 "horizontally, and the sine of theta vertically. As theta "
+                 "changes, both move smoothly."
         ) as tracker:
-            self.play(self.theta.animate.set_value(0.9), run_time=0.7)
+            self.play(
+                GrowFromPoint(seed_parts[0], CENTRE),
+                GrowFromPoint(seed_parts[1], CENTRE),
+                FadeIn(VGroup(seed_parts[2], seed_parts[3])),
+                run_time=0.8,
+                rate_func=smooth,
+            )
+            self.remove(seed_parts, *seed_parts)
             self.add(parts)
-            self.play(self.theta.animate.set_value(1.5), run_time=1.5)
-            self.play(Write(eq), FadeIn(key),
-                      self.theta.animate.set_value(2.1), run_time=1.6)
-            self.across(tracker, self.theta.animate.set_value(0.9 + TAU),
-                        floor=1.5, rate_func=smooth)
+            self.across(
+                tracker,
+                self.theta.animate.set_value(5.0),
+                Succession(
+                    Wait(0.12),
+                    AnimationGroup(
+                        Write(eq, run_time=0.42),
+                        FadeIn(key, run_time=0.42),
+                        lag_ratio=0.15,
+                    ),
+                    Wait(0.46),
+                ),
+                floor=2.8,
+                rate_func=linear,
+            )
 
         # Silence with the two shadows sliding under a moving arrow: the viewer
         # has just been given a correspondence to check, and checking it takes a
         # moment with nothing said over it.
-        self.inspect(1.3, self.theta.animate.set_value(0.9 + TAU + 0.9),
-                     rate_func=smooth)
+        self.inspect(1.1, self.theta.animate.set_value(5.55),
+                     rate_func=linear)
 
-        for m in (parts, self.vec, self.tip_dot):
-            m.clear_updaters(recursive=True)
+        self.freeze(parts, self.vec, self.tip_dot)
         self.play(FadeOut(VGroup(eq, key, parts, self.vec, self.tip_dot,
                                  self.rule)), run_time=0.7)
         self.remove(parts, self.vec, self.tip_dot)
@@ -331,7 +387,8 @@ class B01(ActScene):
         def mean_parts():
             z = np.mean(np.exp(1j * angles()))
             tip = CENTRE + RADIUS * np.array([z.real, z.imag, 0.0])
-            dot = Dot(tip, radius=0.11).set_fill(EMPIRICAL, 1)
+            dot = Dot(tip, radius=layout.ARROW_TIP_DOT_RADIUS)
+            dot.set_fill(AVERAGE, 1)
             # Evenly spaced angles average to exactly zero, so the arrow can be
             # asked to run from a point to itself. Drawing an arrowhead on a
             # zero-length shaft is undefined; the dot alone is the honest
@@ -339,7 +396,7 @@ class B01(ActScene):
             # sweep lands on at that end.
             if abs(z) < 0.02:
                 return VGroup(dot), abs(z)
-            return VGroup(arrow_to_point(tip, colour=EMPIRICAL, width=8),
+            return VGroup(arrow_to_point(tip, colour=AVERAGE, width=8),
                           dot), abs(z)
 
         live_arrows = always_redraw(bundle)
@@ -352,24 +409,26 @@ class B01(ActScene):
         # every construction, and rebuilding one per frame at 60 fps is the kind
         # of thing that turns a 5 s beat into a slow render.
         len_label = ty.line("length", "$=$", size=ty.STATEMENT,
-                            color=EMPIRICAL)
+                            color=AVERAGE)
         len_label.move_to(np.array([3.1, 0.9, 0.0]))
         len_value = always_redraw(lambda: DecimalNumber(
             mean_parts()[1], num_decimal_places=2,
-            font_size=ty.STATEMENT).set_color(EMPIRICAL)
+            font_size=ty.STATEMENT).set_color(AVERAGE)
             .next_to(len_label, RIGHT, buff=0.18).align_to(len_label, DOWN))
         layout.fit_in_frame(len_label)
 
         with self.voiceover(
-            text="Arrows add tip to tail, so a set of them has an average: the "
-                 "sum, divided by how many there are. "
-                 "<bookmark mark='avg'/>Six arrows pointing roughly the same "
-                 "way average to something almost as long as they are."
+            text="Suppose we take a few directions and average their endpoints. "
+                 "<bookmark mark='avg'/>When they point roughly together, "
+                 "their average stays long."
         ) as tracker:
             seeds = bundle()
             self.play(lagged_map(GrowArrow, seeds, lag_ratio=0.14),
                       run_time=1.4)
-            self.remove(seeds)
+            # lagged_map animates the children directly, so remove both the
+            # container and its individually registered arrows before the live
+            # bundle takes ownership.
+            self.remove(seeds, *seeds)
             self.add(live_arrows)
             self.wait_until_bookmark("avg")
             mean_seed = mean_parts()[0]
@@ -385,10 +444,10 @@ class B01(ActScene):
                         rate_func=there_and_back)
 
         with self.voiceover(
-            text="Spread the same six around the circle and their components "
-                 "start cancelling against one another, which pulls the "
-                 "average in toward the centre. Evenly spaced, the "
-                 "cancellation is exact and the average is zero."
+            text="Then, if we spread those arrows around the circle, their "
+                 "components cancel against one another, pulling the average "
+                 "inward. With equal spacing around the circle, the "
+                 "cancellation is exact."
         ) as tracker:
             # The fanning-out IS the sentence, so it gets the whole sentence
             # rather than a fixed 1.6 s with the rest played over a still frame.
@@ -399,16 +458,33 @@ class B01(ActScene):
 
         self.inspect(1.2, u.animate.set_value(0.94), rate_func=there_and_back)
 
-        with self.voiceover(
-            text="So the length of that average measures how much a set of "
-                 "angles agree: one when they coincide, zero when they are "
-                 "spread evenly, and something in between otherwise. The "
-                 "angles have been arbitrary so far. Getting them from a batch "
-                 "of numbers is the next move."
-        ) as tracker:
-            self.play(u.animate.set_value(0.0), run_time=2.2)
-            self.across(tracker, u.animate.set_value(1.0), floor=2.4)
+        angle_prompt = ty.maths(
+            R"x_i \longmapsto \theta_i =\ ?",
+            size=ty.EQ_DISPLAY, color=TARGET,
+        ).move_to(np.array([3.1, 0.7, 0.0]))
+        layout.fit_in_frame(angle_prompt)
 
-        for m in (live_arrows, live_mean, len_value):
-            m.clear_updaters(recursive=True)
-        self.clear_beat()
+        with self.voiceover(
+            text="So the average gives us a smooth measure of how well the "
+                 "directions line up. To connect this back to our samples, we "
+                 "just need a rule for choosing each angle."
+        ) as tracker:
+            # Do not replay the full aligned-to-cancelled experiment. A small
+            # partial return keeps the diagram alive while the conclusion
+            # lands, then the mapping takes over as the new focal object.
+            self.play(u.animate.set_value(0.78), run_time=1.15,
+                      rate_func=smooth)
+            self.freeze(len_value)
+            self.play(
+                FadeOut(VGroup(len_label, len_value)),
+                Write(angle_prompt),
+                run_time=0.85,
+                rate_func=smooth,
+            )
+            self.across(tracker, u.animate.set_value(0.88),
+                        floor=1.0, rate_func=there_and_back)
+
+        self.inspect(0.45)
+
+        self.freeze(live_arrows, live_mean, len_value)
+        self.clear_beat(run_time=0.35)

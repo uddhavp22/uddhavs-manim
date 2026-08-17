@@ -612,6 +612,24 @@ Example with varied but natural rhythm:
 
 The sentence variation follows the reasoning.
 
+## Logical connectives are not filler
+
+"So," "if," "suppose," "then," "now we can" are not the casual filler section 3
+warns against — they are how a real explanation signals dependency between one
+step and the next, and a script with none of them reads as a list of
+disconnected facts rather than a chain of reasoning. Keep them wherever they
+mark genuine logical movement.
+
+The failure mode runs in both directions. A scene that never uses one of these
+words reads flat. A scene that opens three consecutive sentences with the same
+one — "If we take a batch... If we shift the points... If we follow the
+curve..." — reads as a tic, even though each individual use is fine in
+isolation. Vary which connective marks each step, the way section 13 varies
+sentence shape: "so" for a consequence, "if"/"suppose" for a hypothetical
+being set up, "now" or "then" for a step that follows a completed one. Check
+across the whole scene, not sentence-by-sentence, since the pattern is only
+visible at that scale.
+
 ---
 
 # 14. Avoid excessive rhetorical questions

@@ -41,7 +41,7 @@ def claim(scene: str, spoken: str):
 
 
 # ------------------------------------------------------------------ geometry
-@claim("b01", "here it is exactly zero, because these six are evenly spaced")
+@claim("b02", "here it is exactly zero, because these six are evenly spaced")
 def roots_of_unity_cancel():
     ang = np.linspace(0, 2 * np.pi, 6, endpoint=False)
     z = np.mean(np.exp(1j * ang))
@@ -49,7 +49,7 @@ def roots_of_unity_cancel():
     return f"|mean of 6 evenly spaced arrows| = {abs(z):.2e}"
 
 
-@claim("b02", "the roll lands exactly on e^{ia}")
+@claim("b03", "the roll lands exactly on e^{ia}")
 def roll_is_exact():
     from common.wrap import wrapped
     a = np.linspace(-8, 8, 400)
@@ -61,7 +61,7 @@ def roll_is_exact():
 
 
 # ------------------------------------------------------------ worked examples
-@claim("b06", "the curve it traces is exactly the cosine")
+@claim("b05", "the curve it traces is exactly the cosine")
 def two_point_is_cosine():
     t = np.linspace(0, 6.5, 700)
     z = ecf(np.array([-1.0, 1.0]), t)
@@ -71,7 +71,7 @@ def two_point_is_cosine():
            f"max|Im phi| = {np.abs(z.imag).max():.1e}"
 
 
-@claim("b06", "the curve stays pinned at one")
+@claim("b05", "the curve stays pinned at one")
 def constant_batch_has_unit_modulus():
     t = np.linspace(0, 6.5, 700)
     m = np.abs(ecf(np.full(7, 0.9), t))
@@ -79,9 +79,9 @@ def constant_batch_has_unit_modulus():
     return f"max||phi| - 1| = {np.abs(m - 1.0).max():.1e}"
 
 
-@claim("b06b", "the amber one lands back on its own ghost")
+@claim("b05", "the amber one lands back on its own ghost")
 def shift_moves_only_the_phase():
-    """Retagged from b06: the shift example is its own scene now (b06b)."""
+    """The translation example is the final experiment in b05."""
     t = np.linspace(0.05, 6.5, 700)
     h = np.array([-1.4, -0.7, -0.2, 0.3, 0.9, 1.5])
     mu = 0.8
@@ -96,9 +96,9 @@ def shift_moves_only_the_phase():
            f"magnitude unchanged to {mag:.1e}; phase moves {dphase:.2f} rad"
 
 
-@claim("b02", "the red curve sits at exactly zero across the whole range")
+@claim("b03", "the red curve sits at exactly zero across the whole range")
 def symmetric_batch_is_real():
-    """b05 was folded into b02, and so was its batch.
+    """b05 was folded into b03, and so was its batch.
 
     The scene no longer swaps in a batch nobody has met to make Im phi visible:
     it uses the seven-value clump slice it has been running all along, which is
@@ -116,7 +116,7 @@ def symmetric_batch_is_real():
     return f"mirrored: max|Im phi| = {im:.1e};  unmirrored: {lopsided:.3f}"
 
 
-@claim("b06", "the amber curve drops almost to zero before creeping back up")
+@claim("b05", "the amber curve drops almost to zero before creeping back up")
 def shift_batch_magnitude_dips():
     """Spoken over the first sweep, so it has to match the drawn curve."""
     h = np.array([-1.4, -0.7, -0.2, 0.3, 0.9, 1.5])
@@ -128,7 +128,7 @@ def shift_batch_magnitude_dips():
     return f"min |phi| = {lo:.3f} at t = {t[mag.argmin()]:.2f}; ends at {mag[-1]:.3f}"
 
 
-@claim("b06a", "indistinguishable from total collapse")
+@claim("b07", "indistinguishable from total collapse")
 def aliased_batch_looks_collapsed():
     h = data.aliased_1d(3.0, k=3)
     m = abs(ecf(h, [3.0])[0])
@@ -137,7 +137,7 @@ def aliased_batch_looks_collapsed():
     return f"|phi(3.0)| = {m:.4f} on a batch with sd {h.std():.2f}"
 
 
-@claim("b06a", "spread across nearly thirteen units")
+@claim("b07", "spread across nearly thirteen units")
 def aliased_batch_range():
     """The number printed on screen beside the batch.
 
@@ -151,7 +151,7 @@ def aliased_batch_range():
     return f"range = {rng:.2f} (sd {h.std():.2f})"
 
 
-@claim("b06a", "nudging t collapses the average to almost nothing")
+@claim("b07", "nudging t collapses the average to almost nothing")
 def aliased_batch_breaks_off_resonance():
     """Correction 3's evidence: several nearby frequencies expose the batch.
 
@@ -167,19 +167,20 @@ def aliased_batch_breaks_off_resonance():
 
 
 # ------------------------------------------------------- which frequencies
-@claim("b08", "at a frequency of nought point three the two differ by two thousandths")
+@claim("b09", "at t point three the vertical gap is less than one thousandth")
 def low_t_is_blind():
+    """Check the vertical gap drawn between the two real-coordinate curves."""
     g, b = data.gaussian_1d(40), data.bimodal_1d(40)
-    lo = abs(ecf(g, [0.3])[0] - ecf(b, [0.3])[0])
-    hi = abs(ecf(g, [3.0])[0] - ecf(b, [3.0])[0])
-    assert abs(lo - 0.0021) < 5e-4, lo
-    assert abs(hi - 0.8989) < 5e-4, hi
+    lo = abs(ecf(g, [0.3])[0].real - ecf(b, [0.3])[0].real)
+    hi = abs(ecf(g, [3.0])[0].real - ecf(b, [3.0])[0].real)
+    assert lo < 0.001, lo
+    assert abs(hi - 0.7623) < 5e-4, hi
     # the batches must actually agree on mean and variance, or the point is moot
     assert abs(g.mean() - b.mean()) < 5e-3 and abs(g.std() - b.std()) < 5e-3
-    return f"gap at t=0.3 is {lo:.4f}; at t=3.0 is {hi:.4f}"
+    return f"vertical gap at t=0.3 is {lo:.4f}; at t=3.0 is {hi:.4f}"
 
 
-@claim("b08", "the expected squared length settles at one over N")
+@claim("b09", "the expected squared length settles at one over N")
 def noise_floor_is_one_over_n():
     rng = np.random.default_rng(0)
     vals = [abs(ecf(rng.standard_normal(40), [6.0])[0]) ** 2 for _ in range(4000)]
@@ -189,13 +190,13 @@ def noise_floor_is_one_over_n():
     return f"E|phi_40(6)|^2 = {got:.4f} vs 1/N = 0.0250; truth = {gaussian_cf(6.0)**2:.1e}"
 
 
-@claim("b08", "that band holds over ninety nine per cent of what is worth measuring")
+@claim("b11", "the numerical integration window holds over ninety nine per cent of the weighted comparison")
 def window_holds_the_mass():
     """The fraction is BATCH-DEPENDENT, so the claim must be a bound.
 
     PLAN.md rev 4 recorded a single figure, 99.78%, as though it were a
     constant. Measured across batches it runs 99.63% to 99.98%, so any one
-    figure is spurious precision and b08 originally spoke one. The honest,
+    figure is spurious precision and b09 originally spoke one. The honest,
     batch-independent claim is the bound.
     """
     # Integrand of the Epps-Pulley statistic: w(t)|phi_N - phi_0|^2, lambda = 1.
@@ -217,8 +218,28 @@ def window_holds_the_mass():
            f"across 4 batches (never a single fixed figure)"
 
 
+@claim("b09", "the shape gap crosses sampling variation near one point one and four point six")
+def signal_noise_crossings():
+    grid = np.linspace(0.0, 6.4, 700)
+    gaussian = data.gaussian_1d(40)
+    bimodal = data.bimodal_1d(40)
+    gap = np.abs(ecf(gaussian, grid).real - ecf(bimodal, grid).real)
+    rng = np.random.default_rng(20260806)
+    estimates = np.asarray([
+        ecf(rng.standard_normal(40), grid).real
+        for _ in range(14)
+    ])
+    variation = estimates.std(axis=0)
+    changes = np.flatnonzero(np.diff(np.sign(gap - variation)))
+    crossings = [grid[index] for index in changes if grid[index] > 0.1]
+    assert len(crossings) == 2, crossings
+    assert abs(crossings[0] - 1.1) < 0.05, crossings
+    assert abs(crossings[1] - 4.6) < 0.05, crossings
+    return f"signal/noise crossings at t={crossings[0]:.2f} and {crossings[1]:.2f}"
+
+
 # ----------------------------------------------------------------- histograms
-@claim("b10", "same forty numbers, different answer")
+@claim("b01", "same forty numbers, different answer")
 def bins_are_arbitrary():
     g = data.gaussian_1d(40)
     a, _ = np.histogram(g, bins=np.arange(-3, 3.01, 0.5))
@@ -228,14 +249,14 @@ def bins_are_arbitrary():
     return f"offset 0.00 -> {a.tolist()};  offset 0.15 -> {b.tolist()}"
 
 
-@claim("b10", "at a width of one and a half the counts read two, fourteen, twenty four, zero")
+@claim("b01", "at a width of one and a half the counts read two, fourteen, twenty four, zero")
 def bins_delete_structure():
     c, _ = np.histogram(data.bimodal_1d(40), bins=np.arange(-3, 3.0001, 1.5))
     assert c.tolist() == [2, 14, 24, 0], c.tolist()
     return f"bimodal at width 1.5 -> {c.tolist()} (two clumps gone)"
 
 
-@claim("b10", "it sits at seven, and then it is six")
+@claim("b01", "it sits at seven, and then it is six")
 def bins_are_a_staircase():
     g = data.gaussian_1d(40)
     i = int(np.argmin(np.abs(g - 0.5)))
@@ -249,7 +270,7 @@ def bins_are_a_staircase():
 
 
 # ---------------------------------------------------------------- the target
-@claim("b11", "the fingerprint of a standard Gaussian is e to the minus t squared over two")
+@claim("b10", "the fingerprint of a standard Gaussian is e to the minus t squared over two")
 def gaussian_cf_solves_ode():
     t = np.linspace(0, 6, 2001)
     phi = gaussian_cf(t)
@@ -260,19 +281,19 @@ def gaussian_cf_solves_ode():
     return f"max|phi' + t phi| = {np.abs(dphi[interior] + t[interior] * phi[interior]).max():.1e}; phi(0) = {phi[0]:.1f}"
 
 
-@claim("b07", "phi of zero is one")
+@claim("b06", "phi of zero is one")
 def phi_at_zero_is_one():
     for h in (data.gaussian_1d(40), data.bimodal_1d(40), np.full(24, 1.3)):
         assert abs(ecf(h, [0.0])[0] - 1.0) < 1e-15
     return "phi(0) = 1 for all three batches, to machine precision"
 
 
-@claim("b07", "the hump decays and stays down, while the clumps swing the "
+@claim("b06", "the hump decays and stays down, while the clumps swing the "
               "average all the way over to the negative side")
 def toy_batches_have_different_curves():
     """Part 1's closing claim: the opening experiment, answered.
 
-    b00 shows two batches agreeing on count, mean and variance. b07 draws both
+    b00 shows two batches agreeing on count, mean and variance. b06 draws both
     characteristic functions on one pair of axes and says they are nothing
     alike. Every part of that has to hold on the batches actually drawn --
     including the direction of the difference, since the narration says the
@@ -297,7 +318,7 @@ def toy_batches_have_different_curves():
 
 
 # ----------------------------------------------------------------- the score
-@claim("b12", "a factor of fifty six")
+@claim("b11", "a factor of fifty six")
 def score_separates_batches():
     t = np.linspace(0.2, 4.0, 4001)
     tgt = gaussian_cf(t)
@@ -308,11 +329,11 @@ def score_separates_batches():
     return f"unweighted: gaussian {g:.4f}, bimodal {b:.4f}, ratio {b / g:.1f}x"
 
 
-@claim("b12", "putting the weight in barely moves it")
+@claim("b11", "putting the weight in barely moves it")
 def weighting_preserves_the_verdict():
     """Source fidelity: the displayed formula carries w(t) and an N prefactor.
 
-    The animation shows the UNWEIGHTED area, so b12 must be able to say the
+    The animation shows the UNWEIGHTED area, so b11 must be able to say the
     refinement does not change the verdict. It does not -- 56.4x becomes 57.3x.
     """
     t = np.linspace(0.2, 4.0, 4001)

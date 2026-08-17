@@ -12,27 +12,27 @@ the render actually speaks. On-screen text is included as a second
 channel — [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) §7.2 treats it as
 one, and a line cut from the voice and left on screen is not cut.
 
-Ordering within a scene is source order, which tracks playback order but
+Scenes follow the chapter's playback order. Ordering within a scene is
+source order, which tracks playback order but
 is not guaranteed to equal it: on-screen text is often constructed a few
 lines before the passage that reveals it.
 
-**13 scenes · 3,712 spoken words · 19:48**
+**12 scenes · 2,445 spoken words · 0:00**
 
 | Scene | Words | Duration | Words/min |
 |---|---:|---:|---:|
-| [`b00_the_problem`](#b00-the-problem) | 272 | 1:22 | 197 |
-| [`b01_arrows`](#b01-arrows) | 255 | 1:15 | 202 |
-| [`b02_the_rig`](#b02-the-rig) | 234 | 1:10 | 198 |
-| [`b05_real_and_imaginary`](#b05-real-and-imaginary) | 242 | 1:17 | 187 |
-| [`b06_worked_examples`](#b06-worked-examples) | 142 | 0:48 | 177 |
-| [`b06a_one_speed_fails`](#b06a-one-speed-fails) | 169 | 0:53 | 189 |
-| [`b06b_what_magnitude_ignores`](#b06b-what-magnitude-ignores) | 166 | 0:52 | 188 |
-| [`b07_the_anchor`](#b07-the-anchor) | 135 | 0:50 | 162 |
-| [`b08_which_frequencies`](#b08-which-frequencies) | 462 | 2:23 | 193 |
-| [`b09_uniqueness`](#b09-uniqueness) | 292 | 1:38 | 177 |
-| [`b10_why_not_histograms`](#b10-why-not-histograms) | 351 | 1:50 | 191 |
-| [`b11_gaussian_fingerprint`](#b11-gaussian-fingerprint) | 510 | 2:49 | 181 |
-| [`b12_fingerprint_to_loss`](#b12-fingerprint-to-loss) | 482 | 2:35 | 186 |
+| [`b00_the_problem`](#b00-the-problem) | 173 | — | — |
+| [`b01_why_not_histograms`](#b01-why-not-histograms) | 151 | — | — |
+| [`b02_arrows`](#b02-arrows) | 202 | — | — |
+| [`b03_the_rig`](#b03-the-rig) | 406 | — | — |
+| [`b04_the_definition`](#b04-the-definition) | 121 | — | — |
+| [`b05_worked_examples`](#b05-worked-examples) | 230 | — | — |
+| [`b06_the_anchor`](#b06-the-anchor) | 54 | — | — |
+| [`b07_one_speed_fails`](#b07-one-speed-fails) | 138 | — | — |
+| [`b08_uniqueness`](#b08-uniqueness) | 96 | — | — |
+| [`b09_which_frequencies`](#b09-which-frequencies) | 218 | — | — |
+| [`b10_gaussian_fingerprint`](#b10-gaussian-fingerprint) | 171 | — | — |
+| [`b11_fingerprint_to_loss`](#b11-fingerprint-to-loss) | 485 | — | — |
 
 ---
 
@@ -40,744 +40,568 @@ lines before the passage that reveals it.
 
 *Chapter B, opening — why summary statistics are not enough.*
 
-`1:22` · [`b00_the_problem.py`](chapterB/b00_the_problem.py)
-
 > **ON SCREEN** — one bell-shaped hump
 
 > **ON SCREEN** — two separated clumps
 
-Forty numbers drawn from a bell curve, laid out on a number line. And forty
-more that fall into two separate clumps.
+Imagine taking forty numbers drawn from a bell curve and laying them out on a
+number line. Then draw forty more numbers that fall into two separate clumps.
 
 <sub>cues: second</sub>
 
-Both batches hold the same number of samples. Their means agree. Their
-variances agree, to two decimal places.
+These two batches look completely different, yet their sample counts, means,
+and variances agree.
 
-<sub>cues: mean, var</sub>
+<sub>cues: count, mean, var</sub>
 
-Every summary either batch offers up so far is identical, and the two pictures
-are not. A mean fixes where a batch sits. A variance fixes how far it spreads
-from there. Neither one says anything about how the mass is arranged inside
-that spread, and the arrangement is the entire difference between one hump and
-two.
+> **ON SCREEN** — one score
 
-> **ON SCREEN** — How many would be enough?
+So the question becomes: can we compress this difference in shape into one
+smooth number?
 
-The usual next move is to add more summaries. Skewness measures asymmetry,
-kurtosis measures the weight in the tails, and past those there is an
-unlimited supply of higher moments. Each one catches something the previous
-ones missed, which leaves a question nothing on this list answers.
+> **ON SCREEN** — s =
 
-<sub>cues: ask</sub>
+Suppose this first pair gives us this number. Now feed the same rule two bell-
+shaped batches, and the value falls.
 
-> **ON SCREEN** — one differentiable score
+Try a nearly collapsed batch against a spread-out one, and the same rule
+responds again.
 
-What would settle it is a description of the whole distribution, rather than a
-longer list of numbers taken from it.
+> **ON SCREEN** — what must the score do?
 
-> **ON SCREEN** — Samples are all that arrives. There may be no density formula to compare against.
+> **ON SCREEN** — \frac{\partial s}{\partial x_i}\ \text{exists}
 
-> **ON SCREEN** — The comparison becomes a training loss, so moving one sample must move the score smoothly.
+Ideally, this score should come directly from the samples themselves, without
+assuming we know a density formula.
 
-Two things constrain what such a description can be. A batch of samples is all
-that ever arrives, so there may be no density formula available to compare
-against. And the comparison has to end up as a training loss, which means
-moving any single sample has to change the score smoothly, by an amount
-gradient descent can follow.
+And if one sample nudges to the side, how should the number respond? Smoothly
+enough that gradient descent can tell which way to move it.
 
-<sub>cues: one, two</sub>
-
-> **ON SCREEN** — a complete description
-
-> **ON SCREEN** — one differentiable score
-
-Both constraints have to hold at once. What follows asks the same batch a
-whole family of questions, one frequency at a time, and keeps every answer.
-
-<sub>cues: pipe</sub>
+One smooth scalar is where we want to end. But we cannot jump straight there.
+Before that, we need a description that keeps the shape.
 
 ---
 
-## b01_arrows
+## b01_why_not_histograms
 
-*Chapter B.1 — complex numbers as arrows.*
+*Chapter B.1 — why the obvious shape picture is a bad training loss.*
 
-`1:15` · [`b01_arrows.py`](chapterB/b01_arrows.py)
+Mean and variance weren't enough, so let's keep all the samples in view.
 
-Sideways measures the real part of a complex number, upward the imaginary
-part.
+<sub>cues: samples</sub>
 
-The number a plus b i is the point with coordinates a and b. The picture that
-will matter is the arrow from the origin out to that point, because the
-operation this chapter keeps needing is addition, and arrows add tip to tail.
+The first thing you might try is a histogram. Split the number line into bins,
+then count how many samples land in each one. This keeps the shape that those
+two summary numbers missed.
 
-<sub>cues: arrow</sub>
+<sub>cues: bins, counts, shape</sub>
 
-Restrict to arrows of length one and each is determined by a single number,
-its angle. The unit arrow at angle theta is written e to the i theta, and
-raising theta walks it round the circle at a steady rate.
+> **ON SCREEN** — bin edge
 
-<sub>cues: name</sub>
+But the score still has to be differentiable in every sample. Watch what
+happens to this one.
+
+<sub>cues: sample</sub>
+
+Inside the bin, both counts stay fixed. But the instant it crosses the edge,
+one drops and the other jumps.
+
+<sub>cues: crosses</sub>
+
+So the derivative is zero between edges and undefined at the boundary. That
+breaks the differentiability we needed.
+
+<sub>cues: zero, undefined</sub>
+
+We need a smooth question we can ask each sample, so that a small move
+produces a small change in its answer.
+
+<sub>cues: small</sub>
+
+> **ON SCREEN** — x_i \longmapsto\ ?
+
+---
+
+## b02_arrows
+
+*Chapter B.2 — complex numbers as arrows.*
+
+> **ON SCREEN** — x_i \longmapsto\ ?
+
+> **ON SCREEN** — x_i \longmapsto \text{a direction}
+
+What we can do is let each sample represent a direction.
+
+> **ON SCREEN** — a + bi
+
+The natural home for those two answers is the complex plane. A point here is
+written A, plus B I. A gives its horizontal coordinate, and B gives its
+vertical coordinate.
+
+<sub>cues: plane</sub>
+
+Now draw an arrow from the origin to that point. As the point moves, the
+direction changes smoothly with it.
+
+Suppose only the direction matters. Then we can set the arrow's length to one,
+so a single angle, theta, determines it. We write this unit direction as e to
+the i theta.
+
+> **ON SCREEN** — e^{i\theta} = \cos\theta + i\,\sin\theta
 
 > **ON SCREEN** — how far right
 
 > **ON SCREEN** — how far up
 
-Its sideways and upward components are the cosine and the sine of theta.
-Euler's identity, read off the picture: how far right the arrow reaches, and
-how far up.
+The tip gives us two numbers: the cosine of theta horizontally, and the sine
+of theta vertically. As theta changes, both move smoothly.
 
-<sub>cues: eq</sub>
-
-Arrows add tip to tail, so a set of them has an average: the sum, divided by
-how many there are. Six arrows pointing roughly the same way average to
-something almost as long as they are.
+Suppose we take a few directions and average their endpoints. When they point
+roughly together, their average stays long.
 
 <sub>cues: avg</sub>
 
-Spread the same six around the circle and their components start cancelling
-against one another, which pulls the average in toward the centre. Evenly
-spaced, the cancellation is exact and the average is zero.
+Then, if we spread those arrows around the circle, their components cancel
+against one another, pulling the average inward. With equal spacing around the
+circle, the cancellation is exact.
 
-So the length of that average measures how much a set of angles agree: one
-when they coincide, zero when they are spread evenly, and something in between
-otherwise. The angles have been arbitrary so far. The next step is to get them
-from data.
+> **ON SCREEN** — x_i \longmapsto \theta_i =\ ?
+
+So the average gives us a smooth measure of how well the directions line up.
+To connect this back to our samples, we just need a rule for choosing each
+angle.
 
 ---
 
-## b02_the_rig
+## b03_the_rig
 
-*Chapter B.2-4 — the three-panel rig.*
+*Chapter B.3 — the three-panel rig, built and then read.*
 
-`1:10` · [`b02_the_rig.py`](chapterB/b02_the_rig.py)
+> **ON SCREEN** — x_i \longmapsto \theta_i = {t}x_i
 
-Seven measurements on a line. To reuse the arrow picture, each measurement has
-to become an angle, and multiplying by a frequency t is the least elaborate
-way to turn a position into one. Wrapping the line around the circle is that
-multiplication, drawn.
+So if we want to wrap these samples around a circle, each one needs an angle.
+Take this one. Its position on the line is x sub i.
+
+<sub>cues: each, sample</sub>
+
+The parameter t controls how quickly position turns into angle. For this
+sample, the angle is t times x sub i.
+
+<sub>cues: rule, sample_angle</sub>
+
+With an angle attached to every sample, the whole strip can wrap around the
+circle.
 
 <sub>cues: wrap</sub>
 
-A value x lands at the angle t x, so samples further from zero travel further
-round.
+> **ON SCREEN** — x_i \longmapsto e^{i{t}x_i}
 
-Each landing point is a unit arrow, and their average is a single point inside
-the circle.
+We write the direction as e raised to i t x sub i, where this i is the
+imaginary unit, and this i indexes x.
 
-<sub>cues: avg</sub>
+<sub>cues: imaginary_i, index_i</sub>
 
-That average is one complex number, and plotting its horizontal coordinate
-against t, on the right, gives the first point of a curve.
+When we change t, the samples do not move, but their angles on the unit circle
+change, and the values farther from zero turn faster. Each t asks the same
+batch a different alignment question.
 
-Raising t moves two of the three panels. The samples on the left do not move
-at all: the data is fixed, and only the question being asked of it changes. On
-the circle, samples further from zero accumulate angle faster, so over this
-early stretch the arrows separate and the average is pulled in toward the
-centre. Keep going and the arrows carry on turning, fall part way back into
-step, and the average grows again. The curve on the right records where that
-average keeps landing, and it rises and falls as the arrows drift in and out
-of step.
+Average the directions. At this value of t, the whole batch leaves one arrow.
 
-One frequency produced one point. Sweeping t produced the curve. What is not
-yet clear is how much about the batch that curve still remembers.
+<sub>cues: mean</sub>
 
----
+At one value of t, that arrow lands at one point. The blue graph records only
+how far right that point lies.
 
-## b05_real_and_imaginary
+<sub>cues: project</sub>
 
-*Chapter B.5 — the two components of phi(t).*
-
-`1:17` · [`b05_real_and_imaginary.py`](chapterB/b05_real_and_imaginary.py)
+If we vary t, we see how the horizontal average traces the curve.
 
 > **ON SCREEN** — how far right, on average
 
 > **ON SCREEN** — how far up, on average
 
-Every curve so far has plotted one number, the horizontal coordinate of the
-average arrow. An arrow in the plane has two coordinates, and the second one
-has been discarded at every frequency.
+But that curve only tracks where the arrow points sideways. It also has a
+vertical coordinate.
 
-Split the average into its components. The blue piece is how far right the
-arrows point on average, the red piece how far up. Those are the real and
-imaginary parts of phi.
+<sub>cues: imaginary</sub>
 
-<sub>cues: split</sub>
+The horizontal and vertical components locate the same endpoint.
 
-Averaging the cosines gives the sideways component, averaging the sines gives
-the upward one.
+<sub>cues: horizontal, vertical</sub>
 
-Blue tracks the sideways coordinate of the average arrow and red tracks the
-upward one. Read them together and they describe one point moving in the
-plane, which is why dropping either curve loses information the other cannot
-supply.
+> **ON SCREEN** — \overline{e^{itx_i}} = \underbrace{\overline{\cos(tx_i)}}_{\text{right}} + i\, \underbrace{\overline{\sin(tx_i)}}_{\text{up}}
 
-This batch is symmetric about zero: every value has a partner the same
-distance away on the other side.
+Written out, they are the batch averages of the cosine of t times x sub i, and
+the sine of t times x sub i. The bar means: evaluate every sample in the
+batch, then average the results.
 
-Each pair wraps to a pair of arrows at opposite angles, so whatever one
-contributes upward the other contributes downward by the same amount. The
-vertical components cancel pair by pair, which leaves the average nowhere to
-go except along the horizontal axis.
+<sub>cues: formula, cosine, sine, bar</sub>
 
-The sweep agrees: the red curve sits at exactly zero across the whole range.
+> **ON SCREEN** — both coordinates, against t
 
-So a symmetric distribution has a purely real characteristic function. The
-Gaussian is symmetric, so the target this chapter is heading toward will be a
-single real curve, and now that follows from the pairing argument instead of
-being a convenience of the drawing.
+One curve follows the horizontal average; the other follows the vertical
+average. Together they preserve the average arrow for every t.
+
+<sub>cues: vertical, full</sub>
+
+At t equals zero, every direction equals one, so the average is one.
+
+In a symmetric batch, each x sub i has a partner at negative x sub i.
+
+Those partners have equal and opposite vertical components, so they cancel for
+every t. The average stays horizontal, and the vertical curve stays at zero.
+
+Perfect symmetry pins the vertical curve at zero. That is why the Gaussian
+target lies on the real axis. But a finite batch rarely contains exact mirror
+pairs, so its empirical point can still have a vertical component.
 
 ---
 
-## b06_worked_examples
+## b04_the_definition
 
-*Chapter B.6 — two worked examples on the rig.*
+*Chapter B.4 — naming and defining the characteristic function.*
 
-`0:48` · [`b06_worked_examples.py`](chapterB/b06_worked_examples.py)
+> **ON SCREEN** — the empirical characteristic function
+
+To recap, we started with a batch of samples. For each t, every sample became
+a direction, and those directions were averaged. Let t vary, and the average
+traces this function. This is the empirical characteristic function.
+
+<sub>cues: directions, function, name</sub>
+
+> **ON SCREEN** — \hat\varphi_N(t) = \frac{1}{N}\sum_{j=1}^{N} e^{itx_j}
+
+For the batch we actually have, each sample contributes e to the i t x. Adding
+those arrows and dividing by the batch size gives their empirical average.
+
+<sub>cues: wrap, add, divide</sub>
+
+> **ON SCREEN** — \varphi_X(t)=\mathbb E\!\left[e^{itX}\right]
+
+If we knew the full distribution, the same operation would be an expectation.
+We only have samples, so the finite average estimates that population
+function; the hat keeps the two quantities distinct.
+
+<sub>cues: samples, hat</sub>
+
+---
+
+## b05_worked_examples
+
+*Chapter B.5 — worked examples on one continuous rig.*
 
 > **ON SCREEN** — every value the same
 
-Take a batch in which every value is the same number.
+So before trusting what it keeps, we should try the most extreme case, where
+every sample is in the same place.
 
-Equal values wrap to equal angles, so the arrows stay stacked on top of one
-another however fast the winding goes. With nothing pointing in a different
-direction there is nothing to cancel, and the average keeps its full length at
-every frequency.
+Every value now wraps to the same angle, so nothing would cancel, and the
+arrows stay stacked. If we model the magnitude of the arrow, it stays at one.
 
-A flat line at one is the signature of complete collapse.
+The flat curve we see is the magnitude of the function, not the characteristic
+function itself. For a collapsed batch, its magnitude stays one at every
+frequency.
 
-The simplest non-degenerate case: two values, minus one and plus one, equally
-likely.
+If we try the smallest symmetric batch next, it's minus one and plus one.
 
-The two arrows sit at angles t and minus t, mirror images across the real
-axis. Their vertical components cancel by the same pairing as before, so only
-the horizontal ones survive, and the average traces out the cosine.
+Their vertical pieces cancel, while the horizontal pieces agree. Look at the
+average as the pair turns.
 
-Every arrow in this batch is at angle plus or minus t, so the average is the
-cosine of t, exactly, at every frequency.
+> **ON SCREEN** — {{\varphi(t) =}} \tfrac{1}{2}e^{it} + \tfrac{1}{2}e^{-it}
 
----
+> **ON SCREEN** — {{\varphi(t) =}} \cos t
 
-## b06a_one_speed_fails
+It produces one half of e to the i t, plus one half of e to the minus i t,
+which simplifies to the cosine of t.
 
-*Chapter B — one wrapping speed is not enough.*
+<sub>cues: simplify</sub>
 
-`0:53` · [`b06a_one_speed_fails.py`](chapterB/b06a_one_speed_fails.py)
+Put a spread batch back on the circle and track the length of its arrow. As
+the frequency climbs, that length nearly vanishes, then rises again.
 
-Sweeping every frequency is expensive. If one well chosen value of t did the
-job, the sweep would be waste.
+<sub>cues: sweep</sub>
 
-This batch is spread across nearly thirteen units. By any reasonable reading
-it has not collapsed.
+Suppose all the points shift three units right. The shape hasn't changed, and
+we run exactly the same sweep.
 
-> **ON SCREEN** — every arrow lands on the same spot
+Every arrow turns together. The blue curve keeps changing, while the magnitude
+returns to its old trace.
 
-Wrapped at this particular frequency, though, every arrow lands on the same
-spot and the average has length one. Which is the reading a completely
-collapsed batch would produce.
+> **ON SCREEN** — \varphi_{X+\mu}(t) = e^{i\mu t}\,\varphi_X(t)
 
-<sub>cues: verdict</sub>
+> **ON SCREEN** — |e^{i\mu t}| = 1
 
-The agreement survives almost no change in t. Nudge the frequency and the
-arrows scatter, and the average falls away to almost nothing.
+> **ON SCREEN** — the full complex value still changes
 
-The samples happened to be spaced at multiples of the wrapping period, and any
-single frequency has a batch built the same way. Asking at several frequencies
-breaks this particular coincidence, because no batch can be in step with all
-of them at once. Whether finitely many frequencies are enough to separate any
-two distributions is a stronger question, and the answer to it belongs to the
-whole curve rather than to any list of points on it.
-
----
-
-## b06b_what_magnitude_ignores
-
-*Chapter B.6b — what the magnitude ignores.*
-
-`0:52` · [`b06b_what_magnitude_ignores.py`](chapterB/b06b_what_magnitude_ignores.py)
-
-Take any batch, and alongside its curve draw the length of the average arrow
-in amber.
-
-Sweep once, and the amber curve drops almost to zero before creeping back up.
-
-Now slide every value along the line by the same amount, and sweep again.
-
-The blue curve changes completely while the amber one lands back on its own
-ghost. Sliding every sample by the same amount adds the same angle to every
-arrow, so the average rotates as a rigid object, and a rotation leaves length
-alone.
-
-> **ON SCREEN** — the shift moved the phase, and only the phase
-
-Moving a batch multiplies its characteristic function by a factor of magnitude
-one. Everything the shift did is in the phase, and the magnitude did not see
-it at all.
-
-So location and magnitude can be asked about separately. What the magnitude
-does keep is the shape of the batch and how far it spreads, together, and
-untangling those two takes a family of distributions narrow enough that one
-number settles it. The Gaussian is a family that narrow.
-
----
-
-## b07_the_anchor
-
-*Chapter B.7 — phi(0) = 1, for every distribution there has ever been.*
-
-`0:50` · [`b07_the_anchor.py`](chapterB/b07_the_anchor.py)
-
-Set the frequency to zero. The product t x is zero whatever x was, so every
-value in the batch produces the same angle, every arrow is the unit arrow
-pointing right, and they stack on top of one another.
-
-<sub>cues: same</sub>
-
-Averaging identical arrows returns the same arrow, so phi of zero is one. The
-data never entered that argument, which is what makes the result hold for
-every distribution rather than for this batch.
-
-<sub>cues: note</sub>
-
-Three batches with nothing in common.
-
-Three different curves, all leaving from the same point. Every characteristic
-function is already normalised at the origin, so no curve has to be rescaled
-before it is read: a height near one means the arrows still agree, and a
-height falling away means they have begun to cancel.
-
----
-
-## b08_which_frequencies
-
-*Chapter B.8 — which frequencies are worth looking at.*
-
-`2:23` · [`b08_which_frequencies.py`](chapterB/b08_which_frequencies.py)
-
-> **ON SCREEN** — same mean, same variance — different shapes
-
-> **ON SCREEN** — bell curve
-
-> **ON SCREEN** — two clumps
-
-Back to the two batches from the start: same mean, same variance, different
-shapes. These are their two characteristic functions.
-
-Starting the frequency low and creeping up, only one curve appears to be on
-screen. Both are drawn; they are sitting on top of each other.
-
-> **ON SCREEN** — low t: coarse structure only
-
-At a frequency of nought point three the two curves differ by two thousandths.
-Slow wrapping turns a whole batch through only a small angle, so it can
-register roughly where the batch sits and roughly how wide it is, and little
-else. Those are the two facts that already failed to separate these batches.
-
-Keep going.
-
-Once the wrapping is fast enough that the two clumps land at genuinely
-different angles, the curves separate: the red one dives negative while the
-blue flattens out near zero. By a frequency of three the gap is nine tenths.
-Fine structure shows up at high frequency, not low.
-
-Which suggests pushing the frequency as high as it will go. That fails, for a
-reason that has nothing to do with the mathematics of the transform.
-
-<sub>cues: no</sub>
-
-A distribution is never what arrives. A batch is. So: forty numbers drawn from
-a genuine bell curve, twenty separate times, with all twenty curves plotted.
-
-The amber curve is the population characteristic function they were all drawn
-from. The blue ones are what forty samples actually produce.
-
-<sub>cues: draws</sub>
-
-> **ON SCREEN** — out here the truth is zero —
-
-> **ON SCREEN** — everything you see is sampling noise
-
-At the right-hand end the population curve has been flat at zero for some
-time, while the twenty draws are still wandering. Nothing in that wandering is
-a property of the bell curve. It is the accident of which forty numbers came
-out.
-
-> **ON SCREEN** — measured at t = 6, N = 40: 0.0251 against 1/N = 0.0250
-
-> **ON SCREEN** — the true value there is 2 × 10⁻¹⁶
-
-That wandering has a predictable size. Where the population curve is zero, the
-expected squared length of the empirical average settles at one over N: with
-forty samples, nought point nought two five. Measured over four thousand draws
-it comes out at nought point nought two five one. So a perfectly Gaussian
-batch reads as non-Gaussian at high frequency purely because it is finite.
-
-> **ON SCREEN** — too low: blind to shape
-
-> **ON SCREEN** — too high: nothing but noise
-
-Both ends are therefore ruled out for different reasons. Too low and the curve
-cannot resolve a shape. Too high and it is reading its own sampling noise.
-
-<sub>cues: right</sub>
-
-What survives is a band in the middle. For a standard normal target that band
-runs from about nought point two to four, and it carries over ninety-nine per
-cent of the separating power.
-
-<sub>cues: win</sub>
-
-> **ON SCREEN** — Something has to suppress the high frequencies.
-
-> **ON SCREEN** — That much is forced by having finitely many samples.
-
-This is why the published statistic suppresses high frequencies. The
-suppression is not tuning for its own sake: past some frequency the
-measurement is dominated by sampling noise, so a cut has to exist. Where
-exactly it falls is a bandwidth parameter, and the source is explicit that
-someone chooses it.
-
----
-
-## b09_uniqueness
-
-*Chapter B.9 — why knowing every frequency is knowing the distribution.*
-
-`1:38` · [`b09_uniqueness.py`](chapterB/b09_uniqueness.py)
-
-> **ON SCREEN** — a sound
-
-A sound, drawn as a pressure wave. In that form there is not much to hold on
-to: no obvious quantity to compare against another sound.
-
-The same sound decomposes into pure tones, and each tone carries a single
-number, its amplitude.
-
-Adding the tones back reconstructs the original wave exactly, not an
-approximation to it.
-
-> **ON SCREEN** — same amplitudes
-
-So the list of amplitudes loses nothing: it is the same object in a different
-coordinate system. Two sounds with the same list are the same sound.
-
-The characteristic function stands in the same relation to a distribution. The
-two situations are connected literally: both objects are Fourier transforms.
-
-> **ON SCREEN** — a sound
-
-> **ON SCREEN** — its amplitude at each tone
-
-> **ON SCREEN** — a distribution
-
-> **ON SCREEN** — its average arrow at each frequency
-
-A sound is determined by how much of each tone it contains. A distribution is
-determined by where its average arrow lands at each wrapping frequency.
-
-<sub>cues: dist</sub>
-
-> **ON SCREEN** — the uniqueness theorem
-
-Written out, that is the uniqueness theorem: if two distributions have the
-same characteristic function at every frequency, they are the same
-distribution. Because the curve determines the distribution completely,
-calling it a fingerprint is accurate rather than decorative, and that is the
-sense the word carries for the rest of the video.
-
-No proof here. It runs through an inversion formula that recovers the density
-from the curve, which is a video of its own. The theorem is being cited, not
-established, and everything after this depends on it.
-
-The precision matters. Without the theorem, matching fingerprints would be a
-proxy for matching distributions: suggestive, and no more. With it, the two
-are the same statement.
-
-> **ON SCREEN** — loss on fingerprints = 0
-
-> **ON SCREEN** — not: the distributions are similar
-
-> **ON SCREEN** — but: the distributions are equal
-
-So a loss built from fingerprints, driven to zero, licenses the statement that
-the distributions are equal, not merely that they resemble each other. That
-licence comes from the theorem, and it is what the whole detour through the
-transform buys.
-
----
-
-## b10_why_not_histograms
-
-*Chapter B.10 — the obvious alternative, and why it cannot be used.*
-
-`1:50` · [`b10_why_not_histograms.py`](chapterB/b10_why_not_histograms.py)
-
-> **ON SCREEN** — the obvious alternative: just bin it
-
-There is a much more direct way to compare a batch against a bell curve. Chop
-the line into bins, count how many samples land in each, and compare the
-counts against what the bell curve predicts. Three objections rule it out, and
-the third is the one that matters.
-
-> **ON SCREEN** — the data has not moved — only the bin edges
-
-The first: nothing in the data determines where the bins should start. Sliding
-the edges along, without moving a single sample, changes the counts.
-
-<sub>cues: slide</sub>
-
-Counts before, counts after. The same forty numbers, and a different answer,
-so any score built on top inherits an arbitrary choice.
-
-The second objection is sharper. Bin width is also a free choice. This is the
-two-clump batch, the one the mean and variance could not separate.
-
-At a narrow width the two clumps are unmistakable. Widening the bins erases
-them: at a width of one and a half the counts read two, fourteen, twenty-four,
-zero, which reads as one lopsided hump. The structure the score exists to
-detect can be removed by a parameter the analyst sets.
-
-<sub>cues: gone</sub>
-
-Both of those are arguments about arbitrariness. The third one is not.
-
-> **ON SCREEN** — position of one sample
-
-> **ON SCREEN** — count in its bin
-
-Slide one sample slowly across a bin edge. The count does not ease from seven
-down to six. It holds at seven, and then it is six.
-
-> **ON SCREEN** — almost everywhere,
-
-> **ON SCREEN** — undefined at the steps
-
-A thousandth of a step moves the answer by a whole unit. The derivative of a
-bin count with respect to a sample is therefore zero almost everywhere and
-undefined at the jumps, which leaves gradient descent nothing to descend.
-
-<sub>cues: grad</sub>
-
-> **ON SCREEN** — histogram bin count
-
-> **ON SCREEN** — a staircase in the data
-
-> **ON SCREEN** — defined at every point
-
-> **ON SCREEN** — never zero
-
-> **ON SCREEN** — and it grows with t — high frequencies push hardest
-
-The wrapped sample behaves differently. Differentiating e to the i t x with
-respect to x returns i t times the same quantity.
-
-Defined everywhere, never zero, and growing with the frequency. Nudging a
-sample moves every value of the characteristic function smoothly, which is the
-property that lets this sit inside a training loop.
-
-> **ON SCREEN** — histogram: d(count)/dx = 0 almost everywhere
-
-> **ON SCREEN** — wrapped sample: d/dx = i t · e^{itx}, never zero
-
-So the choice of the complex exponential is doing work here that a histogram
-cannot do at all, and the next question is how to turn two of these curves
-into one number.
-
----
-
-## b11_gaussian_fingerprint
-
-*Chapter B.11 — the full derivation of the Gaussian fingerprint e^{-t^2/2}.*
-
-`2:49` · [`b11_gaussian_fingerprint.py`](chapterB/b11_gaussian_fingerprint.py)
-
-Comparing a batch against a Gaussian needs the Gaussian's own characteristic
-function, and so far it has only been asserted to be a bell curve. It can be
-derived in about two minutes.
-
-The standard normal density. Nothing beyond this formula gets assumed.
-
-> **ON SCREEN** — differentiate once: p'(x) = −x p(x)
-
-Differentiating once, the exponent brings down a factor of minus x and what
-remains is the density itself. So p prime of x equals minus x times p of x.
-
-<sub>cues: key</sub>
-
-That identity carries the derivation. It says the Gaussian's derivative is the
-Gaussian again, up to a factor of x, and that is the property no other common
-density has in so usable a form.
-
-> **ON SCREEN** — differentiate under the integral
-
-The characteristic function of that density is the same average arrow as
-before. A formula has replaced the samples, so the average is written as an
-integral.
-
-Differentiate both sides with respect to t. Only the wrapped term carries a t,
-and differentiating it brings down a factor of i x.
-
-The integral now contains x times the density, which the identity from a
-moment ago says is minus p prime of x. Substituting removes the x.
-
-<sub>cues: sub</sub>
-
-With the x gone, the integral is no longer a harder object than the one it
-came from. That was the reason for differentiating the density first.
-
-> **ON SCREEN** — boundary terms vanish: the density dies at both ends
-
-Integrating by parts moves the derivative from the density onto the wrapped
-term. The boundary terms vanish because the bell curve decays at both ends,
-leaving nothing at infinity.
+The shift rotates the full complex value, while its magnitude stays the same.
+When we compare distributions, we will keep the full complex point.
 
 <sub>cues: why</sub>
 
-What comes out is phi again. Substituting back, minus i times minus i t leaves
-minus t.
+---
 
-<sub>cues: tidy</sub>
+## b06_the_anchor
 
-> **ON SCREEN** — a differential equation — no complex analysis needed
+*Chapter B.6 — the universal anchor of every characteristic function.*
 
-Which is a differential equation: the rate of change of phi is minus t times
-phi. An integral that could not be evaluated directly has become an equation
-that separates.
+> **ON SCREEN** — t = 0
 
-> **ON SCREEN** — every characteristic function is 1 at the origin
+Before looking at any particular shape, there is one point we can predict:
+when the frequency is zero, every sample lands at angle zero.
 
-Phi on one side, t on the other. Integrating gives a logarithm on the left and
-minus t squared over two on the right, plus a constant.
+The arrows stack at one, so phi of zero is one. Every characteristic function
+passes through this exact point, so zero can never tell two batches apart.
 
-<sub>cues: int</sub>
-
-The constant is already determined: every characteristic function equals one
-at the origin, which was established from the stacked arrows earlier. So C is
-zero.
-
-Exponentiating gives the result: the characteristic function of a standard
-Gaussian is e to the minus t squared over two. The bell curve transforms into
-a bell curve.
-
-Drawn out, this is the curve every batch in the rest of the video gets
-measured against.
-
-> **ON SCREEN** — real, and symmetric in t
-
-> **ON SCREEN** — equal to 1 at the origin
-
-> **ON SCREEN** — decays smoothly to zero
-
-All three of its features were predictable from earlier scenes. Purely real,
-because the Gaussian is symmetric and symmetric distributions cancel their
-vertical components. One at the origin, like every characteristic function.
-Decaying, because faster wrapping spreads the arrows of a spread-out batch
-further apart.
-
-> **ON SCREEN** — φ(t) = e^{−t²/2} — the target
-
-From here on, asking whether a batch is Gaussian means asking how far its
-fingerprint sits from this curve.
-
-> **ON SCREEN** — phase shifts it; decay spreads it
-
-A Gaussian with some other mean and variance gives this, and both new pieces
-have appeared before. The mean sits in the phase, as the shift example showed.
-The variance sets the decay rate, because a wider distribution spreads its
-arrows at a lower frequency.
+<sub>cues: note</sub>
 
 ---
 
-## b12_fingerprint_to_loss
+## b07_one_speed_fails
 
-*Chapter B.12 — from a fingerprint to a number you can minimise.*
+*Chapter B.7 — one wrapping speed is not enough.*
 
-`2:35` · [`b12_fingerprint_to_loss.py`](chapterB/b12_fingerprint_to_loss.py)
+Could one carefully chosen value of t identify an entire batch of numbers?
 
-Two curves now exist: the batch's fingerprint, and the one a Gaussian would
-give. Turning the pair into a single number is what remains.
+> **ON SCREEN** — sample values
 
-Fix one frequency. The batch gives one average arrow there; the Gaussian gives
-another. Two arrows, which is to say two points in the complex plane.
+> **ON SCREEN** — wrapped directions
 
-<sub>cues: tgt</sub>
+> **ON SCREEN** — t =
 
-Their disagreement is the distance between them.
+> **ON SCREEN** — average length
 
-> **ON SCREEN** — squared, so it is positive
+Suppose the chosen value is t equals two point four. The directions partly
+cancel, leaving an average length of about point two three.
 
-> **ON SCREEN** — and smooth at zero
+<sub>cues: wrap, average</sub>
 
-Squaring that distance makes it positive without introducing a kink at zero,
-which the absolute value would, and a kink is exactly what differentiation
-cannot cross.
+Now try t equals three. Each angle becomes a whole number of turns, so all
+seven directions land together. The average length becomes one, exactly what
+total collapse would produce.
 
-> **ON SCREEN** — squared gap, at every frequency
+<sub>cues: three, align, score</sub>
 
-One number, at one frequency. The band worth reading was settled earlier:
-nought point two to four. So repeat the measurement across it.
+But if we nudge t back down to two point six, those same samples produce
+directions that mostly cancel, which means a single t cannot reliably identify
+a batch.
 
-The red segment on the left is the gap at the current frequency, stretching
-and shrinking as the two curves drift apart and back together. Its squared
-length is what the right-hand plot records, and the area under that plot
-accumulates as the sweep proceeds.
+<sub>cues: nudge, settle, conclusion</sub>
 
-The total area is the score for this batch: one point nought four.
+One answer can be fooled. So keep the batch's answers across the whole range
+of t.
 
-A single score has no scale attached to it, so the same measurement runs on a
-batch actually drawn from a bell curve.
+<sub>cues: sweep</sub>
 
-The two curves stay close across the whole band, and almost no area
-accumulates.
+---
 
-Nought point nought one eight, against one point nought four: a factor of
-fifty-six. Nothing in the construction was told what a clump is, or how many
-to look for.
+## b08_uniqueness
 
-> **ON SCREEN** — 0.0184 = the finite-sample floor
+*Chapter B.8 — the complete characteristic function is unique.*
 
-> **ON SCREEN** — for N = 40, measured earlier
+As t varies, those answers fill out the characteristic function.
 
-The residual nought point nought one eight is the sampling floor measured
-earlier, appearing where it should. Forty samples cannot produce a smaller
-score than that even when the batch is genuinely Gaussian.
+<sub>cues: curve</sub>
 
-Written down, the area that just filled in is this: the squared gap,
-integrated over the band.
+> **ON SCREEN** — \varphi_X(t)=\varphi_Y(t)\quad\text{for every }t
 
-The published version carries two further pieces. A weight function fades the
-high frequencies out smoothly rather than stopping dead at four, with lambda a
-bandwidth parameter the analyst sets. A factor of N in front makes scores
-comparable across batch sizes. Adding both moves the separation between these
-two batches from fifty-six times to fifty-seven.
+> **ON SCREEN** — uniqueness theorem
 
-<sub>cues: full</sub>
+The uniqueness theorem tells us how much stronger that full curve is. Two
+distributions may agree at one value of t. But if their characteristic
+functions agree for every t, then they are the same distribution. We'll use
+that result without proving it here.
 
-Every symbol in it has been on screen already. The squared gap is the red
-segment. The integral accumulates it across frequencies. The weight
-concentrates on the middle of the range, for the two reasons the sweep
-demonstrated: low frequencies cannot resolve shape, and high ones are
-dominated by sampling noise.
+<sub>cues: one, full</sub>
 
-> **ON SCREEN** — this is the Epps–Pulley statistic
+With a finite batch, we only estimate this curve. Before we turn that estimate
+into a score, we need to find out which frequencies are actually useful.
 
-The statistic has a name. It is Epps-Pulley, published as a test of normality
-in nineteen eighty-three.
+<sub>cues: estimate, where</sub>
 
-It is differentiable in the samples, which was the requirement the histogram
-failed, so gradient descent can push it down.
+---
 
-> **ON SCREEN** — this scores a batch of numbers
+## b09_which_frequencies
 
-> **ON SCREEN** — a representation is a vector
+*Chapter B.9 — which frequencies are useful for a finite batch.*
 
-> **ON SCREEN** — in hundreds of dimensions
+> **ON SCREEN** — bell-shaped batch
 
-One problem is left. Everything built so far scores a batch of single numbers,
-and a learned representation is a vector in hundreds of dimensions.
+> **ON SCREEN** — two clumps
 
-Chapter C has to get from a test for one number to a test for a cloud in high
-dimension.
+If we place the characteristic functions of our first two batches together,
+their gap at t equals point three is close to zero.
+
+<sub>cues: gap</sub>
+
+At t equals three, the difference in their shapes leaves a much larger gap.
+
+> **ON SCREEN** — vertical gap
+
+But larger t is not automatically better. Suppose we take fresh samples from
+the same Gaussian. Each batch gives a slightly different estimate of the same
+curve.
+
+Near the tail, those estimates spread apart even though the distribution has
+not changed. That variation is sampling noise, so it need not represent real
+structure.
+
+> **ON SCREEN** — same-Gaussian variation
+
+Condense those Gaussian resamples into this blue band. Its width records the
+variation produced by one unchanged distribution. The red curve is the two-
+clump batch.
+
+<sub>cues: band, clumps</sub>
+
+Near zero, every characteristic function is anchored at one, so the gap begins
+small. Through the middle frequencies, the two-clump curve moves well beyond
+ordinary resampling variation. Farther out, that variation becomes a larger
+part of what we see.
+
+<sub>cues: middle, tail</sub>
+
+> **ON SCREEN** — frequency influence
+
+So the score should keep every frequency, while letting their influence fade
+smoothly into the noisy tail. This taper is the idea we will put into the
+final formula.
+
+<sub>cues: taper</sub>
+
+The standard Gaussian now supplies the reference curve that each batch will be
+compared with.
+
+---
+
+## b10_gaussian_fingerprint
+
+*Chapter B.10 — reveal the standard Gaussian target curve.*
+
+In a standard Gaussian, each value x is balanced by minus x. At any t, their
+vertical arrow components cancel, so its fingerprint stays on the real axis.
+
+<sub>cues: components, real</sub>
+
+And when t equals zero, every arrow points to one, which fixes the curve's
+starting point.
+
+<sub>cues: start</sub>
+
+For the standard Gaussian, we average e raised to the imaginary unit times t
+times x over the bell curve. Written as an integration, this takes a separate
+Gaussian calculation. Its result is e raised to minus t squared over two.
+Because of that negative square, the curve falls smoothly from one toward
+zero.
+
+<sub>cues: average, integral, result, curve</sub>
+
+So every frequency comes with a precise Gaussian target. At t equals one point
+six, for example, that target is about point two eight.
+
+<sub>cues: example, value</sub>
+
+The batch gives us a second point at the same t. Their separation is what we
+add up next.
+
+<sub>cues: next</sub>
+
+---
+
+## b11_fingerprint_to_loss
+
+*Chapter B.11 — turn the Gaussian fingerprint into one scalar score.*
+
+> **ON SCREEN** — \mathcal T\in\mathbb R
+
+At t equals one point six, the batch and the Gaussian each give one point in
+the complex plane.
+
+Their distance tells us how much the two fingerprints disagree at this
+frequency.
+
+That distance uses both coordinates: the horizontal mismatch from the target,
+and any vertical component in the empirical batch. Squaring it gives a
+nonnegative quantity that still changes smoothly as the points move.
+
+> **ON SCREEN** — squared gap
+
+> **ON SCREEN** — two-clump batch
+
+Each t now gives one nonnegative contribution. Let t vary, and those
+contributions line up as a curve of squared disagreement.
+
+<sub>cues: range</sub>
+
+Now watch the gap. Wherever the fingerprints separate, the curve rises; where
+they agree, it settles back toward zero.
+
+To compress this curve into one number, we still need to decide how strongly
+each frequency should count.
+
+> **ON SCREEN** — frequency influence
+
+> **ON SCREEN** — \mathcal T=
+
+The taper from the previous scene becomes a Gaussian weight. Its value tells
+us how much influence a frequency receives: strongest near zero, then fading
+smoothly into the tail. Lambda controls the width of that taper.
+
+<sub>cues: weight, lambda</sub>
+
+At any t, the yellow curve sets the influence, and the red curve supplies the
+squared disagreement. Multiplying them gives the weighted contribution from
+that frequency.
+
+<sub>cues: weight_part, gap_part, product</sub>
+
+Now add those weighted contributions across every t. The integration sign
+performs that continuous sum. Inside it are the weight and the squared gap we
+just built. Multiplying by N adjusts the statistic for the batch size.
+
+<sub>cues: integral, pieces, scale</sub>
+
+> **ON SCREEN** — Epps–Pulley statistic
+
+Put those pieces together, and this weighted total is the Epps–Pulley
+statistic.
+
+> **ON SCREEN** — \mathcal T_{\mathrm{pop}}=0
+
+Now bring back the two original batches. If we compare each fingerprint with
+the standard Gaussian, the two clumps give a large value, while the bell-
+shaped batch lands close to zero.
+
+<sub>cues: compare</sub>
+
+> **ON SCREEN** — sampling variation
+
+Fresh Gaussian batches land at slightly different positive values. A result
+near zero means the batch fingerprint follows the Gaussian target about as
+closely as ordinary sampling variation allows.
+
+<sub>cues: draws, values, near_zero, variation</sub>
+
+At the population level, zero has an exact meaning. If the score is zero, then
+the characteristic function matches the Gaussian at every t. The uniqueness
+theorem then forces the distribution itself to be standard Gaussian.
+
+<sub>cues: theorem, distribution</sub>
+
+At the start, these two batches made the missing shape information obvious.
+Fixing the standard Gaussian as the reference turns that visual difference
+into a repeatable score: every batch is judged against the same target.
+
+<sub>cues: reference</sub>
+
+The whole construction now fits in one line. Start with the samples, build
+their empirical fingerprint, compare it with the Gaussian fingerprint at every
+frequency, and combine the weighted discrepancies into one smooth number.
+
+<sub>cues: fingerprint, compare, score</sub>
+
+In the next chapter, we'll discuss how to do the same thing with a whole batch
+of vectors.
+
+<sub>cues: vectors</sub>
 
 ---

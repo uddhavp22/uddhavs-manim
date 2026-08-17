@@ -59,7 +59,7 @@ class VoiceoverDemo(VoiceoverScene):
         self.play(FadeOut(square))
 
     def graph_beat(self):
-        axes = Axes(x_range=(-1, 4, 1), y_range=(-1, 5, 1), width=9, height=5.5)
+        axes = Axes(x_range=(-1, 4, 1), y_range=(-1, 5, 1), x_length=9, y_length=5.5)
         axes.add_coordinates(font_size=20)
         graph = axes.plot(lambda x: 0.4 * x**2, x_range=(-0.8, 3.4))
         graph.set_color(YELLOW)

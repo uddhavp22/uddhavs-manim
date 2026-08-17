@@ -24,13 +24,13 @@ tool to an embedding cloud through projections. This follows the source
 tutorial's construction: characteristic function → Epps–Pulley statistic →
 random one-dimensional projections → SIGReg.
 
-- The current `b08`–`b12` are rev-2 implementation, not the approved playback
+- The current `b09`–`b11` are rev-2 implementation, not the approved playback
   order below. Their source, claims ledger, and useful visual assets remain
   inputs; their scene boundaries and narration require a Part 2 revision.
 - **Playback order is conceptual, not filename order:** establish completeness,
   then its finite-frequency limitation, then the Gaussian target,
   differentiability, and the scalar score. `build.sh` must carry that explicit
-  order when the revision is implemented: `b09 → b08 → b11 → b10 → b12`.
+  order when the revision is implemented: `b08 → b09 → b10 → b01 → b11`.
 - Chapter B ends with `𝒯` for a batch of **scalars**. It does not introduce
   projections `u`, their count `M`, or the finished SIGReg average. Those
   belong to Chapter C, where each has a visible reason to exist.
@@ -49,7 +49,7 @@ re-cut against both.
   had a typeface chosen for it — ManimGL's `text.font` default is `Consolas`,
   absent on macOS, so every `Text` fell back to an unspecified Pango family.
   See [`VISUAL_SYSTEM.md`](../../VISUAL_SYSTEM.md) and `RENDER_REVIEW.md` F1–F6.
-- **`fingerprint` is no longer spoken before `b09` earns it** with the
+- **`fingerprint` is no longer spoken before `b08` earns it** with the
   uniqueness theorem: 24 uses across 8 scenes → 5 across 3. This closes the
   rev-5 open question about metaphor count.
 
@@ -119,7 +119,7 @@ proving, the Fourier uniqueness theorem.*
 | | Concepts |
 |---|---|
 | **ASSUME** | expectation as a weighted average; unit vectors and projection; covariance and eigenvalues; that gradient descent needs derivatives |
-| **REFRESH** | complex number as an arrow; `e^{iθ}` as the unit arrow at angle `θ` (`b01`, and *only* by that property) |
+| **REFRESH** | complex number as an arrow; `e^{iθ}` as the unit arrow at angle `θ` (`b02`, and *only* by that property) |
 | **TEACH** | phase `t·x`; wrapping; the empirical CF; the three-panel rig; `Re`/`Im`; `φ(0)=1`; frequency selection; differentiability; the Gaussian fingerprint; the squared-gap loss |
 | **DEFER** | the CF as a Fourier transform of a density; the inversion formula; contour integration; `λ` tuning; quadrature weights `α_k` |
 
@@ -232,7 +232,11 @@ sample-computable, differentiable **one-dimensional Gaussianity score**.*
 Ends on the question that opens C: *`𝒯` can score one line of numbers. Which
 lines of a vector cloud must look Gaussian for the whole cloud to be Gaussian?*
 
-### Chapter C — SIGReg  (~9 min) — **unbuilt except `c02`**
+### Chapter C — SIGReg  (~9 min planned / **~16:30 estimated at storyboard**) — **unbuilt except `c02`**
+
+> Scene-by-scene storyboard and script draft: `CHAPTER_C_STORYBOARD.md`. All 11
+> open decisions in its §7 are resolved (approved 2026-08-11); implementation
+> should follow its §8 sequence.
 1. **The cheating world model.** Loss meter hits zero; an information meter
    drops to zero at the same instant. No SIGReg formula yet.
 2. **The distribution goal and tempting wrong fix.** Point, line, pancake,
@@ -327,14 +331,13 @@ only the wrapping speed is.
 
 ### File naming — the number IS the plan item
 
-`<chapter-letter><item-number>[suffix]_<slug>.py`; scene class is the prefix
-uppercased (`b06a_one_speed_fails.py` → `B06A`). `build.sh` globs and sorts on
+`<chapter-letter><item-number>_<slug>.py`; scene class is the prefix
+uppercased (`b07_one_speed_fails.py` → `B07`). `build.sh` globs and sorts on
 filename, so the number alone fixes running order.
 
 - **`b00`** — un-numbered lead-in stating the problem.
-- **`b06a`** — a letter suffix marks an addition not in the numbered list.
-- A scene spanning several items is named for its first (`b02` covers 2–4).
-- Gaps are unbuilt scenes, not missing files.
+- **`b01`–`b11`** — contiguous playback order, with no historical gaps or
+  letter suffixes.
 
 ---
 
@@ -355,16 +358,16 @@ confident line of narration that happens to be wrong.
 The source was re-fetched to run the fidelity diagnostic. Three defects in
 already-rendered scenes:
 
-1. **`b12` displayed `𝒯` without the `N` prefactor** while calling it the
+1. **`b11` displayed `𝒯` without the `N` prefactor** while calling it the
    Epps–Pulley statistic. The source has `𝒯 = N∫w(t)|φ_N−φ₀|²dt`. As a *loss*
    the prefactor does not move the argmin — but the named statistic has it.
    **Fixed**; `N` now on screen and glossed.
-2. **`b12` showed `w_λ(t)` over an animation that never constructed it.** The
+2. **`b11` showed `w_λ(t)` over an animation that never constructed it.** The
    swept area is unweighted. Visual-symbolic correspondence broken. **Fixed** by
    building the formula in two steps — the unweighted integral the picture
    actually computed, then the weight and `N` as named refinements, with the
    measured reassurance that the verdict moves only 56.4× → 57.3×.
-3. **`b08` claimed the weighting "is not a tuning knob".** The source explicitly
+3. **`b09` claimed the weighting "is not a tuning knob".** The source explicitly
    calls `λ` a *bandwidth parameter*, so it plainly is one. **Fixed** — what
    finite `N` forces is the *existence* of high-frequency suppression, not any
    particular `λ`. Also separated the smooth weight `w(t)` from the `[0.2, 4]`
@@ -372,7 +375,7 @@ already-rendered scenes:
 
 ### Narration fixes from the audit
 
-4. **`b02` said "Watch all three panels at once"** — the process's own negative
+4. **`b03` said "Watch all three panels at once"** — the process's own negative
    example, verbatim. **Fixed** to name the invariant and the dependency.
 5. **`b05` had a run of five consecutive short sentences.** **Fixed**; longest
    run now 3.
@@ -384,7 +387,7 @@ already-rendered scenes:
   metaphor — a complex number *is* an arrow here, which is the whole point — so
   the real count is one metaphor plus one representation. Recorded rather than
   fixed. Revisit if a third appears.
-- **`b00` and `b08` still show cadence runs of 4.** Below the run-of-5 threshold
+- **`b00` and `b09` still show cadence runs of 4.** Below the run-of-5 threshold
   that triggered the `b05` rewrite. Left alone.
 - **Repeated openers**: "it is…" ×14, "that is…" ×12. Diffuse across 3.5k words;
   a systemic rewrite would cost more than it buys.
@@ -393,7 +396,7 @@ already-rendered scenes:
 
 ## 8. Production  *(Deliverable 10)*
 
-### Chapter B status: complete — 10 scenes, all narrated
+### Chapter B status: complete — 12 scenes, all narrated
 
 Part 1 was re-cut at rev 4 and is now six scenes rather than eight. Two scene
 files were **folded into their neighbours and deleted**, because each was one
@@ -401,13 +404,13 @@ half of an investigation the master was cutting in two — the rendered chapter
 faded a live three-panel rig to background and rebuilt an almost identical one
 a second later at both seams:
 
-- `b05_real_and_imaginary` → the second half of **`b02`**. The curve is built,
+- `b05_real_and_imaginary` → the second half of **`b03`**. The curve is built,
   and then the same rig, the same batch and the same sweep are used to notice
   that the curve was only one of the average arrow's two coordinates.
-- `b06b_what_magnitude_ignores` → the third beat of **`b06`**. Same rig, third
+- `b06b_what_magnitude_ignores` → the third beat of **`b05`**. Same rig, third
   question.
 
-`b07` was rewritten rather than trimmed. It used to prove `phi(0) = 1` on three
+`b06` was rewritten rather than trimmed. It used to prove `phi(0) = 1` on three
 batches nobody had met and stop there; it now proves the same thing and then
 runs **`b00`'s two toy batches** through the rig, so the question the chapter
 opens with is the question its last Part 1 scene answers. See
@@ -416,25 +419,26 @@ opens with is the question its last Part 1 scene answers. See
 | file | plan item | rev 3 | rev 4 |
 |---|---|---|---|
 | `b00_the_problem` | lead-in | 0:33 | 1:11 |
-| `b01_arrows` | 1 | 1:28 | 1:24 |
-| `b02_the_rig` | 2–5 | 1:19 + 1:21 | 2:41 |
-| `b06_worked_examples` | 6 | 0:48 + 0:53 | 1:20 |
-| `b06a_one_speed_fails` | aliasing | 0:55 | 0:55 |
-| `b07_the_anchor` | 7 | 0:53 | 1:30 |
-| `b08_which_frequencies` | 8 | 2:08 |
-| `b09_uniqueness` | 9 | 1:31 |
-| `b10_why_not_histograms` | 10 | 1:48 |
-| `b11_gaussian_fingerprint` | 11 | 2:59 |
-| `b12_fingerprint_to_loss` | 12 | 2:43 |
+| `b01_why_not_histograms` | 1 | — | 1:48 |
+| `b02_arrows` | 2 | 1:28 | 1:24 |
+| `b03_the_rig` | 3 | 1:19 + 1:21 | 2:41 |
+| `b04_the_definition` | 4 | — | — |
+| `b05_worked_examples` | 5 | 0:48 + 0:53 | 1:20 |
+| `b06_the_anchor` | 6 | 0:53 | 1:30 |
+| `b07_one_speed_fails` | 7 | 0:55 | 0:55 |
+| `b08_uniqueness` | 8 | — | 1:31 |
+| `b09_which_frequencies` | 9 | — | 2:08 |
+| `b10_gaussian_fingerprint` | 10 | — | 2:59 |
+| `b11_fingerprint_to_loss` | 11 | — | 2:43 |
 
 **Master runs ~17:50 at 480p draft, against the ~8 min estimate in §5.** The
 estimate was wrong, not the pacing: it predates the beats and assumed each plan
 item was a beat rather than a scene. No dead air — silence detection at −45 dB
 over 2.5 s finds nothing, because `VoiceoverScene` makes audio drive timing.
 
-If runtime has to come down: **`b11` at 2:59 is the outlier** and §5 calls the
-ODE derivation an appendix. Stages B and C are the cuttable ones. `b08` and
-`b12` are moments 3 and 5 of §3 and should not be cut before `b11` is.
+If runtime has to come down: **`b10` at 2:59 is the outlier** and §5 calls the
+ODE derivation an appendix. Stages B and C are the cuttable ones. `b09` and
+`b11` are moments 3 and 5 of §3 and should not be cut before `b10` is.
 
 **Still 480p.** Final pass is `./build.sh chapterB --hd`.
 
@@ -469,7 +473,7 @@ animations.
   (`p′ = −xp` ⇒ `φ′ = −tφ`). Declared divergence, `SOURCE_MAP.md` §6d.
 - The `[0.2, 4]` mass fraction is **batch-dependent** (99.63%–99.98% measured
   across four batches). Rev 4 recorded 99.78% as though it were a constant and
-  `b08` spoke it; both now state the bound instead.
+  `b09` spoke it; both now state the bound instead.
 
 ---
 
@@ -511,18 +515,18 @@ animations.
 From building items 1, 5, 7–10, 12 — all found by extracting frames and looking:
 
 - **`FadeOut` cannot remove an `always_redraw` mobject.** Known for
-  `clear_beat`, but it bites on *partial* teardown too: `b12` faded its left
+  `clear_beat`, but it bites on *partial* teardown too: `b11` faded its left
   panel and left two live dots redrawing for 40 s with no panel around them.
   `clear_updaters(recursive=True)`, then `FadeOut`, then `remove`.
-- **A bar taller than the frame is simply not in the render.** `b10` used one
+- **A bar taller than the frame is simply not in the render.** `b01` used one
   screen-height-per-count at every bin width; at width 1.5 the tallest bar was
   7.2 units on an 8-unit frame. Generated geometry needs its *worst* case
   checked, not its typical one.
-- **Clipped text raises nothing.** `b11`'s closing aside fell off the bottom.
+- **Clipped text raises nothing.** `b10`'s closing aside fell off the bottom.
   `fit_in_frame` guards horizontally only.
-- **An angle drawn from a raw `ValueTracker` wraps past 2π.** `b01`'s arc became
+- **An angle drawn from a raw `ValueTracker` wraps past 2π.** `b02`'s arc became
   a near-closed ring over the components.
 - Labels at the far edge of an `Axes` land *inside* whatever is shaded there
-  when the region is a few pixels wide (`b08`'s "too low" over the window).
-- Reading colour off a 480p draft is unreliable — `b02`'s `Tex` substring
+  when the region is a few pixels wide (`b09`'s "too low" over the window).
+- Reading colour off a 480p draft is unreliable — `b03`'s `Tex` substring
   colouring looked white at 480p and was correct at full crop. Zoom first.

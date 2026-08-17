@@ -1,6 +1,7 @@
 # Chapter B Part 1 — script revision record
 
-Covers `b00 b01 b02 b05 b06 b06a b07`. Part 2 (`b08`–`b12`) is out of scope.
+Covers the pre-renumbering Part 1 revision that became `b00`–`b07`.
+Part 2 (`b08`–`b11`) is out of scope.
 
 Written against [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) §§1–30, audited under
 §31 A–J, revised in §33 order. The external review's six-step process is followed;
@@ -17,12 +18,12 @@ its mandatory corrections 1–4 all land in this part and are treated as blocker
 | Scene | Unique transition it creates | Verdict |
 |---|---|---|
 | `b00` | none → *simple statistics do not determine shape* | **REBUILD** |
-| `b01` | complex arithmetic → *arrows, and their average measures agreement* | keep, compress |
-| `b02` | angles are arbitrary → *a sample becomes an angle via `t·x`; sweeping `t` gives a curve* | keep, fix maths |
-| `b05` | the curve is one number → *the average arrow has two coordinates, and both matter* | keep, compress |
-| `b06` | the rig is abstract → *three batches whose curves can be predicted* | **SPLIT** |
-| `b06a` | one frequency might do → *any single frequency has a counterexample* | keep, fix maths |
-| `b07` | curves start anywhere → *every curve starts at 1, so heights are comparable* | compress |
+| `b02` | complex arithmetic → *arrows, and their average measures agreement* | keep, compress |
+| `b03` | angles are arbitrary → *a sample becomes an angle via `t·x`; sweeping `t` gives a curve* | keep, fix maths |
+| `b03` real/imag beats | the curve is one number → *the average arrow has two coordinates, and both matter* | keep, compress |
+| `b05` | the rig is abstract → *three batches whose curves can be predicted* | **SPLIT** |
+| `b06` | curves start anywhere → *every curve starts at 1, so heights are comparable* | compress |
+| `b07` | one frequency might do → *any single frequency has a counterexample* | keep, fix maths |
 
 ### Per scene
 
@@ -50,7 +51,7 @@ its mandatory corrections 1–4 all land in this part and are treated as blocker
 - **Pacing:** the final 13 s hold one static frame (open finding O3). The scene's whole
   second half is a frozen tableau.
 
-#### `b01_arrows` — keep, compress
+#### `b02_arrows` — keep, compress
 
 - **Teaching goal:** `e^{iθ}` is a unit arrow at angle θ; averaging arrows measures
   angular agreement.
@@ -69,13 +70,13 @@ its mandatory corrections 1–4 all land in this part and are treated as blocker
   shows *and* what the narration says: three channels, one fact.
   `"The length of the average arrow / measures how much the angles agree."` — the
   narration's next sentence, verbatim.
-- **Repeated idea:** the cancellation argument is made here, then re-derived in `b06` for
-  the ±1 case. `b06` should back-reference.
+- **Repeated idea:** the cancellation argument is made here, then re-derived in `b05` for
+  the ±1 case. `b05` should back-reference.
 - **Pacing:** 1:30, the longest scene in Part 1, and §12 of the spec says assumed
   prerequisites should not be re-taught. The Euler's-identity beat is prerequisite
   restoration and can be halved.
 
-#### `b02_the_rig` — keep, **mathematical correction 1**
+#### `b03_the_rig` — keep, **mathematical correction 1**
 
 - **Teaching goal:** the translation rule — sample → angle `t·x` → arrow → average →
   the average's horizontal position *is* the curve's height.
@@ -112,7 +113,7 @@ its mandatory corrections 1–4 all land in this part and are treated as blocker
 - **Pacing:** two of its beats are a bare `self.wait()` under narration — a frozen frame
   with voice over it.
 
-#### `b06_worked_examples` — **SPLIT**
+#### `b05_worked_examples` — **SPLIT**
 
 - **Teaching goal (three separate ones):** constant batch → `|φ|=1`; two-point → `φ = cos t`
   exactly; shift → phase only.
@@ -121,7 +122,7 @@ its mandatory corrections 1–4 all land in this part and are treated as blocker
 - **Mathematical issue — BLOCKER (correction 2).** On-screen `location → phase` /
   `spread → magnitude` is too broad. Translation changes phase and leaves magnitude fixed
   — that is exact. But magnitude records **shape and scale**, not "spread". Within the
-  Gaussian family variance controls the decay rate, and that narrower claim is what `b11`
+  Gaussian family variance controls the decay rate, and that narrower claim is what `b10`
   actually needs.
 - **Redundant narration:** *"One more case, and it separates two things that have been
   travelling together."* — announces structure (§2). *"The cosine arrived without an
@@ -133,7 +134,7 @@ its mandatory corrections 1–4 all land in this part and are treated as blocker
   voiceover blocks. Highest density in Part 1. **Split: the degenerate + two-point cases
   are one scene (predicting curves), the shift is another (what magnitude ignores).**
 
-#### `b06a_one_speed_fails` — keep, **mathematical correction 3**
+#### `b07_one_speed_fails` — keep, **mathematical correction 3**
 
 - **Teaching goal:** any single frequency admits a batch that fakes total agreement.
 - **Claim:** `aliased_1d(3.0, k=3)` has `|φ(3)| = 1` with sd > 4. Verified.
@@ -150,7 +151,7 @@ its mandatory corrections 1–4 all land in this part and are treated as blocker
   `"nudge the speed, and the illusion breaks"` — aphorism.
 - **Keep the counterexample itself intact.** It is the best beat in Part 1.
 
-#### `b07_the_anchor` — compress
+#### `b06_the_anchor` — compress
 
 - **Teaching goal:** `φ(0) = 1` for every distribution, so curves share a reference point.
 - **Claim:** verified for gaussian, bimodal and constant batches to 1e-15.
@@ -176,27 +177,27 @@ review's scheme. **Aggressive by instruction.**
 | 1 | b00 | "Separating those by eye takes no effort." | **delete** | The animation is the argument. |
 | 2 | b00 | "Mean and variance are the two summaries anyone reaches for first." | **merge** | Fold into the moment-ladder sentence. |
 | 3 | b00 | "These two batches agree on both, to three decimal places." | **keep** | Load-bearing: it is the whole discrepancy. |
-| 4 | b01 | "The complex plane, for one minute, because everything after this is built on it." | **delete** | Lesson-plan narration, §2. |
-| 5 | b01 | "Nothing in this chapter needs the power series or any identity beyond that…" | **delete** | Negative information. |
-| 6 | b01 | "Every curve later in this chapter turns out to be one of those two components…" | **delete** | Promises later relevance, §1. |
-| 7 | b01 | "Arrows add tip to tail, so a set of them has an average: the sum, divided by how many there are." | **keep** | Defines the operation the chapter runs on. |
-| 8 | b01 | "The angles have been arbitrary so far. The next step is to get them from data." | **keep** | Creates the need for `b02`. §19. |
-| 9 | b02 | "Wrapping the line around the circle is that multiplication, drawn." | **keep** | The translation rule itself. |
-| 10 | b02 | "That average is one complex number, for this one frequency." | **merge** | Combine with the plotting sentence. |
-| 11 | b02 | "What is not yet clear is how much about the batch that curve still remembers." | **keep** | Sets up `b09`. |
+| 4 | b02 | "The complex plane, for one minute, because everything after this is built on it." | **delete** | Lesson-plan narration, §2. |
+| 5 | b02 | "Nothing in this chapter needs the power series or any identity beyond that…" | **delete** | Negative information. |
+| 6 | b02 | "Every curve later in this chapter turns out to be one of those two components…" | **delete** | Promises later relevance, §1. |
+| 7 | b02 | "Arrows add tip to tail, so a set of them has an average: the sum, divided by how many there are." | **keep** | Defines the operation the chapter runs on. |
+| 8 | b02 | "The angles have been arbitrary so far. The next step is to get them from data." | **keep** | Creates the need for `b03`. §19. |
+| 9 | b03 | "Wrapping the line around the circle is that multiplication, drawn." | **keep** | The translation rule itself. |
+| 10 | b03 | "That average is one complex number, for this one frequency." | **merge** | Combine with the plotting sentence. |
+| 11 | b03 | "What is not yet clear is how much about the batch that curve still remembers." | **keep** | Sets up `b08`. |
 | 12 | b05 | "Two components need two curves, so both get one, and the frequency sweeps again." | **leave to animation** | Pure description. |
 | 13 | b05 | "Which is all the formula says: average the cosines…" | **replace** | State the correspondence, not its adequacy. |
 | 14 | b05 | "The sweep agrees: the red curve sits at zero across the whole range, not merely close to it." | **keep** | Observation *and* qualification. |
-| 15 | b06 | "The degenerate case first: every value in the batch is the same number." | **replace** | Fragment opener; state the batch. |
-| 16 | b06 | "One more case, and it separates two things that have been travelling together." | **delete** | Announces structure. |
-| 17 | b06 | "Their vertical components cancel exactly, by the pairing argument from a moment ago" | **merge** | Back-reference `b05`; do not re-derive. |
-| 18 | b06 | "Two arrows turning, and their average. The cosine arrived without an integral being evaluated." | **delete** | Evaluative framing, §5. |
-| 19 | b06 | "A faint copy of that amber curve stays on screen as a reference." | **leave to animation** | Narrates a visual affordance. |
-| 20 | b06a | "Sweeping every frequency is expensive. If one well-chosen value of t did the job, the sweep would be waste." | **keep** | Genuine motivation. |
-| 21 | b06a | "By any reasonable reading it has not collapsed." | **keep** | The contradiction the scene runs on. |
-| 22 | b07 | "Every graph from here on starts at exactly the same height." | **replace** | Promise; state `φ(0)=1` and show it. |
-| 23 | b07 | "The data never entered that argument, which is what makes the result hold for every distribution rather than for this batch." | **keep** | The universality point — the best sentence in the scene. |
-| 24 | b07 | "Three batches with nothing in common: a spread-out one, two separate clumps, and one constant value repeated." | **compress** | Rule of three; the visual names them. |
+| 15 | b05 | "The degenerate case first: every value in the batch is the same number." | **replace** | Fragment opener; state the batch. |
+| 16 | b05 | "One more case, and it separates two things that have been travelling together." | **delete** | Announces structure. |
+| 17 | b05 | "Their vertical components cancel exactly, by the pairing argument from a moment ago" | **merge** | Back-reference `b05`; do not re-derive. |
+| 18 | b05 | "Two arrows turning, and their average. The cosine arrived without an integral being evaluated." | **delete** | Evaluative framing, §5. |
+| 19 | b05 | "A faint copy of that amber curve stays on screen as a reference." | **leave to animation** | Narrates a visual affordance. |
+| 20 | b07 | "Sweeping every frequency is expensive. If one well-chosen value of t did the job, the sweep would be waste." | **keep** | Genuine motivation. |
+| 21 | b07 | "By any reasonable reading it has not collapsed." | **keep** | The contradiction the scene runs on. |
+| 22 | b06 | "Every graph from here on starts at exactly the same height." | **replace** | Promise; state `φ(0)=1` and show it. |
+| 23 | b06 | "The data never entered that argument, which is what makes the result hold for every distribution rather than for this batch." | **keep** | The universality point — the best sentence in the scene. |
+| 24 | b06 | "Three batches with nothing in common: a spread-out one, two separate clumps, and one constant value repeated." | **compress** | Rule of three; the visual names them. |
 
 **On-screen text — delete or convert (13 captions):**
 
@@ -204,21 +205,21 @@ review's scheme. **Aggressive by instruction.**
 |---|---|---|
 | b00:136 | `Same mean. Same variance. Different shapes.` | delete — narration says it |
 | b00:137 | `mean, variance fixed ⇒ shape still free` | convert to the stat block itself |
-| b01:265 | `arrows that agree → a long average` | delete |
-| b01:285 | `arrows that spread → they cancel` | delete — keep the live length readout instead |
-| b01:305–306 | `The length of the average arrow / measures how much the angles agree.` | delete |
-| b02:248 | `one point of this curve, per frequency` | delete |
+| b02:265 | `arrows that agree → a long average` | delete |
+| b02:285 | `arrows that spread → they cancel` | delete — keep the live length readout instead |
+| b02:305–306 | `The length of the average arrow / measures how much the angles agree.` | delete |
+| b03:248 | `one point of this curve, per frequency` | delete |
 | b05:198 | `symmetric batch ⟹ Im φ = 0 everywhere` | delete — `ty.line` already sets it correctly |
-| b06:82 | `every value the same — plotting \|φ(t)\|` | **em dash** — rebuild as a label + `ty.maths` |
-| b06:200 | `location → phase` | replace with the exact identity (correction 2) |
-| b06:202 | `spread → magnitude` | replace (correction 2) |
-| b06a:44 | `Why sweep t at all? Why not just pick a good one?` | delete |
-| b06a:99 | `every arrow lands on the same spot — at this one speed…"collapsed"` | **em dash** — split into a label and a readout |
-| b06a:118 | `nudge the speed, and the illusion breaks` | delete |
-| b07:171–172 | `Three different distributions.` / `φ(0) = 1, for every distribution` | replace with `ty.maths(R"\varphi(0) = 1")` |
+| b05:82 | `every value the same — plotting \|φ(t)\|` | **em dash** — rebuild as a label + `ty.maths` |
+| b05:200 | `location → phase` | replace with the exact identity (correction 2) |
+| b05:202 | `spread → magnitude` | replace (correction 2) |
+| b07:44 | `Why sweep t at all? Why not just pick a good one?` | delete |
+| b07:99 | `every arrow lands on the same spot — at this one speed…"collapsed"` | **em dash** — split into a label and a readout |
+| b07:118 | `nudge the speed, and the illusion breaks` | delete |
+| b06:171–172 | `Three different distributions.` / `φ(0) = 1, for every distribution` | replace with `ty.maths(R"\varphi(0) = 1")` |
 
-**Unicode maths set as prose (6 sites):** `→` at b01:265, b01:285, b06:200, b06:202;
-`⟹` at b05:198; `θ` at b01:145; `φ` at b05:198, b06:82, b07:172. All are deleted or moved
+**Unicode maths set as prose (6 sites):** `→` at b02:265, b02:285, b05:200, b05:202;
+`⟹` at b05:198; `θ` at b02:145; `φ` at b05:198, b05:82, b06:172. All are deleted or moved
 into `ty.maths` / `ty.line` by the above.
 
 ---
@@ -229,10 +230,10 @@ All four are blockers under `RENDER_REVIEW_SPEC.md` §6.4. Applied in Step 5.
 
 | # | Scene | Before | After |
 |---|---|---|---|
-| 1 | b02 | "samples further from zero accumulate angle faster, so the arrows separate, and the average pulls in toward the centre" | Scoped to the visible sweep: *over this range* the arrows separate and the average moves inward. No implication that `\|φ\|` decreases in `t` generally. |
-| 2 | b06 | `location → phase`, `spread → magnitude` | Translation changes the phase and leaves the magnitude unchanged; the magnitude therefore records shape and scale independently of location. Variance-controls-decay is deferred to `b11`, inside the Gaussian family where it is true. |
-| 3 | b06a | "a score built on one frequency can be defeated by construction, and the sweep is what removes that option" | Several frequencies break *this* coincidence. The uniqueness guarantee belongs to the full characteristic function across all frequencies — flagged now because Part 2's method samples finitely many. |
-| 4 | b07 | "No normalisation has to be established first, which is what lets two curves from different batches be compared at all." | Every characteristic function is pre-normalised at the origin, which gives all curves a common reference point. Useful; not the sole reason comparison is possible. |
+| 1 | b03 | "samples further from zero accumulate angle faster, so the arrows separate, and the average pulls in toward the centre" | Scoped to the visible sweep: *over this range* the arrows separate and the average moves inward. No implication that `\|φ\|` decreases in `t` generally. |
+| 2 | b05 | `location → phase`, `spread → magnitude` | Translation changes the phase and leaves the magnitude unchanged; the magnitude therefore records shape and scale independently of location. Variance-controls-decay is deferred to `b10`, inside the Gaussian family where it is true. |
+| 3 | b07 | "a score built on one frequency can be defeated by construction, and the sweep is what removes that option" | Several frequencies break *this* coincidence. The uniqueness guarantee belongs to the full characteristic function across all frequencies — flagged now because Part 2's method samples finitely many. |
+| 4 | b06 | "No normalisation has to be established first, which is what lets two curves from different batches be compared at all." | Every characteristic function is pre-normalised at the origin, which gives all curves a common reference point. Useful; not the sole reason comparison is possible. |
 
 **Nothing here is invented.** Each correction weakens a claim to what the source and
 `facts.py` support. No claim in Part 1 is unverifiable from the existing ledger — the
@@ -245,19 +246,19 @@ All four are blockers under `RENDER_REVIEW_SPEC.md` §6.4. Applied in Step 5.
 | Scene | Was | Becomes | Runtime |
 |---|---|---|---|
 | `b00_the_problem` | 0:45 | **rebuilt** — same-mean/same-variance opening, moment ladder, two constraints | ~1:15 |
-| `b01_arrows` | 1:30 | compressed; prerequisite restoration halved | ~1:10 |
-| `b02_the_rig` | 1:01 | correction 1; onto `ThreePanelRig`; inspection silence added | ~1:25 |
+| `b02_arrows` | 1:30 | compressed; prerequisite restoration halved | ~1:10 |
+| `b03_the_rig` | 1:01 | correction 1; onto `ThreePanelRig`; inspection silence added | ~1:25 |
 | `b05_real_and_imaginary` | 1:23 | compressed | ~1:15 |
-| `b06_worked_examples` | 1:32 | **split** → `b06` (constant + two-point) | ~1:05 |
+| `b05_worked_examples` | 1:32 | **split** → `b05` (constant + two-point) | ~1:05 |
 | `b06b_what_magnitude_ignores` | — | **new** — the shift example, correction 2 | ~0:55 |
-| `b06a_one_speed_fails` | 0:41 | correction 3 | ~0:50 |
-| `b07_the_anchor` | 1:03 | compressed hard; universality kept | ~0:45 |
+| `b07_one_speed_fails` | 0:41 | correction 3 | ~0:50 |
+| `b06_the_anchor` | 1:03 | compressed hard; universality kept | ~0:45 |
 
 Eight scenes, estimated **~8:40**, inside the agreed 9–10 min with room for the pauses to
 land longer than estimated.
 
 **Playback order is not filename order.** The two worked-example scenes belong together,
-so Part 1 plays `b06` → `b06b` → `b06a`, and a glob sorts `b06a` before `b06b`. The part
+so Part 1 plays `b05` → `b06b` → `b07`, and a glob sorts `b07` before `b06b`. The part
 map in `build.sh` therefore names the eight scenes explicitly, and errors if a named
 scene does not resolve to exactly one file — a silently dropped scene would still produce
 a master, just one missing a minute of the argument.
@@ -286,7 +287,7 @@ qualification costs words. The redundancy audit's deletions paid for most of it.
 
 ### Corrections 1–4, as applied
 
-1. **`b02`** — the old line said the arrows separate and "the average pulls in toward
+1. **`b03`** — the old line said the arrows separate and "the average pulls in toward
    the centre", over a whole sweep. On this scene's own batch `|φ|` falls to 0.027 near
    t=4 and is back at 0.311 by t=6.5, so the sentence was contradicted by the animation
    running underneath it. Now scoped to the early stretch, with the recovery named:
@@ -295,13 +296,13 @@ qualification costs words. The redundancy audit's deletions paid for most of it.
 2. **`b06b`** — `location → phase` / `spread → magnitude` is gone. The identity stays
    because it is exact. What replaces the second half: the magnitude keeps shape *and*
    scale together, and separating them needs a family narrow enough that one number
-   settles it. `b11` is where that is earned.
-3. **`b06a`** — no longer says the sweep "removes that option". Several frequencies
+   settles it. `b10` is where that is earned.
+3. **`b07`** — no longer says the sweep "removes that option". Several frequencies
    break *this* coincidence, because no batch can be in step with all of them at once.
    Whether finitely many suffice for any two distributions is named as the stronger
    question it is, and left with the whole curve. This is the distinction Part 2's
    finitely-many-knots method depends on.
-4. **`b07`** — a shared anchor is no longer "what lets two curves be compared at all".
+4. **`b06`** — a shared anchor is no longer "what lets two curves be compared at all".
    Every characteristic function is already normalised at the origin, so no curve has to
    be rescaled before it is read. Useful; not the reason comparison is possible.
 
@@ -309,17 +310,17 @@ qualification costs words. The redundancy audit's deletions paid for most of it.
 
 Six defects surfaced during the rewrite that the Step 1–2 audit had not caught:
 
-- `b01` said "six arrows" over five, and the two bundles held different counts, so
+- `b02` said "six arrows" over five, and the two bundles held different counts, so
   there was no "same six" to transform between.
-- `b01` drew arrows as headless `Line`s in two places the narration calls them arrows
+- `b02` drew arrows as headless `Line`s in two places the narration calls them arrows
   (VISUAL_SYSTEM.md §5).
 - `rig.readout()` set type by hand at `font_size=30` — below the floor, and it never
   moved when the scale was re-anchored for Latin Modern.
 - `b00`'s dot stack needed binning *before* `stack_levels()`, not just at draw time;
   snapping only the drawn x left 3 of 9 columns floating clear of the axis.
 - Playback order is not filename order — see §Step 4.
-- Three spoken numbers had no ledger entry (`b06a`'s range, its off-resonance
-  magnitudes, `b06b`'s dip). Added to `facts.py`; the `b06` shift claim was retagged to
+- Three spoken numbers had no ledger entry (`b07`'s range, its off-resonance
+  magnitudes, `b06b`'s dip). Added to `facts.py`; the `b05` shift claim was retagged to
   `b06b` and the `b05` claim's spoken quote refreshed to match the revised line.
 
 ## Step 6 — Self-audit
@@ -337,7 +338,7 @@ else on the inventory registers.
 Run last, over the prose only, all 25 rules. Four changes, and one flagged conflict:
 
 - **Rule 9** (negative parallelism) fired twice, and both were load-bearing.
-  `b02`'s *"The curve on the right is not a decay"* became *"records where that average
+  `b03`'s *"The curve on the right is not a decay"* became *"records where that average
   keeps landing, and it rises and falls as the arrows drift in and out of step"* — the
   denial was the correction, and stating the mechanism directly is both cleaner and more
   informative. `b05`'s *"at zero, not merely close to it"* became *"at exactly zero"*,
@@ -400,7 +401,7 @@ course of fixing something else, four hours after it was made to gate.
 
 ### And what measurement could not find
 
-`b01` closed on **fourteen seconds of a completely static frame** — six motionless
+`b02` closed on **fourteen seconds of a completely static frame** — six motionless
 arrows and a fixed `length = 0.00` — while the narration made a claim about a whole
 range: *"one when they coincide, zero when they are spread evenly, and something in
 between otherwise."* The in-between case was never shown anywhere in the chapter.

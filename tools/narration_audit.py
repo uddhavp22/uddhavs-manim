@@ -177,7 +177,7 @@ def extract(path: pathlib.Path) -> list[str]:
         for kw in node.keywords:
             if kw.arg != "text":
                 continue
-            # A list of alternatives (b07 varies its line per batch) counts as
+            # A list of alternatives (b06 varies its line per batch) counts as
             # every branch, since each one is spoken in some render.
             if isinstance(kw.value, (ast.List, ast.Tuple)):
                 for elt in kw.value.elts:

@@ -10,6 +10,8 @@ earlier version of this project built on **ManimGL** (3b1b/manim); the two
 engines share a name and a design lineage but diverge in API in ways that will
 silently misbehave rather than raise. See
 [ManimGL → Manim Community, if you're translating old code](#3-manimgl--manim-community-if-youre-translating-old-code).
+For the implementation model, provenance checks, and full refactoring workflow,
+see [`MANIM_CE_VS_MANIMGL.md`](MANIM_CE_VS_MANIMGL.md).
 
 **This file covers mechanics only.** What to build and how it is judged:
 
@@ -157,6 +159,10 @@ now — see [`VISUAL_SYSTEM.md`](VISUAL_SYSTEM.md) §1.
 ---
 
 ## 3. ManimGL → Manim Community, if you're translating old code
+
+This section is the quick-reference summary. Read
+[`MANIM_CE_VS_MANIMGL.md`](MANIM_CE_VS_MANIMGL.md) before porting a full scene,
+especially one imported through `manim_imports_ext`.
 
 Most manim material online, and everything under `manim-up/` (the old ManimGL
 version of this project, kept as a read-only reference for diffing), is written

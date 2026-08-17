@@ -9,7 +9,7 @@ after Chapter B was already built, as part of the option-2 retrofit.
 |---|---|
 | Primary | <https://rezabyt.github.io/blogposts/sigreg-tutorial.html> — "SIGReg tutorial" |
 | Underlying paper | LeJEPA, arXiv:2511.08544 |
-| Fetched and re-read | 2026-08-06 |
+| Fetched and re-read | 2026-08-12, including §§4–5 on quadrature and projections |
 
 **Honesty note on this document.** Chapter B was built from prose pasted into a
 session, and PLAN.md — a *derived* artifact — was treated as the source of truth
@@ -83,7 +83,7 @@ Verbatim from the source, with how the video handles each:
 
 $$\mathcal{T} = N\int_{-\infty}^{\infty} w(t)\,|\varphi_N(t) - \varphi_0(t)|^2\,dt$$
 
-**Defect found 2026-08-06:** `b12` displayed this formula without the `N`, and
+**Defect found 2026-08-06:** `b11` displayed this formula without the `N`, and
 called it "the Epps–Pulley statistic". As a *loss* the prefactor is a constant
 and does not move the argmin, but the named statistic has it. **Fixed.**
 
@@ -92,14 +92,14 @@ and does not move the argmin, but the named statistic has it. **Fixed.**
 $$w(t) = e^{-t^2/(2\lambda^2)}, \qquad \lambda > 0 \text{ a bandwidth parameter}$$
 
 The range `[0.2, 4]` is the **truncation** used when `λ = 1`; it is not itself
-the weighting. `b08` conflated the two and asserted the weighting is "not a
+the weighting. `b09` conflated the two and asserted the weighting is "not a
 tuning knob". The source explicitly calls `λ` a *bandwidth parameter*, so it
 plainly is one. **Fixed** — what is forced by finite samples is the *existence*
 of high-frequency suppression, not the particular `λ`.
 
 ### 6c. The animated quantity was not the displayed formula
 
-`b12` animated and spoke `∫|φ̂ − φ₀|² dt` (unweighted, no `N`) while showing a
+`b11` animated and spoke `∫|φ̂ − φ₀|² dt` (unweighted, no `N`) while showing a
 formula containing `w_λ(t)`. Visual-symbolic correspondence broken: a symbol on
 screen had no visual counterpart. **Fixed** by building the formula in two
 steps. Measured, so the viewer can be told the refinement does not change the
@@ -127,7 +127,7 @@ so it is never mistaken for what the source does.
 The source states Fourier uniqueness — "two probability distributions are equal
 if and only if their characteristic functions are equal" — and combines it with
 projection equivalence. Neither is proved there, and neither is proved in the
-video. `b09` states it as a theorem and says out loud that the proof is being
+video. `b08` states it as a theorem and says out loud that the proof is being
 skipped. Proof status: `theorem_statement`. This must never be narrated with
 "therefore" or "we have shown".
 
@@ -136,7 +136,7 @@ skipped. Proof status: `theorem_statement`. This must never be narrated with
 > "With finite `N`, even perfectly-Gaussian samples yield `SIGReg(Z) > 0` at
 > order `1/N` from empirical CF noise floor."
 
-`b08` verifies this empirically (0.0251 measured against `1/N` = 0.0250 at
+`b09` verifies this empirically (0.0251 measured against `1/N` = 0.0250 at
 `N = 40`, `t = 6`, over 4000 draws). The empirical verification is **ours**; the
 claim is the source's. Both statuses recorded separately in `concepts.yaml`.
 

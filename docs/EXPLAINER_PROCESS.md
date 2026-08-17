@@ -310,7 +310,7 @@ nodes:
     kind: claim
     label: "phi_X = phi_Y  =>  X and Y are equal in distribution"
     proof_status: theorem_statement     # cited, not proved
-    scene: b09
+    scene: b08
 edges:
   - [phase, visualizes, ecf]
   - [ecf, requires, complex_arrow]
@@ -331,7 +331,7 @@ on screen becomes a function that recomputes it and asserts the value:
 
 ```python
 def two_point_is_cosine():
-    """phi(t) = cos t exactly for X = ±1.  Spoken in b06."""
+    """phi(t) = cos t exactly for X = ±1.  Spoken in b05."""
     t = np.linspace(0, 6.5, 700)
     assert np.abs(ecf(np.array([-1.0, 1.0]), t) - np.cos(t)).max() < 1e-12
 ```

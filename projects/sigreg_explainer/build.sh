@@ -24,6 +24,13 @@ QUALITY="-ql"
 VOICE="draft"
 FORCE=0
 
+# Ceiling on a single scene render, in seconds. See the watchdog in build_one:
+# manim does not reliably exit after a scene raises, and without this one bad
+# scene hangs a whole chapter build forever. Generous by default because a
+# 1080p60 scene is legitimately slow; override for a quick draft pass with
+# SIGREG_RENDER_TIMEOUT=300 ./build.sh chapterB1
+RENDER_TIMEOUT="${SIGREG_RENDER_TIMEOUT:-1800}"
+
 # Keep the historical positional quality flag working, while accepting the
 # build settings in either order: `chapterB1 -ql --voice eleven`.
 #
@@ -50,22 +57,30 @@ case "$VOICE" in
 esac
 export SIGREG_VOICE="$VOICE"
 
+# A quality/voice pair alone is not a render identity.  These files control
+# Manim's output and voiceover behaviour but do not necessarily become newer
+# than an existing clip after a checkout.  Hash their contents, including all
+# local voiceover service code, so a corrected configuration cannot silently
+# reuse an older video with the old behaviour baked in.
+build_inputs_hash() {
+  {
+    shasum -a 256 "$REPO_ROOT/manim.cfg" "$REPO_ROOT/render.sh"
+    find "$REPO_ROOT/voiceover" -type f -name '*.py' -print0 \
+      | sort -z | xargs -0 shasum -a 256
+  } | shasum -a 256 | awk '{print $1}'
+}
+BUILD_INPUTS_HASH="$(build_inputs_hash)"
+
 # --- part maps ---------------------------------------------------------------
 # A chapter can be published as separate parts. A part names the directory its
 # scenes live in and the scenes themselves, in playback order; nothing moves on
 # disk, so per-scene render paths still key off the *directory*.
 #
-# The order is explicit rather than a glob because filename sort gets it wrong:
-# Part 1 plays b06 -> b06a: the worked examples, including the shift test, are
-# one continuous B06 scene, then the counterexample motivates the sweep.
-#
-# Two scenes have been folded into their neighbours and their sources deleted,
-# so the numbering skips: b05 (the two components of phi) is the second half of
-# b02, and b06b (what magnitude ignores) is the third beat of b06. Both were
-# separate renders, which meant the master faded a live three-panel rig to
-# background and rebuilt an almost identical one a second later -- the sharpest
-# chops in Part 1. A stale duplicate source is how shared geometry drifts
-# (finding F15), so the folded files are gone rather than orphaned.
+# The order is explicit rather than a glob because Chapter B follows the
+# learner's questions, not filename order: the obvious histogram attempt fails
+# immediately after the opening problem; the characteristic function is named
+# immediately after its construction; and the later scenes stress-test that
+# named object before asking what the complete curve guarantees.
 part_dir() {
   case "$1" in
     chapterB1|chapterB2) echo "chapterB" ;;
@@ -75,13 +90,13 @@ part_dir() {
 
 part_scenes() {
   case "$1" in
-    chapterB1) echo "b00 b01 b02 b06 b06a b07" ;;
+    chapterB1) echo "b00 b01 b02 b03 b04 b05 b06 b07" ;;
     # Part 2 is deliberately ordered as an argument, not by filename.  First
     # establish what a complete curve means; then decide which part of that
     # curve is trustworthy; only then introduce the Gaussian target and the
     # smooth loss built from it.
-    chapterB2) echo "b09 b08 b11 b10 b12" ;;
-    chapterB)  echo "b00 b01 b02 b06 b06a b07 b09 b08 b11 b10 b12" ;;
+    chapterB2) echo "b08 b09 b10 b11" ;;
+    chapterB)  echo "b00 b01 b02 b03 b04 b05 b06 b07 b08 b09 b10 b11" ;;
     *)         echo "" ;;   # whole directory, in filename order
   esac
 }
@@ -127,7 +142,7 @@ build_one() {
   for src in "${scenes[@]}"; do
     local base scene
     base="$(basename "$src" .py)"
-    scene="$(echo "${base%%_*}" | tr '[:lower:]' '[:upper:]')"  # b06a_x -> B06A
+    scene="$(echo "${base%%_*}" | tr '[:lower:]' '[:upper:]')"
     echo "==> $base :: $scene"
 
     # Manim Community owns the output path and composes it from config as
@@ -145,7 +160,7 @@ build_one() {
       "$REPO_ROOT/.venv/bin/python" "$REPO_ROOT/tools/output_path.py" \
       "$src" "$scene" "$quality")" || exit 1
     local keyfile="${out}.buildkey"
-    local build_key="quality=${quality};voice=${VOICE}"
+    local build_key="quality=${quality};voice=${VOICE};inputs_sha256=${BUILD_INPUTS_HASH}"
     local rebuild="$FORCE"
     local dep
     if [[ "$rebuild" -eq 0 ]]; then
@@ -178,7 +193,37 @@ build_one() {
     # No -w: writing is the default in Manim Community. -v WARNING replaces the
     # old -q; manim.cfg already sets it, but a chapter build should not depend
     # on that staying true.
-    "$REPO_ROOT/render.sh" "$src" "$scene" "$quality" -v WARNING
+    #
+    # Run under a watchdog. When a scene raises, manim prints the traceback and
+    # then does *not* exit -- the process sits at 0% CPU indefinitely, because
+    # stable-ts/torch leaves a non-daemon thread behind (the "leaked semaphore"
+    # warning at the end of a clean run is the same machinery). It cost two
+    # separate sessions a misdiagnosis: both read the silence as a slow render
+    # and waited on a process that had already failed. A successful render exits
+    # normally, so in practice this only fires on the failure path -- but
+    # without it a single bad scene blocks a chapter build forever, which is a
+    # worse failure than stopping. macOS ships no timeout(1), hence doing it by
+    # hand.
+    "$REPO_ROOT/render.sh" "$src" "$scene" "$quality" -v WARNING &
+    local render_pid=$!
+    ( sleep "$RENDER_TIMEOUT"
+      kill -0 "$render_pid" 2>/dev/null && kill "$render_pid" 2>/dev/null ) &
+    local watchdog_pid=$!
+
+    local rc=0
+    wait "$render_pid" || rc=$?
+    kill "$watchdog_pid" 2>/dev/null || true
+    wait "$watchdog_pid" 2>/dev/null || true
+
+    if [[ $rc -ne 0 ]]; then
+      echo "error: $scene render exited $rc" >&2
+      if [[ $rc -eq 143 ]]; then
+        echo "       (143 = SIGTERM: killed by the ${RENDER_TIMEOUT}s watchdog." >&2
+        echo "        Either the scene is genuinely slower than that, or it" >&2
+        echo "        raised and hung. Scroll up for a traceback.)" >&2
+      fi
+      exit 1
+    fi
 
     if [[ ! -f "$out" ]]; then
       echo "error: $scene produced no output at $out" >&2
@@ -214,6 +259,7 @@ build_one() {
     # a missing stream is not silence. Pad with real silence instead.
   local list; list="$(mktemp)"
   local concat_outputs=()
+  local concat_temps=()
   for out in "${outputs[@]}"; do
     # Do not use `ffprobe | grep -q` here. With pipefail enabled, grep may
     # close after its match and leave ffprobe with SIGPIPE, falsely classifying
@@ -221,11 +267,13 @@ build_one() {
     local audio_type
     audio_type="$(ffprobe -v error -select_streams a \
       -show_entries stream=codec_type -of csv=p=0 "$out")"
+    local dur
+    dur="$(ffprobe -v error -select_streams v:0 -show_entries stream=duration \
+           -of csv=p=0 "$out")"
+    local normalized
+    normalized="$(mktemp -t sigreg-concat)"
+    concat_temps+=("$normalized")
     if [[ "$audio_type" != "audio" ]]; then
-      local padded="${out%.mp4}.padded.mp4"
-      local dur
-      dur="$(ffprobe -v error -select_streams v -show_entries stream=duration \
-             -of csv=p=0 "$out")"
       # The silent track MUST match the sample rate of the narrated scenes.
       # Concat -c copy computes timestamps from the first stream's rate, so
       # padding at 44100 against manim's 22050 reports exactly double the
@@ -234,11 +282,21 @@ build_one() {
       echo "    (no narration in $(basename "$out") — padding with silence at ${RATE} Hz)"
       ffmpeg -v error -y -i "$out" \
              -f lavfi -t "$dur" \
-             -i "anullsrc=channel_layout=mono:sample_rate=${RATE}" \
-             -c:v copy -c:a aac -ar "${RATE}" "$padded"
-      out="$padded"
+             -i "anullsrc=channel_layout=stereo:sample_rate=${RATE}" \
+             -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -ar "${RATE}" \
+             -ac 2 -f mp4 "$normalized"
+    else
+      # Manim stops the audio stream at the final spoken cue while the video
+      # commonly continues through an inspect/fade beat. The concat demuxer
+      # represents that missing tail by stretching one AAC packet. Some
+      # players then switch the next scene's audio on abruptly or clip its
+      # opening syllable. Give every clip a real, continuous audio timeline
+      # exactly as long as its video before stitching.
+      ffmpeg -v error -y -i "$out" -map 0:v:0 -map 0:a:0 \
+             -c:v copy -af apad -t "$dur" -c:a aac -ar "${RATE}" -ac 2 \
+             -f mp4 "$normalized"
     fi
-    concat_outputs+=("$out")
+    concat_outputs+=("$normalized")
   done
 
   # The concat demuxer with stream copy does not reject mismatched audio
@@ -267,8 +325,24 @@ build_one() {
   local master_dir="$REPO_ROOT/media/masters/sigreg_explainer"
   mkdir -p "$master_dir"
   local master="$master_dir/${chapter}_master.mp4"
-  ffmpeg -v error -y -f concat -safe 0 -i "$list" -c copy "$master"
+  # Video remains a stream-copy stitch of the rendered MP4s. Audio is decoded
+  # across the whole list and encoded once, removing per-file AAC priming and
+  # edit-list discontinuities without touching a rendered frame. Mux the two
+  # finished streams as a separate last step: asking one ffmpeg process to copy
+  # H.264 while encoding AAC shifts the video globally by one AAC frame.
+  local master_video master_audio
+  master_video="$(mktemp -t sigreg-master-video)"
+  master_audio="$(mktemp -t sigreg-master-audio)"
+  ffmpeg -v error -y -f concat -safe 0 -i "$list" \
+         -map 0:v:0 -an -c:v copy -f mp4 "$master_video"
+  ffmpeg -v error -y -f concat -safe 0 -i "$list" \
+         -map 0:a:0 -vn -c:a aac -ar "${RATE}" -ac 2 \
+         -f mp4 "$master_audio"
+  ffmpeg -v error -y -i "$master_video" -i "$master_audio" \
+         -map 0:v:0 -map 1:a:0 -c copy "$master"
   rm -f "$list"
+  rm -f "$master_video" "$master_audio"
+  for out in "${concat_temps[@]}"; do rm -f "$out"; done
   echo "master: $master  ($(ffprobe -v error -show_entries format=duration \
       -of csv=p=0 "$master")s)"
 

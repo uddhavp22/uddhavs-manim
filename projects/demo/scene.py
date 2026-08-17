@@ -53,8 +53,8 @@ class DemoExplainer(Scene):
         axes = Axes(
             x_range=(-1, 4, 1),
             y_range=(-1, 5, 1),
-            width=9,
-            height=5.5,
+            x_length=9,
+            y_length=5.5,
             axis_config={"include_tip": True},
         )
         axes.add_coordinates(font_size=20)

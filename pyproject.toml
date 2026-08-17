@@ -6,30 +6,35 @@ requires-python = ">=3.12,<3.13"
 
 dependencies = [
     "manim>=0.20.1",
-
     # Pinned below 2.5 on purpose. numba (pulled in by stable-ts via
     # openai-whisper) has no wheel compatible with numpy 2.5 yet, and the
     # resolver's escape route is to walk numba back to 0.53, whose last release
     # supports Python 3.9 and fails to build here. Lifting this pin without
     # checking numba first will produce a long, confusing build failure.
     "numpy<2.5",
-
     # Narration. pydub mixes the music bed and measures clip durations;
     # stable-ts (imported as `stable_whisper`) recovers word-level timings so
     # <bookmark> marks land on the right word instead of by linear
     # interpolation. It brings torch with it, which is most of the install size.
     "pydub>=0.25",
     "stable-ts>=2.19",
-
     # Fallback text-to-speech. The default draft voice is the macOS `say`
     # binary, which needs nothing; gTTS is the cross-platform stand-in.
     "gtts>=2.5",
+    "manim-vision>=0.2.0",
+    "manim-slides>=5.6.0",
 ]
 
 [project.optional-dependencies]
 # Nothing here needs a client library: the ElevenLabs and OpenAI services in
 # voiceover/services/ call the REST endpoints through urllib rather than take
 # an SDK dependency. Listed as a reminder, not an omission.
+
+# Kept on standby, not installed -- nothing in the current explainer needs
+# them, see docs/PLUGINS.md for the full research and when each would matter.
+# `uv add manim-presentations` / `uv add manim-videos` when actually needed.
+# presentations = ["manim-presentations"]
+# videos = ["manim-videos"]
 
 [tool.uv]
 # This repo is an application, not a distributable package -- there is no
@@ -41,3 +46,11 @@ package = false
 # package instead; nothing in the project depends on it being editable.
 [tool.uv.sources]
 manim = { path = "../manim-ce", editable = true }
+
+# Without this, Pyright falls back to whatever `python3` resolves to on PATH,
+# which on this machine is a sibling project's venv that has neither manim nor
+# numpy installed -- every `from manim import *` symbol then reports as
+# undefined. Point it at this repo's own .venv explicitly.
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

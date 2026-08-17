@@ -3,15 +3,14 @@
 The rules live in VISUAL_SYSTEM.md sections 2 and 3. The short version:
 
     MathTex -> mathematics    (Computer Modern, via LaTeX)
-    Text    -> English        (Latin Modern Roman, the same face in OpenType)
+    Text    -> English        (Computer Modern Roman, installed as OpenType)
 
 and nothing on screen is below MIN_SIZE.
 
 One face, two renderers. `MathTex` sets Computer Modern because that is what the
-default LaTeX template does; `Text` sets Latin Modern Roman, which is Computer
-Modern's OpenType successor and the face modern TeX actually ships. The two
-match, so a caption and an equation in the same frame read as one document
-rather than two design systems.
+default LaTeX template does; `Text` sets the original Computer Modern Roman in
+an OpenType conversion. The two match exactly, so a caption and an equation in
+the same frame read as one document rather than two design systems.
 
 `MathTex`, not `Tex`: Manim Community splits the two, and its `Tex` compiles in
 LaTeX *text* mode. Everything this module calls mathematics is set in math mode,
@@ -31,6 +30,7 @@ cost a whole chapter's re-render once already.
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 from manim import DecimalNumber, MathTex, RIGHT, UP, VGroup
@@ -39,21 +39,18 @@ from manim import Text as _ManimText
 from .palette import INK, MUTED
 
 # --- the one typeface ------------------------------------------------------
-# Installed from the TinyTeX tree (texmf-dist/fonts/opentype/public/lm) into
-# ~/Library/Fonts.
+# Converted from TinyTeX's original Type 1 cmr10.pfb into ~/Library/Fonts.
 #
-# Regular only, and not by preference. Every heavier Latin Modern face returns
-# at least one corrupt glyph through manimpango -- the Demi family's '2' and the
-# Bold face's 'b' both come back with paths roughly four times the correct
-# bounding box. Nothing raises: the frame renders with a stray stroke across it,
-# and the inflated box silently wrecks any arrange() or set_height() containing
-# it. That is how a diagonal line ended up drawn through the first restyled
-# frame. Asking Pango for MEDIUM on the roman family is separately a no-op --
-# measured ink is identical to NORMAL -- so weight was never available here.
+# Regular only, and not by preference. The prior Latin Modern Demi/Bold faces
+# returned corrupt glyphs through manimpango; the converted original is
+# deliberately the supplied regular cmr10 face only. Nothing raises for a bad
+# weight: a stray path and inflated bounding box silently wreck arrange() and
+# set_height(). Asking Pango for MEDIUM is not a substitute for an installed
+# face, so hierarchy remains size and colour alone.
 #
 # Hierarchy therefore runs on size and colour alone. tools/font_check.py is the
 # regression check; run it if the typeface ever changes.
-FONT = "Latin Modern Roman"
+FONT = "Computer Modern"
 
 # CE renders Text 1.3623x larger than ManimGL at the same font_size -- measured
 # directly: font_size 24/36/48 gave height ratios 1.3632/1.3616/1.3623, and the
@@ -68,11 +65,9 @@ _CE_TEXT_CALIBRATION = 1.3623
 # --- the scale (VISUAL_SYSTEM.md section 3) --------------------------------
 # px at 1080p = font_size * 0.9375
 #
-# Every prose tier moved up when the face changed. Latin Modern's x-height is
-# roughly 0.43 em against Helvetica Neue's 0.52, so the old numbers rendered
-# about a sixth smaller than they measure, and the small end stopped surviving
-# the draft render: at 480p, TICK 22 and CAPTION 26 were both marginal. These
-# values were set by rendering _fonttest.py and reading it, not by arithmetic.
+# These tiers were last judged with Latin Modern. Computer Modern's original
+# x-height can differ, so re-check _fonttest.py at delivery size before any
+# scale retuning; that is a design decision, not an import-time adjustment.
 TITLE = 46      # transient scene title card
 STATEMENT = 36  # the one sentence a beat is about
 BODY = 31       # a full annotation sentence on screen
@@ -320,12 +315,34 @@ def _assert_fonts_installed() -> None:
     """
     import manimpango
 
+    # Dropping the converted .otf into ~/Library/Fonts is not sufficient on
+    # its own: unlike Latin Modern (installed the same way, and picked up by
+    # CoreText immediately), this fontforge-generated file was not picked up
+    # by the OS font registry even after `fc-cache -f` and a font-cache reset
+    # -- manimpango's macOS build talks to CoreText directly (see its linked
+    # frameworks), not fontconfig, and CoreText's auto-scan of ~/Library/Fonts
+    # did not validate this particular file. `register_font()` is manimpango's
+    # own documented API for exactly this: it hands the file to the native OS
+    # API directly, no cache/registry dependent on timing. Calling it here
+    # every import is idempotent and cheap, and removes the dependency on
+    # whatever silently made Latin Modern work and this face not.
+    font_path = Path.home() / "Library" / "Fonts" / "cmr10.otf"
+    if font_path.exists():
+        manimpango.register_font(str(font_path))
+
     if FONT not in set(manimpango.list_fonts()):
         raise RuntimeError(
             f"typeface not installed: {FONT!r}.\n"
-            f"Install the Latin Modern OpenType files with:\n"
-            f"    cp ~/Library/TinyTeX/texmf-dist/fonts/opentype/public/lm/"
-            f"lmroman10-regular.otf ~/Library/Fonts/\n"
+            f"Install FontForge and convert the supplied Type 1 face:\n"
+            f"    brew install fontforge\n"
+            f"    fontforge -lang=py -c \"import fontforge; "
+            f"f = fontforge.open('$HOME/Library/TinyTeX/texmf-dist/fonts/"
+            f"type1/public/amsfonts/cm/cmr10.pfb'); "
+            f"f.generate('$HOME/Library/Fonts/cmr10.otf')\"\n"
+            f"Then confirm the Pango family with:\n"
+            f"    python3 -c \"import manimpango; print([f for f in "
+            f"manimpango.list_fonts() if 'cm' in f.lower() or "
+            f"'computer' in f.lower()])\"\n"
             f"then verify glyph integrity with:\n"
             f"    ./render.sh tools/font_check.py FontCheck -s -ql\n"
             f"See VISUAL_SYSTEM.md section 2."

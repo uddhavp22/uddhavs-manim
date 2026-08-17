@@ -233,7 +233,7 @@ Roles, not names. `common/palette.py` is the only place these hex values exist.
 Three changes from the old palette, each with a reason:
 
 **Background `#000000` → `#0C0E12`.** Pure black crushes: `GREY_D` furniture at
-`#444444` disappeared entirely at 480p, and the panel axes in `b02` read as
+`#444444` disappeared entirely at 480p, and the panel axes in `b03` read as
 absent rather than as quiet. A near-black with a slight cool cast keeps blacks
 rich on an OLED phone while leaving room for furniture to sit *below* the data
 without vanishing.
@@ -261,14 +261,14 @@ itself, not only in a corner legend.
 ## 5. Layout
 
 - **Safe margins.** Nothing within 0.45 units of any frame edge. The `t` axis
-  label in `b02` was clipping the right edge; `layout.fit_in_frame` existed but
+  label in `b03` was clipping the right edge; `layout.fit_in_frame` existed but
   was not applied to axis labels.
 - **Vertical thirds.** A three-panel rig fills the middle band; the top band
   carries the title *or* the readout, never both plus a caption row.
 - **One dominant focal event per beat**
   ([`RENDER_REVIEW_SPEC.md`](RENDER_REVIEW_SPEC.md) §5.2).
 - **Empty space is not a defect** (§8.2). Large empty regions are only a
-  problem when they unbalance the frame — the old `b01` frames put the whole
+  problem when they unbalance the frame — the old `b02` frames put the whole
   argument in the left half and left the right half black, which is imbalance,
   not restraint.
 - **Arrows have arrowheads.** Six `Line`s through a circle's centre read as
@@ -285,3 +285,44 @@ itself, not only in a corner legend.
 - Emphasis is a change of weight, scale, or opacity — not a flash or a glow.
 - A parameter sweep runs at a speed at which the viewer can read the readout;
   if the number is a blur, the sweep is decorative.
+
+## 7. Scene transitions
+
+`build.sh`'s master assembly is a raw `ffmpeg -c copy` stream concat — no
+re-encode, no crossfade capability. That leaves exactly two honest ways for one
+scene file to hand off to the next.
+
+**Default: hard cut, via `clear_beat()`.** The outgoing scene fades everything
+— rig included — to black; the incoming scene mounts fresh. This is correct
+whenever the two scenes are not asking one continuous question of one
+apparatus: a new batch, a new panel geometry, or a section closing on its own
+result card (`b03`'s `Im φ(t) = 0` card, `b07`'s bespoke aliasing panel) all
+earn a real cut, and a match cut across one would hide a swap the viewer needs
+to notice.
+
+**Continuity seam: match cut, via `clear_overlay()`.** Reserved for a pair of
+scenes that share one live `ThreePanelRig` and are, pedagogically, one
+investigation split across files rather than two. The outgoing scene calls
+`clear_overlay(*mobs)` instead of `clear_beat()` — naming only the text/UI it
+authored on top of the rig — so the rig itself (line, circle, axes, titles,
+dots, and every `always_redraw` `mount()` added) survives to the last frame.
+The incoming scene's `ThreePanelRig` must be constructed with the *exact*
+batch, and its `t` tracker seeded to the *exact* value, the outgoing scene
+ended on; colours must agree too (`mount()`'s `dot_colour` default and the
+rig's `colour`/`show_abs` state). Since nothing type-checks this agreement,
+the invariant is enforced by both scenes importing the shared batch constant
+from `common/data.py` rather than each defining its own, and the seam should
+be spot-checked with `tools/still_frames.py` (or a manual last-frame /
+first-frame still comparison) after either scene changes.
+
+No current Chapter B boundary meets this bar. The former `b05 → b04` seam was
+deliberately returned to a hard cut when the definition moved immediately after
+the construction; retaining a visual continuation would have implied that the
+definition had to wait for the stress tests. `b03 → b04` and `b05 → b07`
+are hard cuts: `b03`'s final frame
+carries several scene-authored mobjects (`comps`, `im_curve`/`im_dot`,
+`re_lab`/`im_lab`, a swapped panel-3 caption) that `b04` would have to
+reconstruct with nothing enforcing agreement, and `b07` does not use
+`ThreePanelRig` at all — it is a deliberately different, single-panel
+apparatus, and porting it onto the rig purely to enable a match cut would be
+solving the wrong problem. Both pairs keep the default hard cut.

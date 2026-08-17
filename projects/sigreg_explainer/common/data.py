@@ -50,6 +50,14 @@ def bimodal_1d(n: int = N_ARROWS, seed: int = 7) -> np.ndarray:
     return (x - x.mean()) / x.std()
 
 
+SPREAD_6 = np.array([-1.4, -0.7, -0.2, 0.3, 0.9, 1.5])
+SHIFT_MU = 0.8
+
+# Promoted from b05_worked_examples.py so b04_the_definition.py can open on
+# the exact batch b06 closes on: VISUAL_SYSTEM.md section 7's match-cut seam
+# needs both scenes reading the same values, and there is no other shared home
+# for a constant two files import (chapterB/ is not a package).
+
 ALIAS_T = 3.0
 
 

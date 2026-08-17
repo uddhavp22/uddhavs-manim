@@ -24,6 +24,9 @@ GRID = "#2A303A"      # grid lines, panel furniture
 CLOUD = "#4FA8E8"     # the data: samples, its arrows, its fingerprint, real parts
 TARGET = "#F0B429"    # the Gaussian reference and its fingerprint
 COLLAPSE = "#E8615A"  # the gap, the error, imaginary parts, the failure case
+AVERAGE = "#9D6FE0"   # the average arrow, once it has been introduced
+MAGNITUDE = "#E2549C" # |phi(t)|, a fingerprint's magnitude, distinct from its
+                       # real/imaginary parts and from the Gaussian target
 DIRECTION = "#5FCF80" # directions u, projections, shadows
 ACCENT = "#EDF0F4"    # the single "look here now" highlight
 

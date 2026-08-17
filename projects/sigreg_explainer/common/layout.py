@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import numpy as np
 from manim import (
-    Axes, Circle, Line, Text, VGroup, config, DOWN, LEFT, RIGHT, UP,
+    Axes, Circle, DashedLine, Dot, Line, Text, VGroup, config,
+    DOWN, DR, LEFT, RIGHT, UP,
 )
 
 from .palette import AXIS, GRID, INK, MUTED, TARGET
@@ -64,6 +65,83 @@ def cf_target_curve(axes: Axes):
     return curve
 
 
+# --- full-width frequency geometry -----------------------------------------
+# B08, B09, and B10 are one continuous question: is the complete curve enough,
+# which part is reliable for a finite batch, and what target should live there?
+# Keeping their axes literal matches makes the raw-concat scene seams invisible.
+
+FREQUENCY_T_MAX = 6.5
+FREQUENCY_WINDOW = (0.2, 4.0)
+
+
+def frequency_axes() -> Axes:
+    axes = Axes(
+        x_range=(0, FREQUENCY_T_MAX, 1),
+        y_range=(-0.85, 1.1, 0.5),
+        x_length=11.0,
+        y_length=4.3,
+        axis_config={"include_tip": False, "stroke_width": 2},
+    )
+    axes.move_to(np.array([0.0, -0.45, 0.0]))
+    return axes
+
+
+def frequency_axis_labels(axes: Axes) -> VGroup:
+    from . import type as ty
+
+    ticks = VGroup()
+    for value in range(1, 7):
+        label = ty.maths(str(value), size=ty.TICK, color=MUTED)
+        label.next_to(axes.c2p(value, 0), DOWN, buff=0.15)
+        ticks.add(label)
+    one = ty.maths("1", size=ty.TICK, color=MUTED)
+    one.next_to(axes.c2p(0, 1), LEFT, buff=0.15)
+    t_label = ty.maths("t", size=ty.TICK, color=MUTED)
+    t_label.next_to(axes.c2p(FREQUENCY_T_MAX, 0), DR, buff=0.15)
+    return VGroup(ticks, one, t_label)
+
+
+def frequency_window(axes: Axes, low: float = FREQUENCY_WINDOW[0],
+                     high: float = FREQUENCY_WINDOW[1]) -> VGroup:
+    from . import type as ty
+
+    start = axes.c2p(low, -0.58)
+    end = axes.c2p(high, -0.58)
+    rule = Line(start, end).set_stroke(TARGET, 3)
+    caps = VGroup(
+        Line(start + 0.10 * DOWN, start + 0.10 * UP),
+        Line(end + 0.10 * DOWN, end + 0.10 * UP),
+    ).set_stroke(TARGET, 3)
+    bracket = VGroup(rule, caps)
+    label = ty.maths(R"[\,0.2,\ 4\,]", size=ty.EQ, color=TARGET)
+    label.next_to(rule, DOWN, buff=0.13)
+    return VGroup(bracket, label)
+
+
+def gaussian_frequency_curve(axes: Axes):
+    curve = axes.plot(lambda t: float(np.exp(-t * t / 2)),
+                      x_range=(0, FREQUENCY_T_MAX))
+    curve.set_stroke(TARGET, 4)
+    return curve
+
+
+def gaussian_frequency_probe(axes: Axes, t: float) -> VGroup:
+    value = float(np.exp(-t * t / 2))
+    start = axes.c2p(t, 0)
+    end = axes.c2p(t, value)
+    dots = VGroup(*(
+        Dot(
+            (1.0 - alpha) * start + alpha * end,
+            radius=0.016,
+        ).set_fill(MUTED, 1)
+        for alpha in np.linspace(0.08, 0.92, 11)
+    ))
+    return VGroup(
+        dots,
+        Dot(end, radius=0.065).set_fill(TARGET, 1),
+    )
+
+
 # --- furniture --------------------------------------------------------------
 
 def act_title(text: str) -> Text:
@@ -106,6 +184,12 @@ RIG_CF_CENTRE = np.array([4.60, RIG_Y, 0.0])
 RIG_CF_WIDTH = 4.0
 RIG_CF_HEIGHT = 3.0
 RIG_TITLE_Y = 2.1
+
+# Endpoint markers should confirm where a vector lands without swallowing its
+# arrowhead. Keep this shared so the same mathematical object does not change
+# visual weight between the prerequisite scene and the persistent rig.
+ARROW_TIP_DOT_RADIUS = 0.06
+AVERAGE_ARROW_TIP_LENGTH = 0.18
 
 
 def rig_circle() -> VGroup:

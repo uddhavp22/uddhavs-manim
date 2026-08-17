@@ -14,12 +14,12 @@ from __future__ import annotations
 
 import numpy as np
 from manim import (
-    DashedLine, Dot, Line, NumberLine, ValueTracker,
-    VGroup, VMobject, always_redraw, DOWN, LEFT, UR,
+    Arrow, DashedLine, Dot, Line, NumberLine, ValueTracker,
+    VGroup, VMobject, Transform, always_redraw, DOWN, LEFT, RIGHT, UR,
 )
 
 from . import layout
-from .palette import AXIS, CLOUD, COLLAPSE, EMPIRICAL, MUTED, TARGET
+from .palette import AVERAGE, AXIS, CLOUD, COLLAPSE, EMPIRICAL, MUTED, TARGET
 from .wrap import ecf, wrapped
 
 # What the three panels are called, everywhere. A scene that renames a panel
@@ -61,6 +61,17 @@ class ThreePanelRig:
         self.line = NumberLine(x_range=line_range, length=layout.RIG_LINE_WIDTH,
                                include_numbers=True, include_tip=False)
         self.line.set_stroke(MUTED, 2)
+
+        # NumberLine's negative DecimalNumber labels are positioned by the
+        # numeral while the minus sign extends left, leaving their actual
+        # bounding-box centres about 0.11 units left of the ticks. Re-centre
+        # every generated label from its measured bounds; positives already
+        # land exactly and therefore do not move.
+        for label in self.line.numbers:
+            value = label.get_value()
+            tick_x = self.line.number_to_point(value)[0]
+            label.shift((tick_x - label.get_center()[0]) * RIGHT)
+
         self.line.move_to(layout.RIG_LINE_CENTRE)
 
         self.circle = layout.rig_circle()
@@ -97,24 +108,34 @@ class ThreePanelRig:
     # drift this module's docstring warns about, so the mounting now lives here
     # beside the geometry it mounts.
 
-    def mount(self, scene, *, titles=DEFAULT_TITLES, dot_colour=CLOUD,
+    def mount(self, scene, *, titles=DEFAULT_TITLES, dots=None,
+              dot_colour=CLOUD,
               dot_radius: float = 0.075, stack_dots: bool = False,
               arrows: bool = True, centroid: bool = True, trace: bool = True,
               rider: bool = True, readout: bool = True,
-              link: bool = False) -> None:
+              link: bool = False, trace_imag: bool = False,
+              rider_imag: bool = False) -> None:
         """Add the panels and every live mobject to `scene`.
 
         Each flag names a mobject some scene deliberately does without. b05
         passes `trace=False, rider=False` because its subject IS the two
         components, and it adds both curves itself a beat later -- mounting the
         default single trace first would leave a third curve on the axes.
+
+        If `dots` is supplied, it is adopted as panel 1's batch without being
+        copied or restyled. This preserves cloud-to-shadow object identity.
         """
         self._dot_colour = dot_colour
         self._dot_radius = dot_radius
         self._dot_stack = stack_dots
         self.titles = layout.rig_titles(*titles)
-        self.mounted_dots = self.line_dots(radius=dot_radius,
-                                           colour=dot_colour)
+        # A projected batch may already own the exact dots that should enter
+        # panel 1. Adopt those instances so mounting the rig cannot create a
+        # second, visually identical batch on top of them.
+        self.mounted_dots = (
+            self.line_dots(radius=dot_radius, colour=dot_colour)
+            if dots is None else dots
+        )
 
         scene.add(self.line, self.circle, self.axes, self.axis_labels(),
                   self.titles, self.mounted_dots)
@@ -123,7 +144,9 @@ class ThreePanelRig:
         for wanted, factory in ((arrows, self.arrows),
                                 (centroid, self.centroid),
                                 (trace, self.trace),
+                                (trace_imag, self.trace_imag),
                                 (rider, self.rider),
+                                (rider_imag, self.rider_imag),
                                 (link, self.link),
                                 (readout, self.readout)):
             if wanted:
@@ -134,20 +157,25 @@ class ThreePanelRig:
 
         Everything `mount()` added is an `always_redraw` over `self.h`, so it
         follows a `set_batch()` by itself. The dots on the number line are the
-        one exception, and deliberately so: panel 1 is the panel that does NOT
-        move, so its dots are static and have to be replaced by hand.
+        one exception, and deliberately so: they are a static group which is
+        transformed into its new positions rather than rebuilt in a hard cut.
 
-        `t` resets to zero, because a swap that left it mid-sweep would redraw
-        the new batch's curve from wherever the old one happened to stop.
+        The rig returns to its shared anchor at `t = 0` while the dots move.
+        Only then does the backing batch change. At the anchor every batch has
+        the same wrapped arrows and curve value, so the live panels cannot snap
+        while the number-line dots are still in transit.
         """
-        scene.remove(self.mounted_dots)
-        self.t.set_value(0.0)
-        self.set_batch(samples, colour)
+        samples = np.asarray(samples, dtype=float)
         if dot_colour is not None:
             self._dot_colour = dot_colour
-        self.mounted_dots = self.line_dots(radius=self._dot_radius,
-                                           colour=self._dot_colour)
-        scene.add(self.mounted_dots)
+        target_dots = self.line_dots(radius=self._dot_radius,
+                                     colour=self._dot_colour,
+                                     samples=samples)
+        anims = [Transform(self.mounted_dots, target_dots)]
+        if abs(self.t.get_value()) > 1e-6:
+            anims.insert(0, self.t.animate.set_value(0.0))
+        scene.play(*anims, run_time=1.0)
+        self.set_batch(samples, colour)
 
     # -- geometry ------------------------------------------------------
     def tips(self):
@@ -166,7 +194,7 @@ class ThreePanelRig:
     STACK_BIN = 0.25
 
     def line_dots(self, radius: float = 0.075, colour=CLOUD,
-                  stack: bool | None = None) -> VGroup:
+                  stack: bool | None = None, samples=None) -> VGroup:
         """Panel 1's samples. `stack` draws them as a dot histogram.
 
         Flat on the axis is right for the handful-of-values scenes, where each
@@ -177,18 +205,19 @@ class ThreePanelRig:
         solution belongs here, next to the geometry, rather than in a second
         copy (which is finding F15's failure mode exactly).
         """
+        values = self.h if samples is None else np.asarray(samples, dtype=float)
         if stack is None:
             stack = self._dot_stack
         if not stack:
             return VGroup(*(
                 Dot(self.line.number_to_point(v),
                     radius=radius).set_fill(colour, 1)
-                for v in self.h))
+                for v in values))
 
         # Quantise once and use the same snapped values for both jobs, so a
         # column packs from the axis outward instead of floating clear of it.
         snapped = [round(float(v) / self.STACK_BIN) * self.STACK_BIN
-                   for v in self.h]
+                   for v in values]
         levels = layout.stack_levels(snapped, self.STACK_BIN)
         step = 2 * radius + 0.018
         return VGroup(*(
@@ -219,19 +248,30 @@ class ThreePanelRig:
         return curve
 
     def dots(self) -> VGroup:
-        return VGroup(*(Dot(p, radius=0.07).set_fill(CLOUD, 1)
+        return VGroup(*(Dot(p, radius=layout.ARROW_TIP_DOT_RADIUS)
+                        .set_fill(CLOUD, 1)
                         for p in self.tips()))
 
     def arrows(self, width: float = 2.0, opacity: float = 0.55) -> VGroup:
         c = layout.RIG_CIRCLE_CENTRE
-        return VGroup(*(Line(c, p).set_stroke(CLOUD, width, opacity=opacity)
-                        for p in self.tips()))
+        return VGroup(*(
+            Arrow(c, p, buff=0.0, stroke_width=width, tip_length=0.14)
+            .set_color(self.colour).set_opacity(opacity)
+            for p in self.tips()
+        ))
 
     def centroid(self) -> VGroup:
         p = self.centroid_point()
         return VGroup(
-            Line(layout.RIG_CIRCLE_CENTRE, p).set_stroke(EMPIRICAL, 6),
-            Dot(p, radius=0.1).set_fill(EMPIRICAL, 1))
+            Arrow(
+                layout.RIG_CIRCLE_CENTRE, p,
+                buff=0.0,
+                stroke_width=6,
+                tip_length=layout.AVERAGE_ARROW_TIP_LENGTH,
+            ).set_color(AVERAGE),
+            Dot(p, radius=layout.ARROW_TIP_DOT_RADIUS)
+            .set_fill(AVERAGE, 1),
+        )
 
     # -- panel 3 -------------------------------------------------------
     def axis_labels(self, xs=(2, 4, 6)) -> VGroup:
@@ -257,7 +297,7 @@ class ThreePanelRig:
 
     def _curve(self, table, colour, width=4):
         t = self.t.get_value()
-        c = VMobject().set_stroke(colour, width)
+        c = VMobject().set_stroke(colour, width).set_fill(opacity=0.0)
         m = self.grid <= max(t, 1e-4)
         pts = [self.axes.c2p(a, b) for a, b in zip(self.grid[m], table[m])]
         if len(pts) < 2:
@@ -278,7 +318,7 @@ class ThreePanelRig:
 
     def trace_imag(self, colour=COLLAPSE, width=3):
         """Im phi(t): how far UP the arrows point on average. Drawn alongside
-        the real part in B05, where the two components are the subject."""
+        the real part in B03, where the two components are the subject."""
         return self._curve(self.table_imag, colour, width)
 
     def rider_imag(self, colour=COLLAPSE) -> Dot:
@@ -296,8 +336,6 @@ class ThreePanelRig:
         return VGroup(
             Line(c, foot).set_stroke(re_colour, 5),
             Line(foot, p).set_stroke(im_colour, 5),
-            DashedLine(p, foot, dash_length=0.06).set_stroke(MUTED, 1.2,
-                                                             opacity=0.7),
         )
 
     def rider(self) -> Dot:

@@ -9,15 +9,15 @@ states the goal once, at the start, and does not weaken it later:
 
     1. two batches agreeing on count, mean and variance, and plainly different
     2. what neither summary reaches: the arrangement inside the spread
-    3. those two batches become the input of a pipeline with a hole in it,
-       and the two constraints are written under the arrows they constrain
+    3. full-size batch pairs feed one scalar score while the two implementation
+       constraints replace the summary table
 
 Both batches are standardised, so the agreement is exact rather than
 illustrative -- facts.py checks they match to 5e-3.
 
 These two batches are the chapter's running experiment. They are named here,
-returned to on the rig in b02, and the curves that finally separate them are
-drawn in b07 -- so this scene is a question the chapter actually answers rather
+returned to on the rig in b03, and the curves that finally separate them are
+drawn in b09 -- so this scene is a question the chapter actually answers rather
 than a motivating anecdote that is dropped.
 
 Render:
@@ -37,6 +37,7 @@ from common import data, layout
 from common.beat import ActScene
 from common.palette import CLOUD, COLLAPSE, MUTED, TARGET
 from common import type as ty
+from common.wrap import ecf
 
 LINE_X = -2.55          # number lines sit left of centre; stats sit right
 LINE_W = 7.4
@@ -53,22 +54,17 @@ DOT_R = 0.055
 # around seven dots high -- tall enough that the hump and the two clumps are
 # distinguishable at 480p, which is the entire claim this scene makes.
 BIN_DX = 0.25
+SCORE_GRID = np.linspace(0.2, 4.0, 500)
 
 
-def batch_on_a_line(h, colour, y, up=True):
-    """A number line at height `y` with the batch stacked above (or below) it.
+def pair_score(first, second):
+    """Concrete scalar examples, using the distance derived later in Chapter B."""
+    gaps = np.abs(ecf(first, SCORE_GRID) - ecf(second, SCORE_GRID)) ** 2
+    return float(np.trapezoid(gaps, SCORE_GRID))
 
-    Stacked, not laid flat on the axis: forty samples from a bell curve overlap
-    into a solid bar otherwise, and this scene's whole claim is that the two
-    shapes are visibly different. Flat dots make that claim unverifiable from
-    the frame.
-    """
-    nl = NumberLine(x_range=(-3, 3, 1), length=LINE_W, include_numbers=True,
-                    include_tip=False)
-    nl.move_to(np.array([LINE_X, y, 0.0]))
-    nl.set_stroke(MUTED, 2)
-    nl.numbers.set_color(MUTED)
 
+def batch_dots_on_line(h, colour, number_line, up=True):
+    """Stack samples on an existing number line without moving the line."""
     # Quantise once, and use the same snapped values for both jobs.
     #
     # stack_levels() is greedy first-fit over sorted values, so a run of nearby
@@ -84,10 +80,21 @@ def batch_on_a_line(h, colour, y, up=True):
     levels = layout.stack_levels(snapped, BIN_DX)
 
     step = (2 * DOT_R + 0.020) * (1 if up else -1)
-    dots = VGroup(*(
-        Dot(nl.number_to_point(s) + np.array([0.0, (lvl + 0.9) * step, 0.0]),
+    return VGroup(*(
+        Dot(number_line.number_to_point(s)
+            + np.array([0.0, (lvl + 0.9) * step, 0.0]),
             radius=DOT_R).set_fill(colour, 0.9)
         for s, lvl in zip(snapped, levels)))
+
+
+def batch_on_a_line(h, colour, y, up=True):
+    """A number line at height `y` with a readable stacked sample batch."""
+    nl = NumberLine(x_range=(-3, 3, 1), length=LINE_W, include_numbers=True,
+                    include_tip=False)
+    nl.move_to(np.array([LINE_X, y, 0.0]))
+    nl.set_stroke(MUTED, 2)
+    nl.numbers.set_color(MUTED)
+    dots = batch_dots_on_line(h, colour, nl, up=up)
     return nl, dots
 
 
@@ -96,7 +103,6 @@ class B00(ActScene):
 
     def construct(self):
         self.two_batches()
-        self.what_the_summaries_miss()
         self.what_we_need()
 
     # ------------------------------------------------------------------ 1
@@ -104,28 +110,35 @@ class B00(ActScene):
         self.h_bell = data.gaussian_1d(40)
         self.h_clumps = data.bimodal_1d(40)
 
+        # Both batches stack upward off their own line. A downward stack for
+        # the second batch used to read as "facing away" in intent but as an
+        # upside-down distribution on watch -- colour (CLOUD vs COLLAPSE) and
+        # shape (hump vs two clumps) already distinguish the two without
+        # needing orientation to carry a third signal.
         nl1, d1 = batch_on_a_line(self.h_bell, CLOUD, TOP_Y, up=True)
-        nl2, d2 = batch_on_a_line(self.h_clumps, COLLAPSE, BOT_Y, up=False)
+        nl2, d2 = batch_on_a_line(self.h_clumps, COLLAPSE, BOT_Y, up=True)
 
         lab1 = ty.label("one bell-shaped hump", color=CLOUD)
         lab1.next_to(d1, UP, buff=0.26)
         lab2 = ty.label("two separated clumps", color=COLLAPSE)
-        lab2.next_to(d2, DOWN, buff=0.26)
+        lab2.next_to(d2, UP, buff=0.26)
 
         with self.voiceover(
-            text="Forty numbers drawn from a bell curve, laid out on a "
-                 "number line. <bookmark mark='second'/>And forty more that "
-                 "fall into two separate clumps."
-        ):
+            text="Imagine taking forty numbers drawn from a bell curve "
+                 "and laying them out on a number line. <bookmark mark='second'/>"
+                 "Then draw forty more numbers that fall into two separate clumps."
+        ) as tracker:
             self.play(Create(nl1),
                       lagged_map(FadeIn, d1, lag_ratio=0.02),
-                      run_time=1.3)
-            self.play(FadeIn(lab1, shift=0.12 * DOWN), run_time=0.5)
+                      FadeIn(lab1, shift=0.12 * DOWN),
+                      run_time=1.05, rate_func=smooth)
             self.wait_until_bookmark("second")
             self.play(Create(nl2),
                       lagged_map(FadeIn, d2, lag_ratio=0.02),
-                      run_time=1.3)
-            self.play(FadeIn(lab2, shift=0.12 * UP), run_time=0.5)
+                      FadeIn(lab2, shift=0.12 * UP),
+                      run_time=1.05, rate_func=smooth)
+            self.play(Indicate(VGroup(d1, d2), scale_factor=1.025,
+                               color=TARGET), run_time=0.55)
 
         # The three agreeing summaries, revealed a row at a time and pulsed in
         # pairs. The pairing is the whole point of the beat, so it gets the
@@ -151,22 +164,21 @@ class B00(ActScene):
         # it. Revealing all three at one bookmark left seven measured seconds of
         # still frame while the voice listed them (tools/still_frames.py).
         with self.voiceover(
-            text="Now for the awkward part. We chose these two toy batches so "
-                 "the familiar checks agree: <bookmark mark='count'/>same "
-                 "count, <bookmark mark='mean'/>same mean, "
-                 "<bookmark mark='var'/>same variance. "
-                 "<bookmark mark='yet'/>Yet one picture is one hump and the "
-                 "other is plainly two clumps."
-        ):
+            text="These two batches look completely different, yet their "
+                 "<bookmark mark='count'/>sample counts, <bookmark mark='mean'/>"
+                 "means, and <bookmark mark='var'/>variances agree."
+        ) as tracker:
+            self.play(Indicate(d1, scale_factor=1.04, color=CLOUD),
+                      Indicate(d2, scale_factor=1.04, color=COLLAPSE),
+                      run_time=0.55)
             for mark, row in (("count", 0), ("mean", 1), ("var", 2)):
                 self.wait_until_bookmark(mark)
                 self.play(FadeIn(top_blk[row], shift=0.12 * LEFT),
                           FadeIn(bot_blk[row], shift=0.12 * LEFT),
-                          run_time=0.7)
-            self.wait_until_bookmark("yet")
-            self.play(Indicate(d1, scale_factor=1.06, color=CLOUD),
-                      Indicate(d2, scale_factor=1.06, color=COLLAPSE),
-                      run_time=1.2)
+                          run_time=0.28)
+            self.play(Indicate(VGroup(top_blk, bot_blk),
+                               scale_factor=1.03, color=TARGET),
+                      run_time=0.55)
 
         # Silence, with both batches and all six numbers on screen. The viewer
         # is being asked to hold two things at once -- the numbers match, the
@@ -187,214 +199,225 @@ class B00(ActScene):
         self.clump_dots = d2
 
     # ------------------------------------------------------------------ 2
-    def what_the_summaries_miss(self):
-        """Name what the two summaries cannot reach, against the picture.
-
-        The previous cut replaced this with a sentence over an amber question
-        card held motionless for twelve seconds -- a third of the scene, and
-        the caption said what the voice was saying at that instant. The gap
-        between the clumps is the thing the sentence is about, so the sentence
-        is spoken over the gap instead, and it is derived from the drawn batch
-        rather than from a constant so it cannot drift off the stack.
-        """
-        lo, hi = layout.widest_gap(list(self.h_clumps))
-        nl2, d2 = self.lines[3], self.lines[4]
-        x_lo = nl2.number_to_point(round(lo / BIN_DX) * BIN_DX)[0]
-        x_hi = nl2.number_to_point(round(hi / BIN_DX) * BIN_DX)[0]
-        gap = Rectangle(width=x_hi - x_lo,
-                        height=d2.height + 2 * DOT_R + 0.18)
-        gap.set_stroke(TARGET, 2).set_fill(TARGET, 0.09)
-        gap.move_to(np.array([(x_lo + x_hi) / 2, d2.get_center()[1], 0.0]))
-        # The same span, marked on the bell batch, where nothing is missing.
-        same = gap.copy().set_stroke(TARGET, 2, opacity=0.35).set_fill(
-            TARGET, 0.0)
-        same.move_to(np.array([(x_lo + x_hi) / 2,
-                               self.lines[1].get_center()[1], 0.0]))
-        same.stretch_to_fit_height(
-            self.lines[1].height + 2 * DOT_R + 0.18)
-
-        top_blk, bot_blk = self.stats
-        with self.voiceover(
-            text="A mean fixes where a batch sits, "
-                 "<bookmark mark='var'/>and a variance fixes how far it "
-                 "spreads, and both batches were built to agree on those. "
-                 "<bookmark mark='gap'/>Neither of them reaches the "
-                 "arrangement inside that spread, which is where all of the "
-                 "difference is: an empty stretch in one batch, and the "
-                 "fullest part of the other."
-        ) as tracker:
-            # Each summary lights up as it is named. Without this the sentence
-            # ran for seven seconds over a still frame -- measured at
-            # 00:18-00:26 on the first pass of this rebuild.
-            self.play(Indicate(top_blk[1], scale_factor=1.18, color=CLOUD),
-                      Indicate(bot_blk[1], scale_factor=1.18, color=COLLAPSE),
-                      run_time=0.9)
-            self.wait_until_bookmark("var")
-            self.play(Indicate(top_blk[2], scale_factor=1.18, color=CLOUD),
-                      Indicate(bot_blk[2], scale_factor=1.18, color=COLLAPSE),
-                      run_time=0.9)
-            self.wait_until_bookmark("gap")
-            self.play(FadeIn(gap), run_time=0.7)
-            self.play(TransformFromCopy(gap, same), run_time=1.1)
-            # "the fullest part of the other" -- so the samples inside the
-            # marked span on the bell batch light up one by one. An opacity
-            # change from 0.09 to 0.22 spread over six seconds was the previous
-            # filler here, and it measured as a still frame: a fill fade that
-            # slow is below the threshold at which anything looks like motion.
-            inside = VGroup(*(
-                dot for dot, v in zip(self.lines[1], self.h_bell)
-                if x_lo <= self.lines[0].number_to_point(
-                    round(v / BIN_DX) * BIN_DX)[0] <= x_hi))
-            self.across(tracker,
-                        lagged_map(Indicate, inside, scale_factor=2.0,
-                                       color=TARGET, lag_ratio=0.06),
-                        floor=1.0)
-
-        self.gap = VGroup(gap, same)
-
-    # ------------------------------------------------------------------ 3
     def what_we_need(self):
-        """The two batches become the left end of a pipeline with a hole in it.
+        """Keep the distributions large and make the scalar goal explicit."""
+        # Open a quiet channel between the two number lines and centre the
+        # experiment while its examples run. It only moves left when the
+        # requirement panel needs the right side of the frame.
+        centre_shift = -LINE_X * RIGHT
+        top_shift = centre_shift + 0.35 * UP
+        bot_shift = centre_shift + 1.10 * DOWN
 
-        The unknown says something the voice does not: it names the two ends
-        that are already fixed and marks the middle as the thing the rest of
-        the video builds. Each constraint is written under the arrow it
-        constrains rather than in a numbered list, so it annotates a step
-        instead of floating (RENDER_REVIEW_SPEC.md section 7.3).
-        """
-        pipe = VGroup(
-            ty.maths(R"\longrightarrow", size=ty.EQ),
-            ty.maths("?", size=ty.EQ_DISPLAY, color=TARGET),
-            ty.maths(R"\longrightarrow", size=ty.EQ),
-            ty.words("one score", size=ty.BODY, color=TARGET),
-        ).arrange(RIGHT, buff=0.40)
-        pipe.move_to(np.array([2.15, 0.70, 0.0]))
-        layout.fit_in_frame(pipe)
+        score_label = ty.words("one score", size=ty.BODY, color=TARGET)
+        score_box = RoundedRectangle(
+            width=1.85, height=0.90, corner_radius=0.14,
+        ).set_fill(TARGET, 0.08).set_stroke(TARGET, 2)
+        score_card = VGroup(score_box, score_label)
+        score_card.move_to(0.20 * DOWN)
 
-        # Where the shrunken batches land: stacked immediately left of the first
-        # arrow, so they ARE the pipeline's input rather than a picture beside
-        # it. One at a time, because both of them go in.
-        top_nest = np.array([-4.55, 1.45, 0.0])
-        bot_nest = np.array([-4.55, 0.05, 0.0])
-
-        with self.voiceover(
-            text="So those two batches are the test case: whatever we build "
-                 "has to take a batch like these and return one number. "
-                 "<bookmark mark='hole'/>The middle of that pipeline is the "
-                 "part nobody has handed us yet."
-        ) as tracker:
-            self.play(FadeOut(self.stats), FadeOut(self.gap),
-                      FadeOut(self.batch_labels), run_time=0.5)
-            self.play(self.plot_top.animate.scale(0.48).move_to(top_nest),
-                      run_time=1.3)
-            self.play(self.plot_bot.animate.scale(0.48).move_to(bot_nest),
-                      run_time=1.3)
-            self.wait_until_bookmark("hole")
-            self.play(FadeIn(pipe[0], shift=0.2 * RIGHT),
-                      FadeIn(pipe[2], shift=0.2 * RIGHT),
-                      FadeIn(pipe[3], shift=0.2 * RIGHT), run_time=0.9)
-            self.across(tracker, Write(pipe[1]), floor=0.7)
-
-        # Each constraint under the arrow it constrains, arriving as that arrow
-        # is named. Two short lines rather than two sentences: the voice
-        # carries the reasoning, the screen carries which step it lands on.
-        # What the screen carries here is the FORM of each constraint, not a
-        # paraphrase of the sentence being spoken over it: what actually
-        # arrives, and what has to exist. Prose versions of these two lines were
-        # a straight second copy of the narration (RENDER_REVIEW_SPEC.md section
-        # 7.2) -- and, being two lines of prose hung under two arrows 1.7 units
-        # apart, they also overlapped into an unreadable smear on the first
-        # render of this rebuild.
-        #
-        # Different heights, each on a dashed lead down from the arrow it
-        # constrains, so the attachment is drawn rather than inferred (5.4).
-        c_in = ty.line("only", R"$x_1, \ldots, x_N$", size=ty.LABEL,
-                       color=MUTED)
-        c_in.move_to(np.array([pipe[0].get_center()[0], -0.85, 0.0]))
-        c_out = ty.line(R"$\partial\,\mathrm{score}/\partial x_i$", "exists",
-                        size=ty.LABEL, color=MUTED)
-        c_out.move_to(np.array([pipe[2].get_center()[0] + 0.7, -2.15, 0.0]))
-        for c in (c_in, c_out):
-            layout.fit_in_frame(c)
-
-        def lead(arrow, caption):
-            return DashedLine(
-                arrow.get_bottom() + 0.12 * DOWN,
-                np.array([arrow.get_center()[0], caption.get_top()[1] + 0.12,
-                          0.0]),
-                dash_length=0.06).set_stroke(MUTED, 1.2, opacity=0.55)
-
-        lead_in, lead_out = lead(pipe[0], c_in), lead(pipe[2], c_out)
+        # Equal-length, exactly vertical arrows floating in the gap. Anchoring
+        # them to NumberLine.number_to_point(0) made sub-pixel layout offsets
+        # read as a crooked pair, and the dots obscured their tails.
+        arrow_length = 0.72
+        arrow_clearance = 0.13
+        top_end = score_box.get_top() + arrow_clearance * UP
+        bot_end = score_box.get_bottom() + arrow_clearance * DOWN
+        top_arrow = Arrow(
+            top_end + arrow_length * UP, top_end,
+            buff=0, stroke_width=3, max_tip_length_to_length_ratio=0.16,
+        ).set_color(CLOUD)
+        bot_arrow = Arrow(
+            bot_end + arrow_length * DOWN, bot_end,
+            buff=0, stroke_width=3, max_tip_length_to_length_ratio=0.16,
+        ).set_color(COLLAPSE)
 
         with self.voiceover(
-            text="Two things pin down what can go in the hole. "
-                 "<bookmark mark='in'/>A batch of samples is all that ever "
-                 "arrives, so there may be no density formula on either side "
-                 "to compare against. <bookmark mark='out'/>And the score "
-                 "becomes a training loss, so nudging any single sample has "
-                 "to change it by an amount gradient descent can follow."
+            text="So the question becomes: can we compress this difference "
+                 "in shape into one smooth number?"
         ) as tracker:
-            self.wait_until_bookmark("in")
-            self.play(Create(lead_in), FadeIn(c_in, shift=0.2 * UP),
-                      Indicate(pipe[0], scale_factor=1.35, color=TARGET),
-                      run_time=1.2)
-            self.wait_until_bookmark("out")
-            self.play(Create(lead_out), FadeIn(c_out, shift=0.2 * UP),
-                      Indicate(pipe[2], scale_factor=1.35, color=TARGET),
-                      run_time=1.2)
-            # "nudging ANY single sample" -- so several of them get nudged, one
-            # after another, each visibly. Three separate gestures, not one
-            # slow one: a single dot drifting a third of a unit over eight
-            # seconds is two pixels per frame at 0.48 scale, which measures and
-            # reads as a still frame. Each also brightens, because a three-pixel
-            # dot cannot carry a motion cue on position alone.
-            order = np.argsort(self.h_clumps)
-            picks = [self.clump_dots[int(order[k])]
-                     for k in (len(order) - 1, len(order) // 2, 0)]
-            span = max(1.2, tracker.get_remaining_duration())
-            for dot in picks:
-                self.play(dot.animate.shift(0.30 * RIGHT).scale(2.4)
-                          .set_fill(TARGET, 1),
-                          run_time=span / len(picks),
-                          rate_func=there_and_back)
+            self.play(FadeOut(self.stats),
+                      FadeOut(self.batch_labels),
+                      self.plot_top[0].animate.shift(top_shift),
+                      self.plot_top[1].animate.shift(top_shift),
+                      self.plot_bot[0].animate.shift(bot_shift),
+                      self.plot_bot[1].animate.shift(bot_shift),
+                      run_time=0.85,
+                      rate_func=smooth)
+            self.play(GrowArrow(top_arrow), GrowArrow(bot_arrow),
+                      FadeIn(score_box), FadeIn(score_label),
+                      run_time=0.65)
+            self.play(Indicate(score_card, scale_factor=1.04,
+                               color=TARGET), run_time=0.55)
 
-        # Resolve the hole rather than drawing a second pipeline underneath the
-        # first, and let the closing sentence hand the next scene its job: the
-        # batch is about to be asked a question, one sample at a time.
-        #
-        # The whole row re-lays-out in the SAME play as the substitution. Doing
-        # the transform first and the re-arrange second left a long phrase
-        # sitting on top of "one score" for 1.2 s, which rendered as two
-        # overlapping strings.
-        answer = ty.words("one question, asked of every sample",
-                          size=ty.LABEL, color=TARGET)
-        final = VGroup(pipe[0].copy(), answer, pipe[2].copy(),
-                       pipe[3].copy()).arrange(RIGHT, buff=0.34)
-        final.move_to(np.array([2.0, 0.70, 0.0]))
-        layout.fit_in_frame(final)
+        self.inspect(1.2)
+
+        score_prefix = ty.maths(R"s =", size=ty.EQ, color=TARGET)
+        score_value = DecimalNumber(
+            pair_score(self.h_bell, self.h_clumps),
+            num_decimal_places=2, font_size=ty.EQ,
+        ).set_color(TARGET)
+        score_readout = VGroup(score_prefix, score_value).arrange(RIGHT, buff=0.10)
+        score_readout.move_to(score_card)
+
+        bell_again = data.gaussian_1d(40, seed=119)
+        bell_pair = data.gaussian_1d(40, seed=812)
+        collapsed = data.collapsed_1d(40)
+        spread = np.linspace(-2.6, 2.6, 40)
+
+        def dots_target(samples, colour, plot):
+            return batch_dots_on_line(samples, colour, plot[0])
 
         with self.voiceover(
-            text="Nothing on the usual list of summaries survives both. "
-                 "<bookmark mark='fill'/>What does is a single question put to "
-                 "every sample at once, whose answers can either reinforce "
-                 "each other or cancel."
+            text="Suppose this first pair gives us this number. Now feed the "
+                 "same rule two bell-shaped batches, and the value falls."
         ) as tracker:
-            self.wait_until_bookmark("fill")
-            self.play(FadeOut(VGroup(lead_in, lead_out), shift=0.2 * DOWN),
-                      FadeOut(c_in, shift=0.2 * DOWN),
-                      FadeOut(c_out, shift=0.2 * DOWN),
-                      ReplacementTransform(pipe[1], final[1]),
-                      Transform(pipe[0], final[0]),
-                      Transform(pipe[2], final[2]),
-                      Transform(pipe[3], final[3]), run_time=1.3)
-            # Every sample is asked, so every sample lights up in turn. This is
-            # the visible form of "asked of every sample at once", and it hands
-            # the next scene a batch that has just been questioned.
-            self.across(tracker,
-                        lagged_map(Indicate, self.clump_dots,
-                                       scale_factor=2.4, color=TARGET,
-                                       lag_ratio=0.035),
-                        floor=1.2)
+            self.play(ReplacementTransform(score_label, score_prefix),
+                      FadeIn(score_value),
+                      FadeOut(top_arrow), FadeOut(bot_arrow), run_time=0.9)
+            self.across(
+                tracker,
+                Transform(self.plot_top[1], dots_target(
+                    bell_again, CLOUD, self.plot_top)),
+                Transform(self.plot_bot[1], dots_target(
+                    bell_pair, COLLAPSE, self.plot_bot)),
+                ChangeDecimalToValue(
+                    score_value, pair_score(bell_again, bell_pair)),
+                floor=1.5, rate_func=smooth,
+            )
+
+        self.inspect(1.2)
+
+        with self.voiceover(
+            text="Try a nearly collapsed batch against a spread-out one, and "
+                 "the same rule responds again."
+        ) as tracker:
+            self.across(
+                tracker,
+                Transform(self.plot_top[1], dots_target(
+                    collapsed, CLOUD, self.plot_top)),
+                Transform(self.plot_bot[1], dots_target(
+                    spread, COLLAPSE, self.plot_bot)),
+                ChangeDecimalToValue(
+                    score_value, pair_score(collapsed, spread)),
+                floor=1.5, rate_func=smooth,
+            )
+
+        self.inspect(1.2)
+
+        requirements = VGroup(
+            ty.words("what must the score do?", size=ty.BODY, color=TARGET),
+            ty.line("work from", R"$x_1,\ldots,x_N$", "alone",
+                    size=ty.LABEL, color=CLOUD),
+            ty.line("respond smoothly to every", "$x_i$",
+                    size=ty.LABEL, color=COLLAPSE),
+            ty.maths(R"\frac{\partial s}{\partial x_i}\ \text{exists}",
+                     size=ty.EQ, color=COLLAPSE),
+        ).arrange(DOWN, buff=0.22, aligned_edge=LEFT)
+        requirements.move_to(np.array([4.35, 0.1, 0.0]))
+        layout.fit_in_frame(requirements)
+
+        # A short, deterministic stream of fresh inputs. Sorting each batch
+        # keeps dot identities locally coherent from one example to the next,
+        # so the changes read as rhythmic trials rather than forty crossing
+        # trajectories.
+        rng = np.random.default_rng(20260808)
+        random_pairs = [
+            (np.sort(rng.normal(-0.35, 0.55, 40)),
+             np.sort(rng.normal(0.45, 0.45, 40))),
+            (np.sort(np.r_[rng.normal(-1.15, 0.20, 20),
+                           rng.normal(0.95, 0.24, 20)]),
+             np.sort(rng.uniform(-2.35, 2.35, 40))),
+            (np.sort(np.clip(rng.normal(0.0, 0.75, 40), -2.5, 2.5)),
+             np.sort(np.clip(rng.normal(0.15, 1.05, 40), -2.5, 2.5))),
+        ]
+
+        return_left = LINE_X * RIGHT
+        lower_clearance = 0.45 * DOWN
+
+        with self.voiceover(
+            text="Ideally, this score should come directly from the samples "
+                 "themselves, without assuming we know a density formula."
+        ) as tracker:
+            self.play(
+                self.plot_top[0].animate.shift(return_left),
+                self.plot_top[1].animate.shift(return_left),
+                self.plot_bot[0].animate.shift(return_left + lower_clearance),
+                self.plot_bot[1].animate.shift(return_left + lower_clearance),
+                score_box.animate.shift(return_left),
+                score_prefix.animate.shift(return_left),
+                score_value.animate.shift(return_left),
+                FadeIn(requirements[0], shift=0.10 * DOWN),
+                run_time=1.0, rate_func=smooth,
+            )
+            self.play(FadeIn(requirements[1], shift=0.12 * LEFT),
+                      run_time=0.7)
+
+            remaining = max(2.4, tracker.get_remaining_duration())
+            step = remaining / len(random_pairs)
+            for top_samples, bot_samples in random_pairs:
+                transition = min(0.85, 0.78 * step)
+                self.play(
+                    Transform(self.plot_top[1], dots_target(
+                        top_samples, CLOUD, self.plot_top)),
+                    Transform(self.plot_bot[1], dots_target(
+                        bot_samples, COLLAPSE, self.plot_bot)),
+                    ChangeDecimalToValue(
+                        score_value, pair_score(top_samples, bot_samples)),
+                    run_time=transition, rate_func=smooth,
+                )
+                self.wait(max(0.0, step - transition))
+
+        with self.voiceover(
+            text="And if one sample nudges to the side, how should the number "
+                 "respond? Smoothly enough that gradient descent can tell "
+                 "which way to move it."
+        ) as tracker:
+            self.play(FadeIn(requirements[2], shift=0.12 * LEFT),
+                      run_time=0.8)
+
+            current_top, current_bot = random_pairs[-1]
+            nudged_bot = current_bot.copy()
+            nudge_index = int(np.argmin(np.abs(nudged_bot - 0.85)))
+            nudged_bot[nudge_index] += 0.60
+            old_x = round(current_bot[nudge_index] / BIN_DX) * BIN_DX
+            new_x = round(nudged_bot[nudge_index] / BIN_DX) * BIN_DX
+            nudge_vector = (
+                self.plot_bot[0].number_to_point(new_x)
+                - self.plot_bot[0].number_to_point(old_x)
+            )
+
+            sample_ring = Circle(radius=0.12).set_stroke(TARGET, 2)
+            sample_ring.move_to(self.plot_bot[1][nudge_index])
+            self.play(Create(sample_ring), run_time=0.35)
+            self.across(
+                tracker,
+                self.plot_bot[1][nudge_index].animate.shift(nudge_vector),
+                sample_ring.animate.shift(nudge_vector),
+                ChangeDecimalToValue(
+                    score_value, pair_score(current_top, nudged_bot)),
+                FadeIn(requirements[3], shift=0.12 * LEFT),
+                floor=1.2, reserve=0.35, rate_func=smooth,
+            )
+            self.play(FadeOut(sample_ring), run_time=0.35)
+
+        final_question = ty.line(
+            "samples", "$\\longrightarrow$", "$?$", "$\\longrightarrow$",
+            "one smooth scalar",
+            size=ty.BODY, color=TARGET,
+        ).move_to(requirements)
+        layout.fit_in_frame(final_question)
+        self.play(FadeOut(requirements, shift=0.10 * UP), run_time=0.5)
+        with self.voiceover(
+            text="One smooth scalar is where we want to end. But we cannot "
+                 "jump straight there. Before that, we need a description "
+                 "that keeps the shape."
+        ) as tracker:
+            self.play(FadeIn(final_question, shift=0.10 * UP), run_time=0.45)
+            self.play(Indicate(VGroup(score_box, score_readout),
+                               scale_factor=1.06, color=TARGET),
+                      run_time=0.65)
+
+        self.inspect(0.8)
 
         self.clear_beat()
 

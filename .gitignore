@@ -8,6 +8,11 @@ media/
 # working copy does not start committing 180 MB of renders after a pull.
 videos/
 
+# manim-slides writes its per-scene slide-break metadata and concatenated
+# clip cache here, relative to wherever it was invoked from -- reproducible
+# from source the same way media/ is.
+slides/
+
 # Secrets. .env holds ELEVEN_API_KEY; .env.example is the tracked template.
 .env
 !.env.example
