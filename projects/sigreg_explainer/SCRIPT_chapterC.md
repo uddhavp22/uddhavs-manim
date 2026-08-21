@@ -17,13 +17,15 @@ source order, which tracks playback order but
 is not guaranteed to equal it: on-screen text is often constructed a few
 lines before the passage that reveals it.
 
-**3 scenes · 1,134 spoken words · 0:00**
+**5 scenes · 1,470 spoken words · 0:00**
 
 | Scene | Words | Duration | Words/min |
 |---|---:|---:|---:|
 | [`c01_vectors`](#c01-vectors) | 155 | — | — |
 | [`c02_the_shape_is_the_goal`](#c02-the-shape-is-the-goal) | 552 | — | — |
-| [`c03_one_shadow`](#c03-one-shadow) | 427 | — | — |
+| [`c03_one_shadow`](#c03-one-shadow) | 413 | — | — |
+| [`c04_one_shadow_is_not_enough`](#c04-one-shadow-is-not-enough) | 192 | — | — |
+| [`c05_gaussian_marginals`](#c05-gaussian-marginals) | 158 | — | — |
 
 ---
 
@@ -156,19 +158,18 @@ has to compare distributions rather than assign partners.
 
 > **ON SCREEN** — \mathbb R^D\longrightarrow\mathbb R
 
-So the loss has to compare distributions. In the last chapter, the Epps-Pulley
-score started with a batch of scalars, but our model gives us a cloud of
-vectors. So before we can use that score, we need a way to turn vectors into
-scalars. Suppose we choose one direction, u, through the cloud. We keep u at
-unit length, because otherwise changing its length would rescale every number
-we are about to measure.
+In the last chapter, the Epps-Pulley score started with a batch of scalars,
+but our model gives us a cloud of vectors. So before we can use that score, we
+need a way to turn vectors into scalars. Suppose we choose one direction, u,
+through the cloud. We keep u at unit length, because otherwise changing its
+length would rescale every number we are about to measure.
 
 <sub>cues: need, gives, bridge, direction, unit</sub>
 
 Now suppose we take one embedding, z sub i. If we drop it perpendicularly onto
 the line, then its signed position is u transpose z sub i. This foot lands on
-the side u points toward, so the coordinate is positive. Now suppose we choose
-a point on the other side. Its foot lands behind the origin, so the coordinate
+the side u points toward, so the coordinate is positive. Pick a point on the
+other side instead. Its foot lands behind the origin, so the coordinate
 becomes negative.
 
 <sub>cues: drop, read, positive, other, negative</sub>
@@ -176,21 +177,21 @@ becomes negative.
 > **ON SCREEN** — \{u^\top z_i\}_{i=1}^{N}\subset\mathbb R
 
 So now we do the same thing for every embedding. Then the vectors become N
-signed coordinates, which form a one-dimensional shadow of the cloud. And now
-the vector cloud has become a scalar batch.
+signed coordinates, which form a one-dimensional shadow of the cloud. The
+vector cloud has become a scalar batch.
 
 <sub>cues: all, shadow, batch</sub>
 
-So now we can simply run the Epps-Pulley test on this shadow and compare it
-with a standard Gaussian.
+We can now run the Epps-Pulley test on this shadow and compare it with a
+standard Gaussian.
 
 <sub>cues: rig</sub>
 
-Now, as t changes, each scalar wraps around the circle, and their average
-traces the blue empirical characteristic function. Once that blue curve is
-drawn, we can compare it with the standard-normal curve. Wherever the two
-curves separate, the red marker shows the gap at the current value of t, while
-the weighted squared gap fills in behind it. If the curves stay close, little
+As t changes, each scalar wraps around the circle, and their average traces
+the blue empirical characteristic function. Once that blue curve is drawn, we
+can compare it with the standard-normal curve. Wherever the two curves
+separate, the red marker shows the gap at the current value of t, while the
+weighted squared gap fills in behind it. If the curves stay close, little
 accumulates. If they pull apart, more accumulates. At the end, all of those
 gaps combine into one score for this shadow.
 
@@ -206,5 +207,69 @@ can tell us whether one shadow looks Gaussian, but it cannot tell us whether
 the whole cloud does.
 
 <sub>cues: turn_one, turn_two, shadow_only, whole</sub>
+
+---
+
+## c04_one_shadow_is_not_enough
+
+*Chapter C.04 — one shadow can be innocent.*
+
+Now suppose the cloud has structure. Two clumps, pulled well apart, in a plane
+we can look straight down at.
+
+<sub>cues: clumps</sub>
+
+> **ON SCREEN** — score along each direction
+
+Take the direction the clumps separate along. Then the shadow comes out as two
+piles with a hole between them, and a Gaussian has no hole in the middle. So
+the score climbs.
+
+<sub>cues: along, piles, gaussian, high</sub>
+
+Now turn that direction a quarter of the way round. The two piles slide
+straight through each other, and what is left is a single hump. The score
+drops to almost nothing.
+
+<sub>cues: turn, merge, bell</sub>
+
+Keep turning and the hole opens again. Every direction in the plane has its
+own score, and half a turn covers all of them.
+
+<sub>cues: keep, trace</sub>
+
+Seventeen here, and almost zero here. And half of every direction in this
+plane sits down in that band. So pick one of them, and this cloud passes. A
+low score tells you about the direction you picked. It tells you nothing about
+the cloud behind it.
+
+<sub>cues: band, verdict</sub>
+
+---
+
+## c05_gaussian_marginals
+
+*Chapter C.05 — coordinate checks can miss a bad joint cloud.*
+
+One direction wasn't enough, so a natural shortcut is to try the two
+coordinate axes. Start with the horizontal coordinate: project every point
+straight onto that axis. Those projected values line up closely with the
+standard bell, so its score is low.
+
+<sub>cues: x_drop, x_stack</sub>
+
+Now turn the same projection onto the vertical axis. Nothing changes, because
+each vertical coordinate copies its horizontal partner. It is the same batch,
+with the same low score.
+
+<sub>cues: y_turn, y_settle</sub>
+
+But those two checks never compare the coordinates. So turn the line forty-
+five degrees, toward the diagonal that subtracts one from the other. Since the
+coordinates are equal, every projection lands at zero. Both coordinate scores
+were low while the cloud still lay on a line. The axes miss this dependence,
+so we have to test directions that mix the coordinates.
+
+<sub>cues: mix, zero, verdict</sub>
 
 ---

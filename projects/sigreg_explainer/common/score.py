@@ -10,6 +10,14 @@ import numpy as np
 
 from .wrap import ecf, gaussian_cf
 
+# Chapter C's settings, carried over from `b11_fingerprint_to_loss.py`'s
+# approved inline computation. They live here rather than in each scene so a
+# scene and `facts.py` cannot drift apart on the grid or the weight while both
+# call the same function -- which would give a checked claim and a rendered
+# number that quietly disagree.
+EP_GRID = np.linspace(-8.0, 8.0, 4000)
+EP_LAMBDA = 1.0
+
 
 def epps_pulley(samples, lam: float, grid) -> float:
     """Empirical Epps--Pulley statistic on a supplied frequency grid.

@@ -1188,3 +1188,71 @@ note was superseded by C03's authorized final pass recorded below.
   passes 24/24.
 
 ### Verdict — `PASS`
+
+---
+
+## Chapter C C05 — Gaussian marginals counterexample tightening (2026-08-20)
+
+### Result
+
+- C04's conclusion now motivates the opening: the two coordinate axes pulse as
+  the natural next shortcut, then the blue `y=x` cloud appears to set its trap.
+- Each axis gets a separate green shadow and amber `N(0,1)` reference, paired
+  with an explicit **low score**. “Passing” now has a visible,
+  named meaning.
+- The 45° direction shows a bell-shaped shadow that is wider than its amber
+  standard target; the 135° direction turns the same cloud into a point mass
+  at zero. The low-score coordinate cards clear before either high-score card
+  arrives, preventing the former overlap.
+- The testing apparatus clears on the closing line, returning to the bare
+  `y=x` cloud and a direct handoff to checking more directions. There is no
+  title question, prolonged continuous turn, or crowded summary card.
+
+### Verification and delivery
+
+- Final file: `media/videos/sigreg_explainer/chapterC/c05_gaussian_marginals/1080p60/C05.mp4`.
+- H.264 1920×1080 at 60 fps; AAC 48 kHz stereo; 60.97 s; Archer ElevenLabs
+  narration.
+- Complete ffmpeg decode passed. `tools/dead_air.py` reports no dead air.
+- Fresh 1080p frames were inspected at both coordinate checks, the wide
+  diagonal, the zero-collapse diagonal, and the summary; no overlap, clipping,
+  stale target, or dead air remains.
+
+### Verdict — `PASS`
+
+---
+
+## Chapter C C05 — owner-review continuity draft (2026-08-20)
+
+### Result
+
+- The diagonal `y=x` cloud is visible from the first frame. The horizontal and
+  vertical axes are presented as the natural shortcut inherited from C04.
+- Scoring the horizontal coordinate is now a literal projection: 32
+  representative perpendicular guides connect the cloud to feet on the actual
+  x-axis. The feet then spread continuously into the readable dot plot used to
+  compare against the standard-normal curve.
+- One direction arrow, line, shadow batch and amber target rotate continuously
+  from x to y and then 45 degrees farther toward `y-x`. Separate target curves
+  and replacement verdict cards no longer create visual cuts between cases.
+- The redundant `x+y` wide-shadow case is gone. At `y-x`, the dot plot
+  contracts back to a single marked point at the origin, directly supporting
+  “every projection lands at zero.”
+- Narration is 133 spoken words in three causally linked passages, down from
+  192. Six bookmarks start the corresponding projection, stack, turn,
+  contraction and verdict animations on the phrases that motivate them.
+
+### Verification
+
+- Draft file:
+  `media/videos/sigreg_explainer/chapterC/c05_gaussian_marginals/480p15/C05.mp4`.
+- 854×480 at 15 fps; 45.20 s; draft macOS narration.
+- `py_compile` passed; `preflight` reports no undefined names;
+  `narration_audit` passes every budget; `facts.py` passes 27/27;
+  `tools/dead_air.py --frozen` reports no dead or frozen interval.
+- Contact sheets and focused frames were inspected at the literal x projection,
+  the x score, the continuous x-to-y turn, the y score, the `y-x` contraction,
+  and the final bare-cloud handoff. No overlap, clipping, stale target, or
+  replacement pop was found at draft resolution.
+
+### Verdict — `DRAFT — AWAITING OWNER REVIEW`

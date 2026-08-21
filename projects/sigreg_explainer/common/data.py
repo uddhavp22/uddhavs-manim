@@ -88,6 +88,24 @@ def gaussian_3d(n: int = 220, seed: int = 5) -> np.ndarray:
     return _rng(seed).standard_normal((n, 3))
 
 
+def clumped_3d(n: int = 220) -> np.ndarray:
+    """The isotropic cloud with two clumps along x. Chapter C.04's cloud.
+
+    The x column is `bimodal_1d`, so the shadow along that axis is literally the
+    two-clump batch grammar Chapter B ran on, and it is normalized to mean 0 and
+    variance 1 -- as are the other two columns. Every direction in the x-y plane
+    therefore reads a batch at the same scale, which is what makes C04's claim
+    about shape rather than spread.
+
+    Lives here rather than in the scene so `facts.py` can check the two scores
+    the scene displays without importing manim.
+    """
+    isotropic = gaussian_3d(n)
+    return np.column_stack([
+        bimodal_1d(n=n, seed=7), isotropic[:, 0], isotropic[:, 2],
+    ])
+
+
 def degenerate_3d(eigs=(1.0, 1.0, 1.0), n: int = 220,
                   seed: int = 5) -> np.ndarray:
     """The same cloud squashed to given standard deviations along the axes.
@@ -99,6 +117,22 @@ def degenerate_3d(eigs=(1.0, 1.0, 1.0), n: int = 220,
 def diagonal_2d(n: int = 200, seed: int = 13) -> np.ndarray:
     """Z = [X, X]. Both marginals are exactly N(0,1) and both pass a
     coordinate-wise normality test, yet the cloud is a line: covariance
-    eigenvalues (2, 0). Act 7's counterexample."""
+    eigenvalues (2, 0). Act 7's counterexample.
+
+    `X` is standardized to sample mean 0 and sample variance 1, the same way
+    `bimodal_1d` is, and for the same reason twice over.
+
+    The docstring's word is *exactly*, and a raw draw of 200 does not deliver
+    it -- this one has sample mean 0.043 and sd 1.021 -- so the claim would be
+    checkable only up to sampling slop. Worse, C05 says the two coordinate
+    directions are the only two that make the cloud look right, and
+    `u^T Z = (u_1 + u_2) X` depends on the direction ONLY through the scale
+    `u_1 + u_2`. An unstandardized `X` puts the best-fitting scale slightly off
+    1, which moves the score's two minima off the axes -- at this seed to 1
+    and 89 degrees -- and the scene's closing claim quietly stops being true of
+    the picture it is read from. Standardizing pins the minima to the axes by
+    construction rather than by luck.
+    """
     x = _rng(seed).standard_normal(n)
+    x = (x - x.mean()) / x.std()
     return np.stack([x, x], axis=1)

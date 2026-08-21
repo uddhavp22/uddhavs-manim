@@ -81,9 +81,9 @@ The protected idea arc and style contract remain binding.
   calls this the wrong loss because every embedding is pulled toward zero,
   then distinguishes that pointwise collapse from matching the batch
   distribution.
-- C03 is now a 358-word pedagogical construction rather than a notation-first
-  summary. It opens by visibly contrasting the scalar batch Epps--Pulley needs
-  with the vector batch the model supplies, then shows the required
+- C03 is now a 344-word pedagogical construction rather than a notation-first
+  summary. It opens directly on the Chapter-B/model type mismatch rather than
+  restating C02's closing line, then shows the required
   `R^D -> R` bridge. The displayed direction arrow is exactly one visible axis
   unit long and carries `||u||=1`; a thinner line, rather than a stretched
   arrow, spans the cloud. Narration
@@ -98,7 +98,13 @@ The protected idea arc and style contract remain binding.
   the standard-normal curve appears on its spoken clause. A separate moving
   instantaneous-gap marker then sweeps the completed curves, progressively filling the
   weighted discrepancy, and computed result `0.055` appear on their narrated
-  clauses. The discrepancy clears before the score appears. The rig then
+  clauses. `ThreePanelRig.mount()` is called without `link=True`: the
+  `link()` `DashedLine` connecting the centroid's screen position to the
+  curve's height rendered as a stray diagonal across both panels in this
+  scene and was removed (2026-08-17), matching how 3Blue1Brown's own
+  `_2018/fourier.py::get_graph_v_line` keeps a value/graph connector local to
+  one panel rather than spanning two. The discrepancy clears before the score
+  appears. The rig then
   contracts into the restored 3-D experiment: two camera moves accompany real
   changes in direction, every shadow point moves, and the exact displayed
   scores change from `score(u_1)=0.055` to `score(u_2)=0.046` and
@@ -108,7 +114,136 @@ The protected idea arc and style contract remain binding.
   Fixed-orientation cloud objects and fixed-frame rig objects must be
   explicitly unregistered during ownership changes or they bleed through the
   composition under Cairo.
-- `SCRIPT_chapterC.md` is now generated from C01–C03. Continue regenerating it
+- C04's narration was rewritten on owner review (2026-08-17, after the first
+  Archer delivery) and the scene rerendered. The gripes were that the
+  explanations were unclear and slightly redundant, that the chapter's
+  conversational connectors ("if / then / now / so") were missing, and that the
+  ending was weak. Changes, all binding on C05–C10:
+  - **Deleted phrases, by owner instruction: "and it should", "if we", and
+    "the cloud stays the same" / "the cloud never changed".** Restating that
+    the cloud is fixed is redundant with the animation, which shows it. The
+    same goes for "Every embedding still lands somewhere on the line", cut from
+    beat 2 — the shadow arriving on screen is that sentence.
+  - Every beat now opens on a connector rather than a construction: "Now
+    suppose…", "Take the direction…", "Then the shadow…", "Now turn…", "Keep
+    turning…", "So pick one of them…".
+  - **New silent visual: a standard normal drawn top-left, in `TARGET`, at the
+    moment the narration says "and a Gaussian has no hole in the middle".** It
+    is never named, labelled or pointed at, and it fades out in the silence
+    after beat 3 (owner instruction on the second review) — it has done both of
+    its jobs by then, the shadow with a hole and the shadow without one having
+    each been seen against it, and leaving it up past that turns a reference
+    into furniture. This is the owner's instruction and it is a good general rule: the
+    scene twice asks the viewer to judge a shape against a bell (two piles with
+    a hole; one hump), and until now there was no bell on screen to judge it
+    against. Because it is there, beat 3 no longer needs the words "close
+    enough to a bell" at all. It is deliberately NOT in the panel column: the
+    free space there sits directly above "score along each direction", and a
+    caption that close reads as labelling the curve above it rather than the
+    axes below it. That was caught in a draft frame, not by inspection.
+  - **The ending is now the band, not a restatement.** Beat 5 marks the
+    stretch of the trace scoring below `BAND_LEVEL = 0.5` — which is exactly
+    half the half turn, 50° to 140° — and says so. It is marked with **two
+    dashed MUTED boundary lines, not a filled rectangle** (owner instruction on
+    the second review; the shaded block was rejected on looks). The dashed form
+    is also the more honest one: a fill behind the curve reads as an area under
+    it, which is an integral and not the claim, and it dulled the trace it sat
+    behind. MUTED rather than DIRECTION because green verticals crossing a
+    green curve separate badly, and dashed MUTED is already the project's
+    annotation-guide convention (`CloudProjectionRig.guide_lines`). The scene's verdict is not
+    that one direction happened to be innocent but that half of them are, and
+    that is a picture rather than a sentence. `facts.py` gained a second C04
+    claim checking the fraction and the uniformity of the angle grid, since a
+    half turn's node fraction only equals a direction fraction on a uniform
+    grid. The closing lines are parallel and land without hedging: "A low score
+    tells you about the direction you picked. It tells you nothing about the
+    cloud behind it." The cloud comes back to full brightness on "the cloud
+    behind it" rather than on a cut line.
+  - 183 → 156 spoken words; 55.05 s → 47.22 s. The second review changed only
+    pixels, so the Archer audio was a straight cache hit and the rerender cost
+    no ElevenLabs credits — audio is keyed on passage text plus service
+    settings, and neither moved.
+- C04 is implemented (2026-08-17). It is a 156-word scene that opens on C03's
+  exact last frame — same cloud, same camera, `u_3` still standing on its
+  shadow, `score(u_3)=0.872` in the same corner — and hands all of that away in
+  its first beat. One camera move then both flattens the view onto the plane the
+  direction turns in and slides the 3-D world left (`frame_center`) to clear two
+  fixed-frame panels, while the same 220 dot instances morph into
+  `data.clumped_3d()`: two clumps along x, ordinary Gaussian coordinates along y
+  and z, every column at unit variance so the failure on show is shape rather
+  than spread. A single `ValueTracker` angle then sweeps 0 → 180° monotonically,
+  driving the direction arrow, the projection line, all 220 shadow feet, the
+  live `score(u)` readout and the score-vs-angle trace from one tabulated
+  evaluator. The shadow is drawn as a dot plot stacked along the line's own
+  normal (`layout.stack_levels`), so it turns with the direction and its shape
+  is legible: two piles with a hole at `17.095`, one hump at `0.046` a quarter
+  turn later, and the hole reopening by 180°. A half turn is every distinct
+  direction in the plane, so the completed trace is the scene's product; the two
+  settled scores are marked on it numerically and the half of it that scores
+  near zero is bracketed by two dashed boundaries. `facts.py` recomputes both scores and the bracketed
+  fraction from `common/score.py` on `data.clumped_3d()`.
+  Four further traps were found while building it, all in the same family as
+  C03's and all silent:
+  4. **`DecimalNumber.set_value` breaks a fixed-in-frame registration.** The
+     camera registers mobject *instances*, and `set_value` discards its glyph
+     submobjects and builds new ones. The new glyphs are unregistered, so the
+     3-D camera projects them: the digits render below and left of the label
+     they were arranged beside, which looks exactly like a layout bug. Any live
+     `DecimalNumber` in a `ThreeDScene` must call
+     `self.camera.add_fixed_in_frame_mobjects(mob)` inside its own updater. Use
+     the camera method, not the scene method, which would also re-`add` the
+     mobject every frame.
+  5. **`set_opacity` on a curve raises its fill with its stroke.** A bare
+     `VMobject` carries a fill colour, so revealing a plotted curve with
+     `set_opacity` floods the whole area under it solid white. Reveal with
+     `set_stroke(opacity=...)` and pin `set_fill(opacity=0.0)`.
+  6. **`ThreeDAxes` does not put its zero at the world origin.** `Axes` centres
+     each `NumberLine` on its own bounding box, ticks and tip included, so each
+     axis's zero lands a sixth of a tick off and `c2p(0,0,0)` — which combines
+     all three — sits at `(0.175, -0.175, -0.175)`. `CloudRig` places dots at
+     raw world coordinates, so the ticks and everything drawn with `c2p`
+     (including `CloudProjectionRig.direction_arrow`) sit beside the data. This
+     is present in C03 too, where the oblique camera reads it as depth; it only
+     becomes visible looking straight down at a plane. Fix with
+     `for axis in axes.axes: axis.shift(-axis.number_to_point(0))`, which
+     corrects `c2p` along with the furniture. Not a regression, so C03 was not
+     reopened for it.
+  7. **An `add_updater` that only moves points is safe with opacity
+     animations** — unlike `always_redraw`. That is the whole reason
+     `TurningProjection` builds its geometry once. Reveals still happen with
+     the angle held still, so the points a `Transform`-family animation
+     captured at `begin()` are the points the updater keeps writing.
+- `common/project.py` gained `TurningProjection`: the tracker-driven sibling of
+  `CloudProjectionRig`, holding the angle state, the derived geometry and one
+  tabulated score curve. C05 and C07 are its intended other consumers. The trace
+  *panel* stays scene-local — the numbers are what generalizes, the layout is
+  not. `common/score.py` gained `EP_GRID`/`EP_LAMBDA` so a scene and `facts.py`
+  cannot drift on the grid while both call `epps_pulley`. `common/data.py`
+  gained `clumped_3d`, so the ledger can check C04's numbers without importing
+  manim.
+- **Renders are grouped by chapter (owner instruction, 2026-08-18).** Every
+  Chapter C output now lands under
+  `media/videos/sigreg_explainer/chapterC/<module>/<quality>/`, and the five
+  built scenes were moved there. Manim's default is
+  `{media_dir}/videos/{module_name}/{quality}`, which flattens every scene file
+  in the repo into one folder — C05 was sitting beside `ionic_bonds`. The rule
+  is `projects/<project>/<chapter>/<module>.py` → `videos/<project>/<chapter>/`,
+  and it lives in **one** place, `tools/output_path.py::video_dir_template`,
+  for a specific reason: `build.sh`'s freshness guard asks that file where a
+  render *will* land and compares mtimes around the attempt, so if it and
+  `render.sh` disagreed the guard would stat a file the render never wrote and
+  call every scene fresh. `render.sh` therefore asks for the template rather
+  than restating it. It has to be delivered as a config file, because manim
+  exposes `--media_dir` on the command line but not `video_dir`; and since `-c`
+  makes manim *ignore* the folder-wide `manim.cfg` rather than layer on it, the
+  generated file at `media/.manim-cfg/<project>-<chapter>.cfg` is `manim.cfg`
+  itself plus one appended line, rebuilt on every run so it cannot drift.
+  Anything not exactly two levels below `projects/` keeps manim's default.
+  This also silently fixes Chapter B, whose renders were already in
+  `chapterB/` while `output_path.py` was answering with the flat path — so its
+  freshness guard was rebuilding every scene every time. Note `-s` still frames
+  are unaffected: `images_dir` was deliberately left alone.
+- `SCRIPT_chapterC.md` is now generated from C01–C05. Continue regenerating it
   after narration changes; do not edit it by hand.
 - C01 and C02 have authorized final ElevenLabs/1920×1080/60 deliveries. C02's
   former final was superseded by the 2026-08-16 owner-directed rewrite, and the
@@ -118,17 +253,157 @@ The protected idea arc and style contract remain binding.
   `media/videos/sigreg_explainer/chapterC/c01_vectors/1080p60/C01.mp4`
   (46.22 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo).
 - C02's delivered ElevenLabs file is
-  `media/videos/c02_the_shape_is_the_goal/1080p60/C02.mp4`
+  `media/videos/sigreg_explainer/chapterC/c02_the_shape_is_the_goal/1080p60/C02.mp4`
   (163.87 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo, Archer voice).
+- C05's delivered ElevenLabs file is
+  `media/videos/sigreg_explainer/chapterC/c05_gaussian_marginals/1080p60/C05.mp4`
+  (60.97 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo, Archer voice).
+- **C05 is in owner-directed review again as of 2026-08-20.** The 60.97-second
+  ElevenLabs file above is the last delivered master, but its content is
+  superseded by the current source and a 45.20-second low-quality draft. The
+  owner identified four related failures: “score the coordinates” was not
+  shown as an actual projection onto the axes; separate reveals made the
+  transitions feel choppy; narration was list-like and poorly synchronized;
+  and long stretches were visually static. The current draft keeps the
+  scene's load-bearing inference while cutting its redundant `x+y` example.
+  The diagonal `Z=(X,X)` cloud is visible from frame one. Representative
+  points drop perpendicularly onto the x-axis before their literal feet spread
+  into a readable dot plot and `score(x)=0.244` appears. One persistent
+  direction line, arrow, shadow batch and amber target then rotate continuously
+  onto y, where `score(y)=0.244` joins it. A final 45-degree turn toward `y-x`
+  contracts the stacked shadow back to one literal point at zero and displays
+  `score(u)=81.785`. The apparatus clears back to the bare diagonal cloud.
+  Narration is 133 spoken words in three passages, with six semantic bookmarks;
+  it uses horizontal/vertical-coordinate wording rather than asking TTS to
+  carry repeated bare “x” and “y.” No new ElevenLabs/1080p render is authorized
+  yet. The current storyboard section records the full decision.
+- **Historical C05 implementation notes (2026-08-18).** The following traps
+  and reusable components came from the superseded strip-and-merge cut. They
+  remain useful engineering context, but its narration, meter, trace, and
+  opening choreography are no longer current; the 2026-08-20 entry above and
+  the current storyboard section are authoritative. The parts that generalize
+  past C05 are these:
+  - **`set_camera_orientation(frame_center=c)` does not move everything by
+    `-c`.** World content moves by `-2c` and fixed-in-frame content by `-c`.
+    Measured with a probe scene (three world dots and three fixed-frame dots,
+    rendered `-s` and read back in pixels): for `c = (1.90, -0.40)`, world
+    `(0,0)` lands at screen `(-3.808, +0.808)` and fixed-frame `(3,0)` at
+    screen `(+1.091, +0.408)`. C04 has the same behaviour and its constants
+    were tuned by eye through it, which is why `METER_POSITION = (4.35, 2.55)`
+    renders at screen `(2.60, 2.55)` — C04's numbers are not screen positions
+    and should not be copied as if they were. C05 derives its constants from
+    the screen layout instead, through two helpers, `_from_screen` and
+    `_framed`. Any future scene that offsets the camera should do the same.
+  - **Trap 8: a `DecimalNumber` whose updater changes the digits must be
+    settled with `update(0)` before it is the target of a Transform-family
+    animation.** `ty.readout` seeds the number from the tracker it is handed,
+    so C05's meter was built showing the angle, `0.000`, and the first
+    updater tick replaced it with the score, `0.244`. Different digits are
+    different glyphs with different point counts, and `.animate` captures its
+    start and end copies at `begin()` — so the rebuild on frame one left the
+    live mobject with 76 points against interpolation targets with 64, and the
+    reveal died with a numpy broadcast error. C04 never hit it only because
+    three earlier plays happened to run the updater before its meter faded in.
+    This is trap 4 (`set_value` breaking a fixed-frame registration) wearing a
+    third hat: `set_value` throws its glyphs away, and everything holding a
+    reference to the old ones breaks quietly.
+  - **A crashed render hangs instead of exiting**, in
+    `Py_FinalizeEx → wait_for_thread_shutdown`, waiting on a stuck OpenMP
+    worker from the transcription model. So `render.sh ... | tail -30` shows
+    nothing at all: the traceback is printed but the pipe never reaches EOF.
+    Redirect to a file and read it (`> /tmp/x.log 2>&1`) rather than piping,
+    or a real error looks exactly like a slow render. There was a
+    months-stale hung B11 process on this machine from the same cause.
+  - **The scene grew an opening that defines its own terms, on owner review
+    (2026-08-18).** The note was that the intro was confusing — *"what does
+    check the coordinates mean?"* — and, more sharply, that the chapter
+    *"doesn't make sense we just do stuff and don't naturally explore."* Both
+    complaints had the same root, and it is worth carrying into C06–C10
+    because it is a failure that passes every gate: **the scene used a word
+    the picture had never established, and skipped the step that made its own
+    experiment the natural one to run.** "Coordinate" was spoken over two dot
+    strips with no vector and no cloud on screen, and the scene never said
+    that a coordinate IS a direction — so its first half (coordinates) and its
+    second half (directions) read as two unrelated activities, and the closing
+    line landed on nothing. Fixes: `z = (x, y)` is now the first object and
+    its two slots physically become the two strips, with the `x` and `y`
+    glyphs surviving as the same instances all the way to the plane's axes;
+    and the narration states the identity out loud in beat 1 — "two directions
+    we never had to choose: its own coordinates" — which the closing line then
+    comes back to. The general rule: a beat that performs an operation the
+    viewer has not been given a reason to want reads as arbitrary no matter
+    how well it is animated, and no narration-level check will catch it.
+    Storyboard's C05 section has the full record.
+  - **`common/data.py::diagonal_2d` now standardizes `X`,** and the reason is
+    not cosmetic — see the storyboard, decision 2. It was the only consumer,
+    and the change makes the ledger's existing "both marginals are exactly
+    standard normal" claim true of the 200 rendered points rather than of the
+    population. That claim was also mistagged `c06` and is now `c05`.
+  - **`TurningProjection` gained `stack_max_level`.** A projection that sends
+    every sample to the same value gives every sample its own dot-plot level,
+    so `N` points build an `N`-level column. C05 turns through exactly that
+    direction. C07 and C10 should expect to need this too.
+- C04's delivered ElevenLabs file is
+  `media/videos/sigreg_explainer/chapterC/c04_one_shadow_is_not_enough/1080p60/C04.mp4`
+  (47.22 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo, Archer voice).
+  Supersedes the 55.05 s cut, which the owner reviewed and sent back on
+  narration; the animation was approved as it stood and is unchanged apart from
+  the silent Gaussian reference and the marked band. A third pass the same day
+  faded that reference out after beat 3 and replaced the band's fill with two
+  dashed boundaries, both on owner instruction; narration and audio unchanged.
+  It came in at 0:47 against the storyboard's 1:30 estimate. The argument is
+  carried by three settled directions rather than by narration around them, so
+  the length is the scene being done rather than the scene being cut; the
+  per-scene estimates in the storyboard are not tracking anything and should not
+  be trusted for the remaining budget.
 - C03's delivered ElevenLabs file is
-  `media/videos/c03_one_shadow/1080p60/C03.mp4`
-  (112.77 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo, Archer voice).
+  `media/videos/sigreg_explainer/chapterC/c03_one_shadow/1080p60/C03.mp4`
+  (110.27 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo, Archer voice).
+  Rerendered on 2026-08-17 after removing `ThreePanelRig.link()`'s dashed
+  centroid-to-curve connector (it drew as a stray diagonal across two panels
+  in this scene), a narration tightening pass (dropped a literal repeat of
+  C02's closing line, the flagged "simply" from `NARRATION_SPEC.md` §27, and
+  de-duplicated adjacent "now"/"So now" openers), and three animation fixes
+  with no narration change. **The three Manim traps behind them are worth
+  carrying into C04–C10, because each renders without an error:**
+  1. **A frame-coordinate mobject added inside a `ThreeDScene` without
+     `add_fixed_in_frame_mobjects` is projected through the 3-D camera.** A
+     seed arrow built from `rig.arrows()` — correct geometry, pointing right
+     from the circle centre — drew as a short skewed diagonal floating over
+     the circle. Register seeds (and their children) the same way the live
+     rig is registered, or build them after the rig is flat.
+  2. **`FadeIn`/`FadeOut` on an `always_redraw` mobject is a no-op.** The
+     updater rebuilds the mobject every frame and resets the opacity being
+     animated, so the object simply pops. `ActScene.clear_beat`'s docstring
+     already records this; the fix is the b02/b03 pattern — animate a static
+     seed copy, `self.remove` it, then `self.add` the live version.
+     `b03_the_rig.py::average_beat` is the reference implementation.
+  3. **`FadeOut` on a `Group` sets one opacity across the whole family.** A
+     member already sitting at zero opacity is forced back up to visible and
+     fades from there. Carrying the faded `gap_formula` into the rig's exit
+     fade redrew it on top of the score. Remove such mobjects from the scene
+     rather than leaving them at zero opacity.
+
+  Phase 6 now grows only the average arrow, its rider and the `t` readout from
+  registered seeds — at `t = 0` all 220 wrapped arrows coincide, so the bundle
+  reads as one line under the average and the sweep is what fans them apart.
+  Phase 8's contraction dropped the `scale(0.08).move_to(meter)` shrink, which
+  dragged a tray of illegible miniature panels across the frame; the rig now
+  fades in place per `VISUAL_SYSTEM.md` §7 while the score it computed crosses
+  to its labelled position, then the cloud reveals into the cleared frame —
+  one focal event at a time, per §5. Superseded the prior 109.67 s cut.
 - Validation: the current files pass `py_compile`; `preflight` reports no
-  undefined names; narration audit passes every budget (974 spoken words total,
-  C01 140, C02 476, and C03 358); ffmpeg's `-45 dB`/2.2 s silence scan reports no
-  qualifying dead air; complete ffmpeg
-  decodes pass;
-  and `facts.py` passes 24/24. The last fresh Pyright CLI run reported 0 errors and only the three
+  undefined names; narration audit passes every budget (bookmark-stripped
+  spoken words: C01 140, C02 476, C03 344, C04 156, C05 133, total 1,249);
+  `dead_air.py --frozen` reports no dead air in the current C05 low-quality
+  draft; and `facts.py` passes
+  27/27, the two newest claims being C05's construction and its displayed
+  scores. Note that `SCRIPT_chapterC.md`'s header reads 1,470 for the same
+  five scenes: `script_dump.py` counts `[A-Za-z']+` tokens on the raw passage
+  text, so each `<bookmark mark='x'/>` adds three to its total. The two
+  numbers are not in conflict, and neither is wrong — but quote the
+  bookmark-stripped one when talking about narration length.
+  The last fresh Pyright CLI run reported 0 errors and only the three
   intentional Manim wildcard-import warnings; Pyright was not installed in the
   final render shell, so do not represent that earlier run as post-render.
 - Serena/editor language-server results may remain stale until the editor's
@@ -139,8 +414,11 @@ The protected idea arc and style contract remain binding.
   every direction / Cramér–Wold → `M` sampled directions, with quadrature `K`
   introduced only when computation requires it. Do not pull C06–C08's results
   into C01–C03.
-- Next implementation work begins at C04. Do not reopen C01–C03 unless a new
-  rendered observation identifies a regression.
+- After the owner approves the current C05 review draft, next implementation
+  work begins at C06. Do not reopen C01–C04 unless a new rendered observation
+  identifies a regression. C05's old score-vs-angle panel remains removed;
+  the current draft makes the coordinate shortcut and one revealing mixed
+  direction directly.
 
 Relevant 3Blue1Brown source patterns were consulted in the local source tree,
 with C01 now specifically grounded in `_2017/nn/part1.py::NetworkMobject`,

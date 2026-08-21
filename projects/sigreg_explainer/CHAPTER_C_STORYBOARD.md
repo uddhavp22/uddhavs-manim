@@ -1,9 +1,10 @@
 # Chapter C — script & storyboard
 
-**Status:** living production storyboard. C01–C03 are implemented and
-render-verified; C04–C10 remain planned. The generated narration authority for
-implemented scenes is `SCRIPT_chapterC.md`, which must be regenerated from the
-scene source after every voiceover edit.
+**Status:** living production storyboard. C01–C04 are implemented and
+render-verified. C05 has an owner-directed 2026-08-20 low-quality review draft;
+C06–C10 remain planned. The generated narration authority for implemented
+scenes is `SCRIPT_chapterC.md`, which must be regenerated from the scene source
+after every voiceover edit.
 
 **C01–C03 revision note (updated 2026-08-16):** their detailed narration blocks below
 are retained as design history and are superseded by `SCRIPT_chapterC.md`.
@@ -30,7 +31,19 @@ the averaging beat then follows one fixed embedding. The lower equation panel
 expands the square and accounts separately for the zero cross term and the
 partner's expected squared length `D` before simplifying. C02 has a final
 ElevenLabs 1080p60 delivery (163.87 s).
-C03 is now a 358-word, 112.77 s Archer cut. It motivates projection as the
+C03 is now a 344-word, 110.27 s Archer cut (updated 2026-08-17: removed
+`ThreePanelRig.link()`'s dashed centroid-to-curve connector, which read as a
+stray diagonal line across the circle and characteristic-function panels;
+tightened the narration — dropped a literal repeat of C02's closing line, the
+flagged "simply," and duplicated "now"/"So now" openers; and fixed three
+animation defects with no narration change — an unregistered frame-coordinate
+seed arrow that the 3-D camera projected into a stray skewed arrow over the
+circle, a `FadeIn` on `always_redraw` mobjects that silently did nothing and
+let the rig pop, and a `Group` `FadeOut` that forced the already-hidden
+discrepancy formula back to visible on top of the score. See the handoff's
+current-status section for the three Manim traps involved, all of which render
+without an error.) It motivates
+projection as the
 missing `R^D -> R` bridge, projects one embedding before the full batch,
 then projects a second embedding on the opposite side so the signed readout
 visibly changes from positive to negative. It
@@ -110,13 +123,19 @@ Ten scenes, the handoff's Scene A–J order preserved. Files follow `PLAN.md` §
 | 1 | `c01_vectors.py` | `C01` | A | scalars become vectors | 1:10 |
 | 2 | `c02_the_shape_is_the_goal.py` | `C02` | B | shape ladder + the wrong fix | 1:50 |
 | 3 | `c03_one_shadow.py` | `C03` | C | the rig returns on one shadow | 1:38 |
-| 4 | `c04_one_shadow_is_not_enough.py` | `C04` | D | rotate `u`, the shadow lies | 1:30 |
-| 5 | `c05_gaussian_marginals.py` | `C05` | E | `Z = (X, X)` | 1:50 |
+| 4 | `c04_one_shadow_is_not_enough.py` | `C04` | D | turn `u`, the shadow lies | **0:47 built** (est. 1:30) |
+| 5 | `c05_gaussian_marginals.py` | `C05` | E | `Z = (X, X)` | **0:45 owner-review draft** |
 | 6 | `c06_every_direction.py` | `C06` | F | one target, all directions; Cramér–Wold | 1:30 |
 | 7 | `c07_sampling_directions.py` | `C07` | G | `M` | 1:50 |
 | 8 | `c08_frequency_knots.py` | `C08` | H | `K` | 1:20 |
 | 9 | `c09_sigreg.py` | `C09` | I | assemble the formula | 1:30 |
 | 10 | `c10_what_it_claims.py` | `C10` | J | anti-collapse, population limit, honest scope | 2:00 |
+
+C04 came in at 0:47 against a 1:30 estimate, while C05's current owner-review
+draft runs 0:45. The first four delivered scenes run 0:46, 2:44, 1:50 and
+0:47; C05's duration remains provisional until the owner approves narration
+and authorizes a final voice pass. The per-scene estimates are not tracking
+anything and should not be treated as a delivery forecast.
 
 **Estimated total ≈ 16:30.** `PLAN.md` §5 says "~9 min". That estimate is wrong in the same way Chapter B's was (8 min estimated, 17:50 built) — it counted plan items, not scenes. State the honest number now rather than discovering it at master-build time.
 
@@ -312,7 +331,7 @@ candidate draws.
 ---
 
 ### C03 — One projection gives a scalar batch
-*(handoff Scene C · 1:52.77 final Archer delivery · density: low — this is the recognition payoff, and narration should stay out of its way)*
+*(handoff Scene C · 1:50.27 final Archer delivery · density: low — this is the recognition payoff, and narration should stay out of its way)*
 
 **Causal beat.**
 Inherited: measure the collection.
@@ -321,7 +340,7 @@ Observation: those readings are an ordinary batch of numbers, and Chapter B's ri
 Conclusion: one direction produces one score.
 Handed on: does a small score along one direction say anything about the cloud?
 
-**Narration authority.** The current 358-word narration is generated in
+**Narration authority.** The current 344-word narration is generated in
 `SCRIPT_chapterC.md`. Its causal order is fixed: motivate the scalar/vector
 type mismatch; choose a visibly normalized direction; project one positive
 and one negative example; repeat for all `N`; identify the result as the scalar batch
@@ -338,10 +357,10 @@ show that the same finite cloud produces different shadows and scores.
 | 3 | One blue `z_i` is isolated and projected to `s_i=u^Tz_i=+1.93`. A second point on the opposite side is then projected with its own guide, and the displayed readout changes to `s_j=u^Tz_j=-1.53`. The positive/negative rule is therefore shown rather than merely narrated. |
 | 4 | Forty-four representative `MUTED` guides establish repetition without turning the frame into a wire cage; all 220 dots descend into the one-dimensional shadow and the formula becomes `{u^Tz_i}_{i=1}^N⊂R`. |
 | 5 | The same shadow instances flatten into screen space and settle onto `layout.RIG_LINE_CENTRE`; cloud and 3-D furniture are explicitly unregistered so no Cairo billboards bleed into the rig shot. |
-| 6 | `rig.circle`, `rig.axes`, and titles fade in around those exact dots; `rig.mount(scene, dots=shadow_dots, link=True)` adopts them. |
-| 7 | `rig.t` sweeps 0 → 6.5, `rate_func=linear`, and completes the full blue empirical curve before the comparison begins. Arrows wrap, the centroid moves, and the dashed link ties the average to the curve height. |
+| 6 | `rig.circle`, `rig.axes`, and titles fade in around those exact dots; `rig.mount(scene, dots=shadow_dots)` adopts them. `link=True` was dropped 2026-08-17 — the dashed centroid-to-curve connector rendered as a stray diagonal spanning both panels rather than a legible local relationship. |
+| 7 | Before the sweep starts, the average arrow, its rider and the `t` readout grow/fade in from registered static seeds — `b03_the_rig.py::average_beat`'s pattern — and only then are the live `always_redraw` objects added (fixed 2026-08-17). The 220 arrows need no reveal of their own: at `t = 0` they all coincide, so the bundle reads as one line beneath the average. Then `rig.t` sweeps 0 → 6.5, `rate_func=linear`, and completes the full blue empirical curve before the comparison begins. Arrows wrap and the centroid moves; the average-position/curve-height correspondence is carried by that synchronized motion alone, not a drawn connector. |
 | 8 | The `TARGET` standard-normal curve appears exactly on “standard-normal curve.” Only after both complete curves are visible does a separate red marker sweep 0 → 6.5 and fill the weighted gap behind itself; the formula clears before the computed `0.055` appears. |
-| 9 | **The rig contracts back into the 3-D experiment.** The restored cloud and shadow hold beside `score(u_1)=0.055`; then two purposeful camera moves accompany real changes to `u_2` and `u_3`. Every projected point moves, and the displayed score recomputes to `0.046` and `0.872`. |
+| 9 | **The rig hands off to the 3-D experiment**, as two sequential beats (fixed 2026-08-17): the rig fades out in place while the score it computed crosses from beneath the curve panel to its labelled `score(u_1)=0.055` position; only then do the cloud, direction and shadow fade into the cleared frame. The earlier `scale(0.08).move_to(meter)` shrink was dropped — it dragged a tray of illegible miniature panels across the frame, and overlapping it with the 3-D reveal put `restored_line` diagonally across the still-large 2-D panels. Two purposeful camera moves then accompany real changes to `u_2` and `u_3`. Every projected point moves, and the displayed score recomputes to `0.046` and `0.872`. |
 
 Phase 9 is a design commitment worth stating plainly: it is the honest visual
 claim that the scalar pipeline produces one number attached to one direction.
@@ -351,7 +370,7 @@ rig is shown at full size, in its literal `layout` positions, exactly once.
 
 **Which cloud.** The isotropic cloud from C01/C02, unchanged. Recommended over a structured cloud: identity continuity is worth more than an impressive first number, and the small score establishes the baseline that C04 then contradicts. (§7, decision 8.)
 
-**Reuse vs new.** Heaviest reuse in the chapter: `ThreePanelRig` in full (`mount`, `t`, `arrows`, `centroid`, `trace`, `rider`, `link`, `readout`), `layout.RIG_*`, `wrap.ecf`, `wrap.gaussian_cf`, `common/score.py`. New: `CloudProjectionRig`'s first use; the phase-5 lift; the phase-9 contraction.
+**Reuse vs new.** Heaviest reuse in the chapter: `ThreePanelRig` in full (`mount`, `t`, `arrows`, `centroid`, `trace`, `rider`, `readout` — not `link`, dropped 2026-08-17), `layout.RIG_*`, `wrap.ecf`, `wrap.gaussian_cf`, `common/score.py`. New: `CloudProjectionRig`'s first use; the phase-5 lift; the phase-9 contraction.
 
 **Claim flags.**
 - `OBSERVATION` only. The score being small here is *not* evidence the cloud is Gaussian, and the narration must not suggest it is. C04 exists precisely to close that door.
@@ -360,16 +379,108 @@ rig is shown at full size, in its literal `layout` positions, exactly once.
 ---
 
 ### C04 — One shadow can be innocent
-*(handoff Scene D · ~1:30 · density: medium)*
+*(handoff Scene D · implemented 2026-08-17, narration rewritten the same day on owner review · 156 words incl. on-screen · density: medium)*
 
 **Causal beat.**
 Inherited: one direction gives one number.
-Experiment: give the cloud two well-separated clumps and rotate `u` through a half turn.
+Experiment: give the cloud two well-separated clumps and turn `u` through a half turn.
 Observation: along one direction the clumps separate and the score climbs; a quarter turn later they sit on top of one another and the shadow passes for a bell, while the cloud has not moved.
 Conclusion: a small score along one direction is evidence about that direction.
 Handed on: then check the coordinate directions?
 
-**Narration.**
+**Narration authority.** The implemented 156 spoken words are generated in
+`SCRIPT_chapterC.md`. The sweep is **monotone 0 → 180°**, which the earlier
+draft below was not, and the narration follows it: start on the axis the clumps
+separate along and read the large score, turn a quarter and watch the piles
+slide through each other, keep turning until the hole reopens, then draw the
+conclusion. Monotone matters for more than tidiness — the trace is written
+left to right exactly once, with no doubling back over itself, and a half turn
+is every distinct direction in the plane because `u` and `−u` give the same
+shadow up to sign.
+
+**The cloud.** `data.clumped_3d()` — `bimodal_1d` along x, the isotropic
+cloud's own coordinates along y and z, every column at mean 0 and unit
+variance. The unit variance is load-bearing: with every direction reading a
+batch at the same scale, the alarming direction cannot be detecting a scale
+mismatch, so the claim really is about shape. Scores: `17.095` at 0°, `0.046`
+at 90°, both checked in `facts.py`.
+
+**Persistent objects.**
+
+| | |
+|---|---|
+| Enters | C03's exact last frame — same cloud, camera at `phi=76°, theta=12°`, `u_3` on its shadow, `score(u_3)=0.872` in the same corner |
+| Transforms | C03's apparatus fades out first, then one camera move both flattens onto the turning plane (`phi=20°, theta=-90°`) and slides the world left via `frame_center` to clear the panels, while the same 220 dot instances morph into two clumps; then one angle tracker drives arrow, line, all 220 shadow feet, the live `score(u)` readout and the trace |
+| Remains | cloud, arrow, meter, and the completed score-vs-angle trace with both settled scores marked (it is the scene's product) |
+| Exits | the axis tips and the z axis, with the camera; the two-clump structure at the cut |
+
+**The shadow is a dot plot, stacked along the line's own normal.** 220 feet
+drawn straight onto the line pile into one bar and hide the only thing the
+scene claims. `layout.stack_levels` is the project's dot-plot rule; stacking
+along the normal rather than a fixed screen axis keeps the whole plot rigidly
+attached to the direction, so it turns with it. That is what makes "the two
+piles slide straight through each other" a thing you watch rather than a thing
+you are told.
+
+**The silent Gaussian reference (owner instruction, 2026-08-17).** A standard
+normal is drawn top-left, in `TARGET`, on the words "and a Gaussian has no hole
+in the middle", and then left alone for the rest of the scene. It is never
+named, labelled or pointed at, and it fades out in the silence after beat 3,
+once both judgements have been made against it. Leaving it up past that turns a
+reference into furniture, and nothing in beats 4 or 5 is a shape judgement. The
+scene asks for two shape judgements against a bell — two piles with a hole,
+then a single hump — and had been asking the viewer to make them against a
+remembered bell rather than a drawn one. Because
+it is on screen, beat 3 no longer has to say "close enough to a bell" at all;
+the words shrank as the picture did the work. It is deliberately **not** in the
+panel column: the free space there sits directly above "score along each
+direction", and a caption that close reads as labelling the curve above it.
+Caught in a draft frame, which is why draft frames come before ElevenLabs.
+
+**The ending is the band.** Beat 5 marks the stretch of the trace scoring
+below `BAND_LEVEL = 0.5` — 50° to 140°, exactly half the half turn — and says
+so. It is marked with **two dashed MUTED boundary lines, not a filled
+rectangle**: the shaded block was rejected on looks, and the dashed form turns
+out to be the more honest one anyway. A fill behind the curve reads as an area
+*under* it, which is an integral and not the claim; it also dulled the trace it
+sat behind. MUTED rather than DIRECTION because green verticals crossing a
+green curve separate badly, and dashed MUTED is already this project's
+annotation-guide convention (`CloudProjectionRig.guide_lines`). The scene's verdict is not that one direction happened to be innocent but
+that half of them are, and that is a picture rather than a sentence. The two
+settled scores are marked first ("Seventeen here, and almost zero here" is
+deictic, so the marks *are* the sentence), the band second, and the cloud comes
+back to full brightness on the closing words "the cloud behind it". `facts.py`
+checks the fraction, and checks that the angle grid is uniform — a half turn's
+node fraction only equals a direction fraction on a uniform grid.
+
+**Continuity dividend, taken.** The alarming direction's shadow is the
+**two-clump batch grammar from `b00` and `b11`** — `data.bimodal_1d`, the
+chapter's running example, now revealed as a shadow of a structured cloud.
+
+**One source of truth.** A single `ValueTracker(theta)`, and one tabulated
+score curve read by the live meter (`np.interp`), the trace, and the settled
+marks alike. Handoff §11: never a hard-coded label beside a separately
+evaluated animation.
+
+**Reuse vs new.** Reuses `CloudRig`, `CloudProjectionRig` (for the seam
+snapshot only), `common/score.py`, `layout.stack_levels`, `ty.readout`. New:
+`common/project.py::TurningProjection` — angle state, updater-driven geometry,
+and the score table. The trace *panel* is scene-local: the numbers are what
+C05 and C07 will reuse, the layout is not.
+
+**Vertical treatment (§7 decision 6).** C04 plots its full range linearly,
+`0 → 18`, with both settled scores labelled numerically. It can afford to,
+because `17.095` against `0.046` only has to read as "huge versus almost
+nothing". C05 turned out to be able to afford the same treatment over
+`0 → 90` — see §7 decision 6, now closed.
+
+**Claim flags.**
+- `OBSERVATION` → `CLAIM`, and the claim is the weak one: one projection is insufficient. Do not overreach into "therefore we need all of them" yet; C05 has to earn that.
+- Verified in `facts.py` — `score(x) = 17.095`, `score(y) = 0.046`, and both x and y coordinates at unit standard deviation.
+- Verified in `facts.py` — half the half turn (50° to 140°) scores below `BAND_LEVEL = 0.5`, on a uniform angle grid, which is what makes the spoken "half of every direction in this plane" a checked number rather than an impression.
+
+<details>
+<summary>Superseded narration draft (kept as design history)</summary>
 
 > <bookmark mark='clumps'/>Give the cloud some structure — two clumps, well separated.
 >
@@ -377,30 +488,92 @@ Handed on: then check the coordinate directions?
 >
 > The cloud never changed. So a small score along one direction is evidence about that direction, and nothing more.
 
-**Persistent objects.**
+</details>
 
-| | |
-|---|---|
-| Enters | the cloud (restructured into two clumps by one morph, same dot instances), the `DIRECTION` arrow, the shadow strip, the `𝒯(u)` meter from C03's phase 8 |
-| Transforms | one angle tracker drives everything: arrow, projection line, every shadow dot, the meter value, and a new `DIRECTION` score-vs-angle trace drawn beneath the cloud |
-| Remains | cloud, arrow, meter, the score-vs-angle trace (it is the scene's product) |
-| Exits | the two-clump structure at the cut |
+<details>
+<summary>Superseded delivered narration, 183 words (rewritten 2026-08-17 on owner review)</summary>
 
-**Continuity dividend.** Orient the clumps so that the alarming direction's shadow is visually the **two-clump batch from `b00` and `b11`** — the chapter's running example, now revealed as a shadow of a 2-D cloud. This costs nothing and pays a lot: the viewer has seen that exact dot pattern score `1.79` in Chapter B.
+The owner's gripes: unclear and slightly redundant explanations, missing
+conversational connectors, weak ending. Banned outright — "and it should",
+"if we", "the cloud stays the same".
 
-**One source of truth.** A single `ValueTracker(theta)`. Handoff §11 is explicit that arrow, projections, guide lines, label and readout all read it. This is where Chapter B's sync errors would recur if they are animated independently.
+> Suppose the cloud has some structure. Two clumps, pulled well apart, and the same embeddings we have had all along.
+>
+> Now take the direction those clumps separate along. Every embedding still lands somewhere on the line, but the shadow comes out as two piles with a hole between them, and a standard Gaussian has no hole in the middle. So the score climbs, and it should.
+>
+> Turn the direction a quarter of the way round. The cloud is not moving, only the line we are reading it along. The two piles slide straight through each other, and what is left is a single hump, close enough to a bell that the score drops to almost nothing.
+>
+> Keep turning and the hole opens again. Every direction in this plane has its own score, and a half turn covers all of them.
+>
+> The cloud never changed. There is a wide band of directions where it passes, so a batch checked along any one of them would look fine. A small score is evidence about the direction we picked, and nothing about the cloud behind it.
 
-**Reuse vs new.** Reuses `CloudProjectionRig`, `common/score.py`, `data.bimodal_1d`'s visual grammar. New: the score-vs-angle trace factory — which lives in `common/project.py` because C05 and C07 both need it.
-
-**Claim flags.**
-- `OBSERVATION` → `CLAIM`, and the claim is the weak one: one projection is insufficient. Do not overreach into "therefore we need all of them" yet; C05 has to earn that.
+</details>
 
 ---
 
 ### C05 — Both coordinates Gaussian, and every point on a line
-*(handoff Scene E · ~1:50 · density: medium-high — this is a proof-shaped beat)*
+*(handoff Scene E · **owner-review draft 2026-08-20, 0:45** · density: medium — one counterexample, one lesson)*
 
-**The four-step reveal is fixed by the handoff and is not negotiable.** The design problem is that steps 1–2 die if the viewer can already see the cloud. So the scene opens with the marginals *only*.
+**Current authority — 2026-08-20 owner-review rework.** This scene keeps its
+load-bearing inference and removes the repeated explanation around it: **two
+coordinate-wise Gaussian checks do not establish that the whole
+representation is Gaussian.** The cloud `Z=(X,X)` is visible from the first
+frame as a diagonal line. One projection apparatus then survives the whole
+experiment; no target curve, direction line, shadow batch, or score panel is
+swapped for an independently created replacement.
+
+| Beat | Visible argument | What the viewer should infer |
+|---|---|---|
+| 1 | The diagonal cloud is already visible while C04's limitation leads to the two coordinate axes. | Checking the horizontal and vertical directions is the natural shortcut after one direction failed. |
+| 2 | Representative dashed guides drop points perpendicularly onto the actual x-axis. The literal feet then spread into a readable dot plot under one amber `N(0,1)` curve; `score(x)=0.244` appears. | “Score the x-coordinates” means project the cloud onto its horizontal axis, then apply the scalar score to those projected values. |
+| 3 | The same direction line, arrow, shadow dots and amber curve rotate continuously onto the y-axis. `score(y)=0.244` joins the first result. | Because `y` copies `x`, the second coordinate produces the same scalar batch and the same low score. |
+| 4 | The apparatus turns only 45° farther, toward `y-x`. The dot plot contracts to one literal point at the origin while `score(u)=81.785` appears; then the testing apparatus clears back to the bare line cloud. | The axes never compared the two coordinates. A mixed direction exposes the dependence, so testing must extend beyond the axes. |
+
+The current draft narration is 133 spoken words and the low-quality render is
+45.20 seconds. It uses three continuous spoken passages and bookmark-locks the
+x projection, dot-plot stack, y turn, mixed turn, zero contraction and verdict
+to the phrases that motivate them. The previous `x+y` wide-shadow example was
+cut: it was mathematically correct but did not add a necessary inference once
+the `y-x` collapse had exposed the missed dependence. The source and
+`SCRIPT_chapterC.md` are the authority for this review draft. It has **not**
+received an owner-authorized ElevenLabs/1080p delivery; the 60.97-second file
+documents the superseded cut.
+
+**Superseded 2026-08-18 production record.** The notes below describe the
+previous strip-and-merge cut; they are retained for provenance and reusable
+implementation lessons only. Where they conflict with the current rework,
+the source and `SCRIPT_chapterC.md` win.
+
+The four-step reveal survived intact. Nine things were decided during implementation:
+
+1. **It is a `ThreeDScene` whose camera never moves,** locked at `phi=0, theta=-90°` — the orientation an ordinary 2-D `Scene` already has. That buys `CloudRig` and `TurningProjection` unchanged, both of which are written against a 3-D scene's fixed-orientation registry, on a scene that is honestly flat. C04 spent this chapter's one purposeful camera move; §8 does not give C05 another.
+2. **`data.diagonal_2d` now standardizes `X`.** This is not tidying. `u^T Z = (u₁ + u₂) X` depends on the direction *only* through the scale `|u₁ + u₂|`, so an unstandardized `X` — this seed's raw draw has sample mean 0.043, sd 1.021 — puts the best-fitting scale slightly off 1 and moves the score's two minima **off the axes**, to 1° and 89°. The scene's closing claim would then be false of the picture it is read from. Standardizing pins the minima to the axes by construction. It also makes the ledger's word *exactly* ("both marginals are exactly standard normal") true of the 200 points on screen rather than of the population they came from.
+3. **The two marginals are world-coordinate dot plots, not fixed-frame ones,** so the merge is a straight interpolation in the same coordinate system the cloud lives in and every dot lands exactly on the point it belongs to. The horizontal strip sits below the plane's region and the vertical strip to its left — the marginal-scatter layout — because a *diagonal* cloud reaches as far in `y` as its own `x` marginal reaches in `x`, so the strips have to sit outside the square rather than beside it. That in turn set `SCALE = 0.78`.
+4. **The merge is 200 pairs converging,** each pair as one `AnimationGroup` inside a `LaggedStart` at `lag_ratio=0.0018`, so no dot is ever seen waiting for its partner. The arrived strip dots sit exactly on the `CloudRig`'s own dots, same radius and colour, so ownership changes hands invisibly and the instances that carry the updater are the ones every later beat projects.
+5. **Two static scores, not one meter, in beats 1–2.** `score(x)` beside the horizontal strip, `score(y)` beside the vertical one, both reading `0.244`. A single shared meter could not hold both on screen at once, and the storyboard's deliberate hold wants exactly that. C04's live `score(u)` meter arrives later, when there is a direction to be live about, and its first reading is the same 0.244.
+6. **C04's silent-Gaussian rule, applied twice.** A `TARGET` normal is stretched to each strip's own extent and laid over it — a fair overlay, since a dot plot's pile height is the density up to one constant. Never named, never labelled, and both fade in the silence after the hold, once both comparisons have been made.
+7. **The score-vs-angle panel sits a unit further right than C04's** (screen `x = 3.55` rather than `2.60`). Draft frames showed that at C04's position the plane's `x` label, in the half-unit gap between the two panels, read as the *trace panel's* axis label. C05's world is narrower than C04's and can afford the shift.
+8. **The shadow's dot plot is capped at 15 levels** (`TurningProjection.stack_max_level`, new). At 135° every value is zero, so an uncapped dot plot gives each of 200 samples its own level and builds a column straight off the top of the frame. Capping folds the excess into the top, and a point mass draws as a short dense knot at the pile's own established maximum height.
+9. **The apparatus leaves on the closing line.** At a half turn the projection line lies exactly along the `x` axis and hides it, so lighting the two axes green would light up an axis nobody can see — and a scene whose verdict is about the whole *set* of directions should not end with one of them still picked out. Arrow, line and shadow fade; the completed trace is the record of the turn.
+10. **The wide-diagonal claim now carries its own reference.** When the narration says that the 45° shadow is still bell-shaped but no longer standard, a compact amber `N(0,1)` curve appears in that shadow's rotating coordinates. Its narrower horizontal span makes the scale mismatch visible; it leaves before the anti-diagonal collapse, where a bell would compete with the point-mass picture.
+
+**The superseded narration was 178 spoken words**, in seven blocks. It was
+rewritten once on owner review — the first cut ran 126 words and 0:43, and the
+note was that the intro and the explanations were confusing: *"What does check
+the coordinates mean? this chapter doesn't make sense we just do stuff and
+don't naturally explore."* Those defects motivated the later structural
+rework recorded above.
+
+1. **"Check the coordinates" was an instruction the viewer could not follow.** It was spoken over two dot strips, with no cloud and no vector on screen — so "coordinate" had no referent, and naming it would not have fixed that, because it is exactly the kind of word that feels understood while staying vague. The fix is visual and it is now the scene's first object: `z = (x, y)`, and the two slots physically leave it to become the two strips. The glyphs `x` and `y` are the same instances throughout — a slot of the embedding, then a strip's label, then an axis of the plane — so the merge in beat 3 reads as undoing the split rather than as a new trick.
+2. **The scene never said that a coordinate IS a direction.** This is the deeper one. Without it, beats 1–3 (coordinates) and beats 5–7 (directions) are two unrelated activities, and the closing line lands on nothing, because the viewer was never told that the two things checked at the start were directions at all. The narration now makes it the spine: *"every embedding already comes with two directions we never had to choose: its own coordinates."* That single clause defines the term, states why the coordinates are the appealing thing to reach for — they feel canonical, like they are not a choice — and sets up the closing line, which now comes back to the same phrase: *"the two we never had to choose were both of them."*
+
+The beat order was also changed so each beat answers the previous one rather than following it. C04 ends "a low score tells you about the direction you picked"; the move that follows is *use more than one*, and then *which ones* — not "check the coordinates" out of nowhere. And the reveal beat now spends its words on the part no picture can carry: the two `0.244`s stay on screen beside a cloud that is a line, so the contradiction is visible and the narration is free to explain *why a coordinate check could never have caught it* — a marginal is a statement about one slot on its own, and dependence lives between slots, where neither of them is looking. It follows C04's rules: every beat opens on a connector (*So / Now / Then / And / Keep*), none of the three banned phrases appears, and nothing is said that the animation already shows — "every sample landed on the diagonal" was cut and only its *reason* kept, because the merge is that sentence. Two lines carry content the picture cannot: "the same number exactly", which plants the secret in beat 1 and pays it off ten seconds later, and "the right shape, at the wrong scale", which forecloses the wrong reading that every off-axis projection is non-Gaussian. It ends on the two marked minima and the line **"And the two we checked were both of them."**
+
+---
+
+**Historical pre-rework plan — superseded.** The design below described the
+former marginal-strip opening. It is retained for provenance only; do not use
+it as implementation authority.
 
 | Step | Screen | Sound |
 |---|---|---|
@@ -688,9 +861,9 @@ Handoff §9 requires all five fields per boundary. Audio: every scene opens and 
 | **B11 → C01** | "…the same thing with a whole batch of vectors." | vector columns, amber `?`, `𝒯 ∈ ℝ` | "In the last chapter, we built the Epps-Pulley statistic…" | the Epps–Pulley equation | **Deliberate recap cut.** C01 compresses Chapter B to the equation it earned, then immediately reconnects it to encoder outputs. |
 | **C01 → C02** | "Suppose we want it to follow a standard Gaussian in D dimensions." | centred 3-D cloud, `Z`, and the target label | "Suppose the cloud starts losing its spread." | the same cloud geometry | Cloud and axes persist in content; C02 begins manipulating the object C01 just named, then motivates why this target and a trainable loss are needed. |
 | **C02 → C03** | "…the loss has to compare distributions rather than assign partners." | the round cloud, restored | "Choose a unit direction u." | the same cloud | Cloud persists. Pairing arrows and partner dots are gone before the cut. |
-| **C03 → C04** | "Call the score T of u." | dimmed cloud + `𝒯(u)` meter | "Give the cloud some structure — two clumps." | the same cloud and meter | Cloud and meter persist; the cloud restructures on the first bookmark. The rig is gone (contracted in C03 phase 8). |
-| **C04 → C05** | "…evidence about that direction, and nothing more." | two-clump cloud, direction arrow, score-vs-angle trace | "Two coordinates, each measured on its own." | two dot strips, no cloud | **Genuine reset.** Slower fade. The joint cloud must be absent for the reveal to work. Only the `𝒯` meter persists. |
-| **C05 → C06** | "…exactly two make this cloud look right." | diagonal cloud, trace with two marked minima | "Then the test has to be every direction at once." | the isotropic cloud | Reset. "Then" carries the causal link; the picture does not. |
+| **C03 → C04** *(built)* | "…but it cannot tell us whether the whole cloud does." | cloud at `phi=76°, theta=12°`, `u_3` arrow, its line, its 220 shadow feet, `score(u_3)=0.872` | "Now suppose the cloud has structure." | **the identical frame**, rebuilt from the same `CloudRig` and a `CloudProjectionRig` on `u=(0,1,0)` | Cloud persists. C03's arrow, line, shadow and score fade out on the first beat before the cloud changes, so the beat has one focal event; the rig itself was already gone (C03 phase 9). |
+| **C04 → C05** *(built)* | "…It tells you nothing about the cloud behind it." | two-clump cloud, direction arrow, score-vs-angle trace | "One direction was not enough." | coordinate axes pulse, then the diagonal `y=x` cloud appears | **Genuine reset.** No testing apparatus persists, but "So" carries the argument across the cut: once one direction is insufficient, the coordinate axes are the natural next shortcut. |
+| **C05 → C06** | "…test directions that mix the coordinates." | bare diagonal cloud on a plane, labelled `y=x` | "Then the test has to be every direction at once." | the isotropic cloud | Reset. "Then" carries the causal link; C05 leaves no direction, shadow, or target on screen, so C06 opens cleanly on the broader turn. |
 | **C06 → C07** | "…together with the uniqueness result from Chapter B." | theorem card over the isotropic cloud | "Every direction is a whole sphere of them…" | the same cloud, card gone | Cloud persists; the theorem card exits during C06's own final beat, not at the cut. |
 | **C07 → C08** | "They don't turn a finite batch into a proof." | cloud, direction fan, purple average | "One of those scores is still an integral…" | B11's gap axes and weighted area | Deliberate object return to Chapter B's picture. Hard cut. |
 | **C08 → C09** | "…not much left to gain." | knots on the gap axes, `K` | "Every piece of this is already on screen." | the C07 frame restored | Hard cut back to the cloud and fan. Justified: C09 assembles from *visible* objects, so they must be visible. |
@@ -712,7 +885,10 @@ Every mathematical statement in Chapter C, with its status. This is the table `f
 | 4 | Nothing about the optimization trajectory of the pairing loss | C02 | **FORBIDDEN** |
 | 5 | `u^T z_i` for a unit `u` is an ordinary scalar batch | C03 | definition |
 | 6 | A small `𝒯(u)` is evidence about `u` alone | C03, C04 | `CLAIM`, earned by C04 |
-| 7 | `Z = (X, X)` has both marginals exactly `N(0,1)`, covariance eigenvalues `(2, 0)` | C05 | `exact_derivation` |
+| 6a | On `data.clumped_3d()`, `score(x) = 17.095` and `score(y) = 0.046`, with both coordinates at unit variance | C04 | `exact_computation`, verified in `facts.py` |
+| 6b | On `data.clumped_3d()`, half of every direction in the turning plane (50°–140°) scores below 0.5 | C04 | `exact_computation`, verified in `facts.py` |
+| 7 | `Z = (X, X)` has both marginals exactly `N(0,1)`, covariance eigenvalues `(2, 0)` | C05 | `exact_derivation`, verified in `facts.py` — *exactly* is why `data.diagonal_2d` standardizes |
+| 7a | On `data.diagonal_2d()`, `score(x) = score(y) = 0.244`, `10.284` at 45°, `81.785` at 135°; the directions scoring below 1.0 are exactly two arcs, one around each axis | C05 | `exact_computation`, verified in `facts.py` |
 | 8 | Gaussian marginals do not imply joint Gaussianity | C05 | `CLAIM`, proved by construction |
 | 9 | `Z ~ N(0, I_D) ⟹ u^T Z ~ N(0,1)` for every unit `u` | C06 | `exact_derivation`, demonstrated |
 | 10 | Every one-dimensional projection standard Gaussian ⟹ joint is `N(0, I_D)` | C06 | **`theorem_statement`** — Cramér–Wold, cited, never "therefore" |
@@ -763,10 +939,12 @@ Handoff §7 permits the claim only with the exact experimental setup recorded in
 **Fallback:** attribute the figure to the source in narration and show only qualitative agreement.
 **Cost if wrong:** a number on screen that `facts.py` cannot check — the class of defect that `SOURCE_MAP.md` §6a–6c exists to catch.
 
-**6. Vertical treatment of the score-vs-angle plot in C05.**
+**6. Vertical treatment of the score-vs-angle plot in C05. — CLOSED 2026-08-18, built.**
 The anti-diagonal projection of `Z = (X, X)` is identically zero, so its Epps–Pulley score is order 10¹–10² at `N = 200`, against ~0.03 on the coordinate axes. A linear axis makes the two near-zero minima indistinguishable from the axis line; a log axis introduces a reading the viewer has not been prepared for.
 **Options:** (a) clip the axis and mark the excursion as off-scale; (b) plot on a compressed scale with the two minima annotated numerically; (c) reduce `N` so the dynamic range is smaller.
-**Recommendation:** (a), with the two minima carrying explicit numeric labels so the claim "exactly two directions look right" is legible rather than inferred from pixel height. Decide before implementation — it changes what C04's trace looks like too, since the two scenes share the component.
+**Was recommended:** (a), with the two minima carrying explicit numeric labels.
+**Resolved as: linear over the whole range, `0 → 90`, plus the numeric labels — the half of (a) that was actually load-bearing.** The clip is unnecessary, and the recommendation had the requirement backwards. C05 does not need the two minima *distinguished from* the axis line; it needs them **on** it, because "exactly two directions look right" is read as "the curve touches the floor exactly twice". Distinguishing them from the floor would have weakened the very claim the clip was meant to protect. What the clip was really guarding was the middle of the range, and that survives on its own: the 45° bump sits at `10.284`, which on a `0 → 90` axis of height 2.85 stands 0.33 world units clear of the axis — about six dot radii, plainly a bump and plainly not the floor. Two 0.244 marks name the minima.
+Three preconditions made this work, and a future scene reusing the component should check them rather than assume the outcome: the dynamic range is 335:1 rather than the 10³ the note feared; the peak is a broad hump (35° of the half turn scores above 40) rather than a needle, so it reads as a region and not as a spike artefact; and `data.diagonal_2d` was changed to standardize `X`, without which the minima do not sit on the axes at all (see below).
 
 **7. Does the `data.ring_2d` beat survive?**
 It forecloses "SIGReg is just a covariance penalty," costs ~8 seconds in C10, and the data already exists.

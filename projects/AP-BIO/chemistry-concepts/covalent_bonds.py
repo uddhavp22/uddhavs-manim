@@ -24,6 +24,7 @@ from manim import (
     LEFT,
     RIGHT,
     Rotating,
+    there_and_back,
     UP,
     ValueTracker,
     VGroup,
@@ -41,7 +42,7 @@ class CovalentBonds(Slide):
     def construct(self):
         heading = title("Covalent Bond").to_edge(UP, buff=0.6)
         self.play(FadeIn(heading, shift=0.2 * UP), run_time=0.6)
-        self.wait(0.8)
+        self.wait(0.5)
         self.next_slide()
 
         first = atom("H", color=ATOM_PRIMARY).move_to(3.0 * LEFT + 0.4 * UP)
@@ -70,14 +71,13 @@ class CovalentBonds(Slide):
         self.play(
             Rotating(
                 first_shell.electrons, TAU, about_point=first.get_center(),
-                run_time=1.8,
+                run_time=1.1,
             ),
             Rotating(
                 second_shell.electrons, TAU, about_point=second.get_center(),
-                run_time=1.8,
+                run_time=1.1,
             ),
         )
-        self.wait(0.3)
         self.next_slide()
 
         # Bonding is an attraction, not a line appearing between two fixed
@@ -87,9 +87,8 @@ class CovalentBonds(Slide):
         self.play(
             first_group.animate.shift(1.5 * RIGHT),
             second_group.animate.shift(1.5 * LEFT),
-            run_time=1.2,
+            run_time=1.0,
         )
-        self.wait(0.3)
         self.next_slide()
 
         bond = covalent_bond(
@@ -105,7 +104,16 @@ class CovalentBonds(Slide):
             run_time=1.2,
         )
         self.play(Create(bond.line), FadeIn(bond.shared_orbit), run_time=1.0)
-        self.wait(0.4)
+        # A brief scale pulse on the newly-formed bond -- the moment reads
+        # as an event, not a freeze-frame, without any bounce/elastic
+        # easing (banned by VISUAL_SYSTEM.md #6): `there_and_back` is a
+        # smooth ease out and back, one animation, one focal event.
+        bond_visual = VGroup(bond.line, bond.shared_orbit)
+        self.play(
+            bond_visual.animate.scale(1.1),
+            rate_func=there_and_back,
+            run_time=0.4,
+        )
 
         # The shared pair actually keeps moving, along the ellipse's own
         # boundary via point_from_proportion -- not a rigid rotation about
@@ -131,14 +139,14 @@ class CovalentBonds(Slide):
             VGroup(first, second), -UP, buff=0.55
         )
         self.play(FadeIn(formula), run_time=0.5)
-        self.wait(1.2)
+        self.wait(0.8)
         self.next_slide()
 
         explanation = caption(
             "Atoms share pairs of electrons to form strong links inside molecules."
         ).move_to(2.9 * -UP)
         self.play(FadeIn(explanation, shift=0.15 * UP), run_time=0.6)
-        self.wait(3.0)
+        self.wait(2.2)
         self.next_slide()
 
         bond.electrons[0].clear_updaters()

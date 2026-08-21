@@ -346,16 +346,85 @@ def weighting_preserves_the_verdict():
 
 
 # ------------------------------------------------------- Chapter C (unbuilt)
-@claim("c06", "both marginals are exactly standard normal, and the cloud is a line")
+@claim("c05", "both marginals are exactly standard normal, and the cloud is a line")
 def diagonal_is_rank_one():
+    """C05's construction, asserted as construction rather than measured.
+
+    `exactly` is the load-bearing word and it is why `data.diagonal_2d`
+    standardizes: a raw draw of 200 has sample mean 0.043 and sd 1.021, so the
+    sentence would be true only of the population it was drawn from and not of
+    the 200 points on screen.
+    """
     z = data.diagonal_2d(200)
     eig = np.linalg.eigvalsh(np.cov(z.T))
     u = np.array([1.0, -1.0]) / np.sqrt(2)
     proj = z @ u
     assert eig[0] < 1e-12, eig
     assert np.abs(proj).max() < 1e-12
+    # Both coordinates, and both of them the same numbers in the same order --
+    # which is what makes score(x) and score(y) agree to every place printed.
+    for column in z.T:
+        assert abs(float(column.mean())) < 1e-12, column.mean()
+        assert abs(float(column.std()) - 1.0) < 1e-12, column.std()
+    assert np.array_equal(z[:, 0], z[:, 1])
     return f"covariance eigenvalues ({eig[1]:.2f}, {eig[0]:.1e}); " \
-           f"projection on (1,-1)/sqrt2 max |{np.abs(proj).max():.1e}|"
+           f"projection on (1,-1)/sqrt2 max |{np.abs(proj).max():.1e}|; " \
+           f"both columns mean {z[:, 0].mean():.1e}, sd {z[:, 0].std():.12f}"
+
+
+@claim("c05", "exactly two make this cloud look right")
+def only_the_axes_look_right():
+    """C05's closing claim, read off the same trace the scene draws.
+
+    `u^T Z = (u_1 + u_2) X`, so the score depends on the direction only through
+    the scale `|u_1 + u_2|`, which is 1 exactly on the two coordinate axes and
+    ranges over [0, sqrt(2)] elsewhere. "Exactly two" therefore has to mean:
+    the set of directions scoring near the floor is two arcs, and each one
+    contains a coordinate axis. Both halves are checked, along with the
+    uniformity of the grid -- a half turn's node fraction is only a fraction of
+    directions when the nodes are evenly spaced.
+
+    The level is a reading aid, not a threshold the chapter has defined, and it
+    is never printed. It is set an order of magnitude above the two minima and
+    an order below the 45-degree bump the scene calls "too wide", so the two
+    arcs it isolates are the two the picture shows touching the floor.
+    """
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+
+    z = data.diagonal_2d()
+    angles = np.linspace(0.0, np.pi, 361)
+    scores = np.array([
+        epps_pulley(z @ np.array([np.cos(a), np.sin(a)]), EP_LAMBDA, EP_GRID)
+        for a in angles
+    ])
+    steps = np.diff(angles)
+    assert float(steps.max() - steps.min()) < 1e-12, steps
+
+    # The two coordinate directions, and the two the scene calls out as wrong.
+    first, second = float(scores[0]), float(scores[180])
+    wide, collapsed = float(scores[90]), float(scores[270])
+    # "The same number, exactly", spoken -- and the scene prints three places.
+    # The two are not bit-identical because `cos(pi/2)` is 6.1e-17 rather than
+    # zero, so the agreement is asserted at the precision the viewer is shown
+    # and a little beyond, not at the precision of the float.
+    assert abs(first - second) < 1e-9, (first, second)
+    assert abs(first - float(scores[360])) < 1e-9   # 180 degrees is 0 degrees
+    assert wide > 30 * first, (wide, first)
+    assert collapsed > 7 * wide, (collapsed, wide)
+
+    # Two arcs on the half turn, one around each coordinate axis. The last node
+    # is dropped because 180 degrees IS 0 degrees, and the remaining 360 are
+    # then treated as a circle -- so the run straddling the wrap counts once,
+    # which is the only way "exactly two" can be counted honestly here.
+    low = scores[:-1] < 1.0
+    boundaries = int(np.count_nonzero(low != np.roll(low, 1)))
+    assert boundaries == 2 * 2, boundaries
+    assert low[0] and low[180], (low[0], low[180])  # one arc per axis
+    fraction = float(low.mean())
+    assert 0.10 <= fraction <= 0.16, fraction
+    return (f"score {first:.3f} on both axes, {wide:.3f} at 45 deg, "
+            f"{collapsed:.3f} at 135 deg; {fraction:.2f} of the half turn "
+            f"below 1.0, in exactly two arcs")
 
 
 @claim("c03", "the arrows average to a pull toward the origin")
@@ -367,6 +436,65 @@ def random_target_pulls_to_origin():
     rhs = float(z @ z + D)
     assert abs(lhs - rhs) / rhs < 0.01, (lhs, rhs)
     return f"E||z - z*||^2 = {lhs:.3f} vs ||z||^2 + D = {rhs:.3f}"
+
+
+@claim("c04", "half of every direction in this plane sits down in that band")
+def half_the_plane_is_innocent():
+    """C04's closing claim, and the shaded band it is read off.
+
+    The scene brackets every direction scoring below `BAND_LEVEL` between two
+    dashed boundaries and says half of the plane sits in there. A half turn is every distinct direction (u and -u
+    give the same shadow up to sign), so the fraction of the tabulated half
+    turn IS the fraction of directions -- provided the table is the uniform
+    grid the scene plots, which is asserted here too.
+    """
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+
+    band_level = 0.5           # chapterC/c04_one_shadow_is_not_enough.BAND_LEVEL
+    z = data.clumped_3d()
+    angles = np.linspace(0.0, np.pi, 361)
+    scores = np.array([
+        epps_pulley(z @ np.array([np.cos(a), np.sin(a), 0.0]),
+                    EP_LAMBDA, EP_GRID)
+        for a in angles
+    ])
+    low = scores < band_level
+    fraction = float(low.mean())
+    # "Half", spoken. Anything outside this and the sentence needs rewriting.
+    assert 0.45 <= fraction <= 0.55, fraction
+    spread = np.degrees(angles[low])
+    assert spread.min() > 5.0 and spread.max() < 175.0, spread
+    # A uniform grid, so counting nodes is counting directions.
+    steps = np.diff(angles)
+    assert float(steps.max() - steps.min()) < 1e-12, steps
+    return (f"{fraction:.2f} of the half turn scores below {band_level}: "
+            f"{spread.min():.0f} to {spread.max():.0f} degrees")
+
+
+@claim("c04", "the score climbs / drops to almost nothing")
+def one_shadow_can_be_innocent():
+    """C04's two settled directions, exactly as the meter and the marks read.
+
+    The scene displays 17.095 along the axis the clumps separate on and 0.046 a
+    quarter turn later. Both come from `common/score.py` on the same array that
+    positions the shadow dots, so this recomputes them from the scene's own
+    `clumped_cloud()` rather than from a transcribed constant.
+    """
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+
+    z = data.clumped_3d()
+    alarming = epps_pulley(z @ np.array([1.0, 0.0, 0.0]), EP_LAMBDA, EP_GRID)
+    innocent = epps_pulley(z @ np.array([0.0, 1.0, 0.0]), EP_LAMBDA, EP_GRID)
+    # Displayed to three places, so the assertion is on what the viewer reads.
+    assert f"{alarming:.3f}" == "17.095", alarming
+    assert f"{innocent:.3f}" == "0.046", innocent
+    # The claim is about shape, not spread: every direction in the turning
+    # plane reads a batch at the same scale, so a scale mismatch cannot be
+    # what the alarming direction is detecting.
+    sd = z.std(axis=0)
+    assert abs(sd[0] - 1.0) < 0.02 and abs(sd[1] - 1.0) < 0.02, sd
+    return f"score(x-axis) = {alarming:.3f}, score(y-axis) = {innocent:.3f}; " \
+           f"coordinate sd ({sd[0]:.3f}, {sd[1]:.3f})"
 
 
 # ---------------------------------------------------------------------- main

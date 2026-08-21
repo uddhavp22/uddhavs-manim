@@ -105,8 +105,7 @@ class C03(ActScene, ThreeDScene):
         model_gives.set_opacity(0.0)
         scalar_bridge.set_opacity(0.0)
         with self.voiceover(
-            text="So the loss has to compare distributions. "
-                 "<bookmark mark='need'/>In the last chapter, the Epps-Pulley "
+            text="<bookmark mark='need'/>In the last chapter, the Epps-Pulley "
                  "score started with a batch of scalars, "
                  "<bookmark mark='gives'/>but our model gives us a cloud of "
                  "vectors. <bookmark mark='bridge'/>So before we can use that "
@@ -218,8 +217,8 @@ class C03(ActScene, ThreeDScene):
                  "the line, <bookmark mark='read'/>then its signed position is "
                  "u transpose z sub i. <bookmark mark='positive'/>This foot "
                  "lands on the side u points toward, so the coordinate is "
-                 "positive. <bookmark mark='other'/>Now suppose we choose a "
-                 "point on the other side. <bookmark mark='negative'/>Its foot "
+                 "positive. <bookmark mark='other'/>Pick a point on the other "
+                 "side instead. <bookmark mark='negative'/>Its foot "
                  "lands behind the origin, so the coordinate becomes negative."
         ) as tracker:
             self.play(
@@ -280,7 +279,7 @@ class C03(ActScene, ThreeDScene):
             text="So now <bookmark mark='all'/>we do the same thing for every "
                  "embedding. <bookmark mark='shadow'/>Then the vectors become N "
                  "signed coordinates, which form a one-dimensional shadow of "
-                 "the cloud. <bookmark mark='batch'/>And now the vector cloud "
+                 "the cloud. <bookmark mark='batch'/>The vector cloud "
                  "has become a scalar batch."
         ) as tracker:
             self.wait_until_bookmark("all")
@@ -372,7 +371,6 @@ class C03(ActScene, ThreeDScene):
             dot_colour=DIRECTION,
             dot_radius=0.035,
             arrows=False,
-            link=True,
         )
         mounted = [
             mob for mob in self.mobjects
@@ -397,7 +395,7 @@ class C03(ActScene, ThreeDScene):
             mob.save_state()
             mob.set_opacity(0.0)
         with self.voiceover(
-            text="So now we can simply <bookmark mark='rig'/>run the "
+            text="We can now <bookmark mark='rig'/>run the "
                  "Epps-Pulley test on this shadow and compare it with a "
                  "standard Gaussian."
         ) as tracker:
@@ -418,6 +416,33 @@ class C03(ActScene, ThreeDScene):
         # mathematical role of each changing part.  The visible t readout,
         # arrows, empirical trace, target, discrepancy, and score are all one
         # continuous left-to-right computation.
+        #
+        # b03_the_rig.py::average_beat is this project's pattern for the moment
+        # the rig's live parts first appear: animate static seed copies, then
+        # hand off to the always_redraw versions. Two rules it encodes, both of
+        # which an earlier attempt here broke. FadeIn on an always_redraw
+        # mobject does nothing -- the updater rebuilds it every frame and resets
+        # the opacity being animated, the same trap clear_beat's docstring
+        # records -- so those parts simply popped. And inside a ThreeDScene a
+        # seed built in frame coordinates must be registered with
+        # add_fixed_in_frame_mobjects, or the camera projects it through the
+        # 3-D view; an unregistered seed arrow is what drew a stray skewed
+        # arrow across the circle.
+        #
+        # At t = 0 every wrapped arrow points the same way, so the bundle reads
+        # as one line beneath the purple average and needs no reveal of its
+        # own -- the sweep is what fans them apart. Only the average, its rider
+        # and the t readout are given one.
+        seed_centroid = rig.centroid()
+        seeds = [seed_centroid, *seed_centroid, rig.rider(), rig.readout()]
+        self.add_fixed_in_frame_mobjects(*seeds)
+        self.remove(*seeds)
+        self.play(
+            GrowArrow(seed_centroid[0]),
+            *(FadeIn(mob) for mob in seeds[1:] if mob is not seed_centroid[0]),
+            run_time=0.6,
+        )
+        self.remove(*seeds)
         self.add(*live_rig)
         target_curve = VMobject().set_stroke(TARGET, 3.5).set_fill(opacity=0.0)
         target_curve.set_points_as_corners([
@@ -512,7 +537,7 @@ class C03(ActScene, ThreeDScene):
         self.add_fixed_in_frame_mobjects(panel_score)
         panel_score.set_opacity(0.0)
         with self.voiceover(
-            text="Now, as <bookmark mark='frequency'/>t changes, each scalar "
+            text="As <bookmark mark='frequency'/>t changes, each scalar "
                  "wraps around the circle, and their average traces the blue "
                  "empirical characteristic function. Once that blue curve is "
                  "drawn, we can compare it with <bookmark mark='target'/>the "
@@ -574,6 +599,13 @@ class C03(ActScene, ThreeDScene):
         self.remove_fixed_in_frame_mobjects(gap_fill)
         self.remove(gap_marker)
         self.remove_fixed_in_frame_mobjects(gap_marker)
+        # Take the faded discrepancy formula out of the scene rather than
+        # leaving it at zero opacity. FadeOut on a Group sets one opacity
+        # across the whole family, so an invisible member carried into the
+        # rig's exit fade is forced back up to visible and fades from there --
+        # which briefly redrew this formula on top of the score.
+        self.remove(gap_formula)
+        self.remove_fixed_in_frame_mobjects(gap_formula)
         with self.voiceover(
             text="That is a small score, so along this direction, the shadow "
                  "looks close to the target."
@@ -596,9 +628,7 @@ class C03(ActScene, ThreeDScene):
         ).move_to(meter_position)
         self.add_fixed_in_frame_mobjects(named_score)
         named_score.set_opacity(0.0)
-        for mob in live_rig:
-            mob.update(0)
-            mob.clear_updaters(recursive=True)
+        self.freeze(*live_rig)
         rig_mobjects = []
         for mob in [
             rig.line,
@@ -606,7 +636,6 @@ class C03(ActScene, ThreeDScene):
             *live_rig,
             shadow_dots,
             target_curve,
-            gap_formula,
         ]:
             if mob not in rig_mobjects:
                 rig_mobjects.append(mob)
@@ -665,11 +694,30 @@ class C03(ActScene, ThreeDScene):
                 2.6,
                 max(1.8, 0.55 * tracker.time_until_bookmark("turn_one")),
             )
+            # Two beats, and a plain fade rather than a shrink into the corner.
+            # Scaling the whole rig to 0.08 and sliding it to the meter dragged
+            # a tray of illegible miniature panels across the frame, and doing
+            # it while the 3-D direction faded in put a long diagonal across
+            # the still-large 2-D panels -- two focal events at once, against
+            # VISUAL_SYSTEM.md section 5's "one dominant focal event per beat".
+            # Section 7 makes the fade the default way a rig leaves; the score
+            # it computed crosses to its labelled position as it goes, so what
+            # survives the cut is the result rather than a shrunken apparatus.
+            fade_time = max(0.5, 0.45 * collapse_time)
+            reveal_time = max(0.5, collapse_time - fade_time)
             self.play(
-                rig_group.animate.scale(0.08).move_to(meter_position)
-                .set_opacity(0.0),
-                FadeOut(panel_score, shift=0.10 * UP),
+                FadeOut(rig_group),
+                panel_score.animate.set_opacity(0.0),
                 named_score.animate.set_opacity(1.0),
+                run_time=fade_time,
+                rate_func=smooth,
+            )
+            # Fixed-in-frame registrations can outlive a Group transform in
+            # Cairo. Remove the rig explicitly before the held final frame so
+            # its t readout cannot ghost behind score(u).
+            self.remove(*rig_mobjects, panel_score)
+            self.remove_fixed_in_frame_mobjects(*rig_mobjects, panel_score)
+            self.play(
                 cloud.axes.animate.set_opacity(1.0),
                 direction_arrow.animate.set_opacity(1.0),
                 Transform(direction_label, first_label),
@@ -679,14 +727,9 @@ class C03(ActScene, ThreeDScene):
                 ),
                 restored_line.animate.set_opacity(0.38),
                 restored_shadow.animate.set_opacity(0.88),
-                run_time=collapse_time,
+                run_time=reveal_time,
                 rate_func=smooth,
             )
-            # Fixed-in-frame registrations can outlive a Group transform in
-            # Cairo. Remove the rig explicitly before the held final frame so
-            # its t readout and dashed connector cannot ghost behind score(u).
-            self.remove(*rig_mobjects, panel_score)
-            self.remove_fixed_in_frame_mobjects(*rig_mobjects, panel_score)
             self.wait_until_bookmark("turn_one")
             turn_one_window = max(
                 0.05,

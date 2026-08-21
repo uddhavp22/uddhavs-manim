@@ -44,7 +44,7 @@ from .palette import (
     MUTED,
 )
 
-ATOM_RADIUS = 0.54
+ATOM_RADIUS = 0.8
 
 
 def _direction(start: np.ndarray, end: np.ndarray) -> np.ndarray:
@@ -130,11 +130,11 @@ def shell(
         for a in angles
     ]
     electrons = VGroup(
-        *[Dot(p, radius=0.06, color=color or ELECTRON) for p in positions[:filled]]
+        *[Dot(p, radius=0.09, color=color or ELECTRON) for p in positions[:filled]]
     )
     gaps = VGroup(
         *[
-            Circle(radius=0.09, stroke_color=MUTED, stroke_width=1.4, stroke_opacity=0.6)
+            Circle(radius=0.13, stroke_color=MUTED, stroke_width=1.6, stroke_opacity=0.6)
             .move_to(p)
             for p in positions[filled:]
         ]
@@ -164,19 +164,22 @@ def covalent_bond(
     `ionic_bond`'s ion-pair animation.
     """
     start, end, direction = _edge_points(first, second)
-    line = Line(start, end, color=BOND_COVALENT, stroke_width=5.0).set_z_index(0)
+    line = Line(start, end, color=BOND_COVALENT, stroke_width=6.5).set_z_index(0)
 
     midpoint = (first.get_center() + second.get_center()) / 2
     span = float(np.linalg.norm(second.get_center() - first.get_center()))
     angle = float(np.arctan2(direction[1], direction[0]))
+    # The cloud is the actual content of this scene -- it has to read as a
+    # solid, colored region the viewer can see, not a near-transparent
+    # outline that only asserts a cloud is there. No stroke: a visible
+    # stroke here would run parallel to `line` and misread as a second
+    # bond (wrong for a single covalent bond like HCl).
     shared_orbit = Ellipse(
-        width=span * 0.6,
-        height=0.44,
-        stroke_color=MUTED,
-        stroke_width=1.2,
-        stroke_opacity=0.5,
-        fill_color=MUTED,
-        fill_opacity=0.12,
+        width=span * 0.62,
+        height=0.5,
+        stroke_width=0,
+        fill_color=BOND_COVALENT,
+        fill_opacity=0.3,
     ).move_to(midpoint)
     shared_orbit.rotate(angle)
 
@@ -304,8 +307,8 @@ def water_molecule(
 def helix_ribbon(
     *,
     loops: int = 3,
-    amplitude: float = 0.55,
-    loop_height: float = 0.95,
+    amplitude: float = 0.7,
+    loop_height: float = 1.15,
     center: np.ndarray | None = None,
     color: str | None = None,
 ) -> VGroup:
@@ -313,21 +316,36 @@ def helix_ribbon(
     helix) with dashed rungs marking the hydrogen bonds that hold its turns
     together -- the "3D shape of a large molecule" the caption names,
     made of the same weak-force vocabulary as the water beat.
+
+    Drawn as two offset strands (one bold, one faint) rather than a single
+    thin line -- a lone sine curve reads as a generic squiggle, not a
+    ribbon with any sense of coiled depth. The faint strand is the same
+    curve shifted slightly along its own width, which is enough separation
+    at this scale to read as "one folded ribbon" without becoming a literal
+    3D ball-and-stick render (AP_BIO.md rules that out).
     """
     if center is None:
         center = np.zeros(3)
     total_height = loops * loop_height
 
-    def point(t: float) -> np.ndarray:
+    def point(t: float, offset: float = 0.0) -> np.ndarray:
         y = center[1] + total_height / 2 - t * loop_height
-        x = center[0] + amplitude * np.sin(t * TAU)
+        x = center[0] + offset + amplitude * np.sin(t * TAU)
         return np.array([x, y, 0.0])
 
+    strand_color = color or BACKBONE
     curve = ParametricFunction(
         point,
         t_range=[0, loops, 0.01],
-        color=color or BACKBONE,
-        stroke_width=5.0,
+        color=strand_color,
+        stroke_width=8.0,
+    )
+    shadow_strand = ParametricFunction(
+        lambda t: point(t, offset=0.16),
+        t_range=[0, loops, 0.01],
+        color=strand_color,
+        stroke_width=3.0,
+        stroke_opacity=0.35,
     )
 
     # Rungs connect matching phase one loop apart -- the i, i+4 hydrogen-bond
@@ -338,17 +356,17 @@ def helix_ribbon(
             DashedLine(
                 point(i + phase),
                 point(i + 1 + phase),
-                dash_length=0.09,
+                dash_length=0.1,
                 color=BOND_WEAK,
-                stroke_width=1.8,
-                stroke_opacity=0.65,
+                stroke_width=2.4,
+                stroke_opacity=0.7,
             )
             for i in range(loops - 1)
         ]
     )
 
-    result = VGroup(curve, rungs)
-    result.curve = curve
+    result = VGroup(shadow_strand, curve, rungs)
+    result.curve = VGroup(shadow_strand, curve)
     result.rungs = rungs
     return result
 
