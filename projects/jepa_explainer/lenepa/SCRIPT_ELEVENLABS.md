@@ -4,14 +4,16 @@ This is a **temporary synthetic-voice render** for editorial timing. The author
 will record the final narration later. Keep `scenes.py` as the timing source of
 truth when replacing the audio; its voiceover blocks drive the animations.
 
-Preview voice: Archer (`eleven_multilingual_v2`), stability 0.65, similarity
-0.75, style 0, speaker boost on. Approximate script length: **731 words**.
+Preview voice: Archer (`eleven_multilingual_v2`) at 90% tempo, stability 0.65,
+similarity 0.75, style 0, speaker boost on. Approximate script length:
+**873 words**.
 `common/scene.py` automatically sends the phonetic forms below to ElevenLabs
 while retaining the conventional spellings in subtitles.
 
 Pronunciation notes:
 
-- LeNEPA: “leh-NEP-uh”
+- LeNEPA: one word, “leh-NEP-uh”
+- LeJEPA: one word, “leh-JEP-uh”
 - SIGReg: “sig-reg”
 - JEPA: “jepp-uh”
 - PTB-XL: “P T B X L”
@@ -23,58 +25,73 @@ Pronunciation notes:
 
 ## 1 — A time series becomes tokens
 
-This signal has L time steps. A strided convolution reads one short window at a
-time, reusing the same filters as it slides along the trace. The windows keep
-their left-to-right order.
+Suppose we want to learn a representation of this time-series signal. We could
+mask part of it and train the model to predict what is missing.
 
-Focus on the third window. Its samples feed the encoder together. Each output
-channel applies a learned filter, and the D channel values form one latent
-vector, z three.
+Or, as in LeJEPA, we could take global and local crops and align the
+representations of those views.
 
-The same map turns every other window into its own vector. So, across a batch,
-B by C by L becomes B by T by D: T ordered tokens, each with D coordinates.
+Next-embedding predictive architectures use a different objective. They divide
+the signal into patches, keep those patches in order, and predict the embedding
+that comes next.
+
+LeNEPA keeps the next-embedding task, but removes the masked or cropped views.
+
+Suppose we focus on the third window. The encoder maps its C by P values into D
+learned coordinates.
+
+That D-dimensional output is z three. The same map turns every other window
+into its own vector. So, across a batch, B by C by L becomes B by T by D: T
+ordered tokens, each with D coordinates.
 
 ## 2 — Predict the next latent
 
-The token row enters a causal Transformer. Focus on position four. Its output
-may use tokens one through four, but the future remains hidden. The output,
-z-hat four, predicts from the available history.
+The ordered tokens enter a causal Transformer. Suppose we read the output at
+position four. It can depend on z one through z four; z five and z six are
+still out of reach. Those four available tokens produce z-hat four, a
+prediction made from the history so far.
 
-The target is the actual next token, z five. Shift that same comparison across
-the row: z-hat one predicts z two, z-hat two predicts z three, and so on.
-Defining the task needs no mask augmentation, second view, or teacher network.
+The target for that prediction is the next token, z five. The same one-step
+shift applies at every usable position: z-hat one predicts z two, z-hat two
+predicts z three, and so on. The prediction task uses only this ordered token
+sequence—there is no masked augmentation, second view, or teacher network.
 
 ## 3 — Where the prediction loss lives
 
-LeNEPA does not compare the two D-dimensional vectors directly. Both pass
-through the same small projector. The two paths share weights. In the main
-experiments, this maps a 192-dimensional backbone vector into a 64-dimensional
-loss space.
+To compute the loss, the transformer's output and the target embedding both
+pass through the same projector.
 
-Line up the projected columns and subtract entry by entry. The difference is
-one d-dimensional vector. Squaring and summing its entries contracts the column
-to one scalar squared distance.
+We compute the MSE between the two projected vectors.
 
-There is one such scalar for every sample and every usable time step; their
-average is the prediction loss. Unlike vanilla NEPA, the target branch is not
-stopped, so gradients flow through both sides. Stabilization must come
-elsewhere.
+So when we do this for every prediction and time point in the batch, the
+prediction loss becomes this:
 
 ## 4 — SIGReg acts across time
 
-A batch-wide regularizer can see plenty of global spread. Different samples
-occupy different regions, so the aggregate cloud looks healthy. But that view
-hides a failure mode inside each sequence.
+The prediction loss compares projected vectors, but temporal SIGReg works on
+the raw tokens themselves, one sequence at a time. Now suppose a batch holds
+several such sequences, each with its own tokens across time.
 
-Inside a single time series, all seven tokens can still collapse toward one
-point while other samples keep the batch spread out. A pooled check may miss
-this. LeNEPA groups tokens by sample and applies SIGReg along that row's time
-axis.
+Nothing stops the tokens in one sequence from drifting together, until every
+position ends up carrying the same embedding.
 
-That temporal regularizer is tapped at the patch embeddings and after
-Transformer layer eight. Averaging over samples and those layers gives the
-temporal SIGReg term. Among the paper's single-component placements, this was
-the one with sustained gains on both main datasets.
+Now suppose we take every representation in the batch and put it into the
+same projected plane. Across the whole batch, there's still plenty of spread.
+
+Now follow the first sequence across time. All six of its representations
+have landed in essentially the same place, so its score comes out large.
+
+The second sequence hasn't collapsed, so it spreads out and scores low — and
+the third looks the same way. So for each sequence, we run SIGReg across its
+own tokens over time.
+
+Tokens exist at every depth of the network, not just one. LeNEPA does this at
+two places: the patch embeddings at layer zero, and again after layer eight.
+
+Those two layers are the layer set L T.
+
+Averaging those scores over the batch and over both layers gives the temporal
+SIGReg term. Together with the prediction loss, that's what LeNEPA trains on.
 
 ## 5 — The complete training step
 

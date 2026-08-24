@@ -88,6 +88,18 @@ def gaussian_3d(n: int = 220, seed: int = 5) -> np.ndarray:
     return _rng(seed).standard_normal((n, 3))
 
 
+def gaussian_2d(n: int = 200, seed: int = 76) -> np.ndarray:
+    """Representative isotropic sample for C06's full direction sweep.
+
+    Seed 76 was selected before animation from a fixed search: after centring
+    and scaling each coordinate, all 37 evenly spaced half-turn projections
+    have Epps--Pulley score below 0.19.  This prevents an unlucky finite batch
+    from visibly contradicting C06's population-level Gaussian claim while
+    preserving ordinary sampling variation in every shadow.
+    """
+    return _rng(seed).standard_normal((n, 2))
+
+
 def clumped_3d(n: int = 220) -> np.ndarray:
     """The isotropic cloud with two clumps along x. Chapter C.04's cloud.
 

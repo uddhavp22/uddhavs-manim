@@ -202,12 +202,13 @@ class C05(ActScene, ThreeDScene):
 
         # --- project onto x before calling it a coordinate check ----------
         with self.voiceover(
-            text="One direction wasn't enough, so a natural shortcut is to "
-                 "try the two coordinate axes. <bookmark mark='x_drop'/>Start "
-                 "with the horizontal coordinate: project every point straight "
-                 "onto that axis. <bookmark mark='x_stack'/>Those projected "
-                 "values line up closely with the standard bell, so its score "
-                 "is low."
+            text="One direction wasn't enough. The coordinate axes give us two "
+                 "natural directions to try next: horizontal and vertical. "
+                 "<bookmark mark='x_drop'/>Start with the horizontal one. Drop "
+                 "every point straight onto that axis. "
+                 "<bookmark mark='x_stack'/>Those landing positions are the "
+                 "horizontal coordinates. They line up closely with the "
+                 "standard bell, so the score is low."
         ) as tracker:
             self.play(
                 Indicate(plane.get_x_axis(), color=DIRECTION, scale_factor=1.03),
@@ -250,11 +251,11 @@ class C05(ActScene, ThreeDScene):
 
         # --- rotate the same apparatus onto y -----------------------------
         with self.voiceover(
-            text="Now <bookmark mark='y_turn'/>turn the same projection onto "
-                 "the vertical axis. <bookmark mark='y_settle'/>Nothing "
-                 "changes, because each vertical coordinate copies its "
-                 "horizontal partner. It is the same batch, with the same low "
-                 "score."
+            text="Now, if we <bookmark mark='y_turn'/>turn that same projection "
+                 "onto the vertical axis, <bookmark mark='y_settle'/>then "
+                 "nothing changes. Each vertical coordinate copies its "
+                 "horizontal partner, so we get the same batch and the same "
+                 "low score."
         ) as tracker:
             self.wait_until_bookmark("y_turn")
             self.play(
@@ -271,13 +272,14 @@ class C05(ActScene, ThreeDScene):
 
         # --- one mixed direction exposes the dependence ------------------
         with self.voiceover(
-            text="But those two checks never compare the coordinates. "
+            text="But this strategy checks each coordinate separately. It "
+                 "never asks whether they move together. "
                  "<bookmark mark='mix'/>So turn the line forty-five degrees, "
-                 "toward the diagonal that subtracts one from the other. "
+                 "toward the diagonal that subtracts one coordinate from the other. "
                  "<bookmark mark='zero'/>Since the coordinates are equal, every "
-                 "projection lands at zero. <bookmark mark='verdict'/>Both "
-                 "coordinate scores were low while the cloud still lay on a "
-                 "line. The axes miss this dependence, so we have to test "
+                 "point lands at zero. <bookmark mark='verdict'/>Both axis "
+                 "scores were low even though the cloud still lies on a line. "
+                 "The axes miss this dependence, so we have to test "
                  "directions that mix the coordinates."
         ) as tracker:
             self.play(

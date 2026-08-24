@@ -1222,7 +1222,7 @@ note was superseded by C03's authorized final pass recorded below.
 
 ---
 
-## Chapter C C05 — owner-review continuity draft (2026-08-20)
+## Chapter C C05 — owner-review continuity render (2026-08-20)
 
 ### Result
 
@@ -1238,21 +1238,85 @@ note was superseded by C03's authorized final pass recorded below.
 - The redundant `x+y` wide-shadow case is gone. At `y-x`, the dot plot
   contracts back to a single marked point at the origin, directly supporting
   “every projection lands at zero.”
-- Narration is 133 spoken words in three causally linked passages, down from
-  192. Six bookmarks start the corresponding projection, stack, turn,
+- Narration is 152 spoken words in three causally linked passages, down from
+  192. It now introduces the axes as two natural directions, says “drop every
+  point straight onto that axis,” uses “if … then” for the unchanged vertical
+  result, and names the coordinate-wise strategy's limitation before the mixed
+  direction. Six bookmarks start the corresponding projection, stack, turn,
   contraction and verdict animations on the phrases that motivate them.
 
-### Verification
+### Verification and review delivery
 
-- Draft file:
-  `media/videos/sigreg_explainer/chapterC/c05_gaussian_marginals/480p15/C05.mp4`.
-- 854×480 at 15 fps; 45.20 s; draft macOS narration.
+- Final-quality review file:
+  `media/videos/sigreg_explainer/chapterC/c05_gaussian_marginals/1080p60/C05.mp4`.
+- H.264 1920×1080 at 60 fps; AAC 48 kHz stereo; 52.25 s; Archer ElevenLabs
+  narration.
+- Complete ffmpeg decode passed. The final Archer transcript preserved the
+  intended “drop every point” and “if … then nothing changes” wording.
 - `py_compile` passed; `preflight` reports no undefined names;
   `narration_audit` passes every budget; `facts.py` passes 27/27;
   `tools/dead_air.py --frozen` reports no dead or frozen interval.
 - Contact sheets and focused frames were inspected at the literal x projection,
   the x score, the continuous x-to-y turn, the y score, the `y-x` contraction,
   and the final bare-cloud handoff. No overlap, clipping, stale target, or
-  replacement pop was found at draft resolution.
+  replacement pop was found in the final-quality contact-sheet pass.
 
-### Verdict — `DRAFT — AWAITING OWNER REVIEW`
+### Verdict — `FINAL-QUALITY RENDER — AWAITING OWNER REVIEW`
+
+---
+
+## Chapter C C06 — Cramér–Wold final-quality review (2026-08-21)
+
+### Result
+
+- Two compact failure recalls open the scene. Pointwise Gaussian partners
+  average toward the origin; a single projection merges the visible structure.
+  The first recall begins centrally, then moves left as the second arrives.
+  Separate bookmarks now align the fresh partner, average pull, selected view,
+  and concealed structure with their exact clauses. The recall crossfades into
+  the inherited C05 cloud instead of cutting to it.
+- Two directions are computed explicitly before the wheel exists. Dashed guides
+  carry representative cloud points to their projection feet, those scalar
+  positions collect into a green batch, and turning `u` repeats the operation.
+  A passing highlight gives the direction sentence visible motion; the actual
+  collection into `{u^T z_i}` completes in 0.72 s. The six remaining plots
+  emerge during the continuing sweep.
+- During the line-to-Gaussian morph, the full apparatus stays fixed. Green
+  empirical shadow stacks visibly vary around the wheel while the eight amber
+  population bells remain stationary. The redundant forward equation has been
+  removed; the visual invariant carries that beat.
+- The reverse implication is now motivated before it is named. One projected
+  characteristic function is shown beside the joint frequency plane. The same
+  live `t` moves a rider across the scalar curve and the point `tu` from the
+  negative side of `u`, through the origin, to the positive side. A fixed unit
+  circle makes clear that `u` remains unit length while `t` supplies radius and
+  sign. The identity `φ_{u^T Z}(t)=φ_Z(tu)` then names this whole line as one
+  radial slice. Rotating `u` fills the frequency plane, and concentric amber
+  contours represent the matching Gaussian slices. The displayed
+  implication from `u^T Z~N(0,1)` to `φ_Z(tu)=e^{-t²/2}` restores the missing
+  Gaussian-CF link. The uniqueness theorem from the last chapter then connects
+  the complete characteristic function to the distribution. The frequency display clears
+  before `Cramér–Wold` enters on its own card; its implication follows without
+  a procedural proof aside.
+- The final line says that computing a continuum is impractical and the loss
+  therefore needs a finite sample; eight direction lines and four example plots
+  remain for C07.
+
+### Verification and review delivery
+
+- Current review file:
+  `media/videos/sigreg_explainer/chapterC/c06_every_direction/1080p60/C06.mp4`.
+- 1920×1080 at 60 fps; 154.03 s; Archer ElevenLabs voice.
+- Complete ffmpeg decode passed. `ffmpeg` silence detection found no interval
+  longer than 2.5 seconds below −45 dB.
+- `py_compile` passed; `preflight` reports no undefined names;
+  `narration_audit` passes every budget at 438 spoken words; `facts.py` passes
+  28/28, including the new sweep check (`0.019–0.181` across 37 directions).
+- Contact sheets and focused frames were inspected at both failure recalls,
+  both projection computations, the wheel build, line-to-round morph, fixed
+  target family, the `t=-2.1 → 0 → +2.1` synchronized riders, radial identity,
+  joint-frequency construction, theorem certificate and continuum-to-finite
+  handoff. No clipping, equation/cloud overlap, stale shadow, missing live
+  digit, target motion, replacement pop or dead-air interval remains.
+
+### Verdict — `FINAL-QUALITY REVIEW RENDER — AWAITING OWNER REVIEW`

@@ -122,14 +122,66 @@ The video uses the ODE route instead (`p′ = −xp ⇒ φ′ = −tφ`). Same a
 complex analysis. This is a **declared pedagogical divergence**, recorded here
 so it is never mistaken for what the source does.
 
-### 6e. Cramér–Wold is cited, not proved
+### 6e. What is derived about projections, and what is cited
 
-The source states Fourier uniqueness — "two probability distributions are equal
-if and only if their characteristic functions are equal" — and combines it with
-projection equivalence. Neither is proved there, and neither is proved in the
-video. `b08` states it as a theorem and says out loud that the proof is being
-skipped. Proof status: `theorem_statement`. This must never be narrated with
-"therefore" or "we have shown".
+Two claims live here, and keeping them apart is the whole point of this
+entry. Until 2026-08-22, `c06` ended on a card reading "Cramér–Wold — cited
+theorem, not proved here", covering both at once. The owner's review called
+that a dodge: most of what the card hid is elementary substitution plus a
+covering argument, and the video had every ingredient for both already —
+characteristic functions and their uniqueness from Chapter B, projections
+from `c03`–`c05`. The card is gone. `c06` now derives the argument live, on
+the same wheel the rest of the chapter built, re-read as frequency space.
+
+**(1) The projection identity, and the covering argument it enables —
+derived, and shown on screen in `c06`.**
+For a unit vector `u` and `Y = u^\top Z`,
+
+$$\varphi_Y(t) = \mathbb E\!\left[e^{itY}\right] = \mathbb E\!\left[e^{i(tu)^\top Z}\right] = \varphi_Z(tu).$$
+
+This is regrouping a scalar inside an exponent — not a theorem, nothing
+cited. `c06` performs the substitution on screen, then reads it
+geometrically: as `t \ge 0` runs and `u` runs over the unit sphere,
+`\xi = tu` runs over all of `\mathbb R^D` (`t = \|\xi\|`, `u = \xi/\|\xi\|`),
+so the family of one-dimensional projection characteristic functions *is*
+`\varphi_Z`, written in polar coordinates. Given (2) below, this is the
+complete argument for Cramér–Wold's "if" direction — same projections force
+the same joint characteristic function, hence (by uniqueness) the same law.
+Not a special case of that direction, not an approximation to it: `c06` may
+say "so" about this step, and may name Cramér–Wold as what it has just
+shown, not merely gestured at. (The converse "only if" direction — same law
+implies same projections — is definitional and was never in question.)
+
+**(2) Fourier uniqueness — still cited, still not proved.**
+"Two probability distributions are equal if and only if their characteristic
+functions are equal." Not proved in the source; stated as a theorem in
+`b08`, which says out loud that the proof is skipped. `c06` *invokes* it as
+the closing step and marks it visibly as a recall from Chapter B, on screen
+and in narration ("we already know..."), rather than presenting it as
+something this scene has newly established. Proof status:
+`theorem_statement`. The old prohibition still applies to this step alone:
+never "we have shown", never "proves" — it is inherited, not re-derived.
+Everything in (1) is downstream of granting (2); take (2) away and `c06`'s
+argument shows only that the projections determine `\varphi_Z`, not that
+`\varphi_Z` determines the distribution.
+
+**The citation boundary did not move, it was redrawn around the right
+fact.** (2) is cited exactly as it always was. What changed is that the
+boundary used to sit around the whole theorem, which made an elementary step
+look unavailable; it now sits only around the one fact that is genuinely
+external.
+
+**Two things the animation must not imply.**
+- The frequency-plane field is amber and real-valued: that is
+  `e^{-\|\xi\|^2/2}`, the value *this cloud's* premise forces (every
+  projection standard Gaussian), not a generic `\varphi_Z(\xi)`, which is
+  complex in general. The picture is this cloud's target field, never "what
+  a characteristic function looks like" in general — same family as the
+  `three_panel_rig` risk in `concepts.yaml`: `\operatorname{Re}\varphi` alone
+  does not determine a distribution.
+- Painting the plane shows that the family of projections *determines*
+  `\varphi_Z`. It says nothing, on its own, about `\varphi_Z` determining the
+  law — that step is entirely (2), and (2) alone.
 
 ### 6f. The `1/N` noise floor is a source-stated limitation
 

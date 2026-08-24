@@ -1,8 +1,23 @@
 # Chapter C — script & storyboard
 
 **Status:** living production storyboard. C01–C04 are implemented and
-render-verified. C05 has an owner-directed 2026-08-20 low-quality review draft;
-C06–C10 remain planned. The generated narration authority for implemented
+render-verified. C05 has an owner-directed 2026-08-20 final-quality review
+render awaiting approval; C06 has a 2026-08-23b revision that keeps the
+point-transfer mechanism (wheel re-read as frequency space, one direction's
+characteristic function carried explicitly onto the spoke a few points at a
+time, Cramér–Wold named before specialising to this cloud's Gaussian target)
+but rewrites the narration into full reasoned prose — equations explained
+rather than read symbol-by-symbol, the uniqueness theorem stated in plain
+language before Cramér–Wold is named — gives the opening and Gaussian-target
+beats real holds instead of racing a short voice line, and splits the
+resolve step's simultaneous crossfade (old ray fading out while the labelled
+ring field faded in at the same moment, which produced an unreadable frame
+with the field equation ghosting through the ray sunburst) into two
+sequential steps; superseding the same-day 2026-08-23a point-transfer
+revision, which itself superseded 2026-08-22 (continuous-bend mechanism,
+longer opening) and the original theorem-card version; visually reviewed at
+low quality; C07–C10 remain planned.
+The generated narration authority for implemented
 scenes is `SCRIPT_chapterC.md`, which must be regenerated from the scene source
 after every voiceover edit.
 
@@ -124,17 +139,17 @@ Ten scenes, the handoff's Scene A–J order preserved. Files follow `PLAN.md` §
 | 2 | `c02_the_shape_is_the_goal.py` | `C02` | B | shape ladder + the wrong fix | 1:50 |
 | 3 | `c03_one_shadow.py` | `C03` | C | the rig returns on one shadow | 1:38 |
 | 4 | `c04_one_shadow_is_not_enough.py` | `C04` | D | turn `u`, the shadow lies | **0:47 built** (est. 1:30) |
-| 5 | `c05_gaussian_marginals.py` | `C05` | E | `Z = (X, X)` | **0:45 owner-review draft** |
-| 6 | `c06_every_direction.py` | `C06` | F | one target, all directions; Cramér–Wold | 1:30 |
+| 5 | `c05_gaussian_marginals.py` | `C05` | E | `Z = (X, X)` | **0:52 final-quality review** |
+| 6 | `c06_every_direction.py` | `C06` | F | directional batches; Cramér–Wold intuition | **1:34 reviewed draft** |
 | 7 | `c07_sampling_directions.py` | `C07` | G | `M` | 1:50 |
 | 8 | `c08_frequency_knots.py` | `C08` | H | `K` | 1:20 |
 | 9 | `c09_sigreg.py` | `C09` | I | assemble the formula | 1:30 |
 | 10 | `c10_what_it_claims.py` | `C10` | J | anti-collapse, population limit, honest scope | 2:00 |
 
-C04 came in at 0:47 against a 1:30 estimate, while C05's current owner-review
-draft runs 0:45. The first four delivered scenes run 0:46, 2:44, 1:50 and
-0:47; C05's duration remains provisional until the owner approves narration
-and authorizes a final voice pass. The per-scene estimates are not tracking
+C04 came in at 0:47 against a 1:30 estimate, while C05's current final-quality
+review render runs 0:52. The first four delivered scenes run 0:46, 2:44, 1:50
+and 0:47; C05 now has Archer audio and a 1080p60 render, but remains provisional
+until the owner approves it. The per-scene estimates are not tracking
 anything and should not be treated as a delivery forecast.
 
 **Estimated total ≈ 16:30.** `PLAN.md` §5 says "~9 min". That estimate is wrong in the same way Chapter B's was (8 min estimated, 17:50 built) — it counted plan items, not scenes. State the honest number now rather than discovering it at master-build time.
@@ -512,7 +527,7 @@ conversational connectors, weak ending. Banned outright — "and it should",
 ---
 
 ### C05 — Both coordinates Gaussian, and every point on a line
-*(handoff Scene E · **owner-review draft 2026-08-20, 0:45** · density: medium — one counterexample, one lesson)*
+*(handoff Scene E · **final-quality owner review 2026-08-20, 0:52** · density: medium — one counterexample, one lesson)*
 
 **Current authority — 2026-08-20 owner-review rework.** This scene keeps its
 load-bearing inference and removes the repeated explanation around it: **two
@@ -529,15 +544,20 @@ swapped for an independently created replacement.
 | 3 | The same direction line, arrow, shadow dots and amber curve rotate continuously onto the y-axis. `score(y)=0.244` joins the first result. | Because `y` copies `x`, the second coordinate produces the same scalar batch and the same low score. |
 | 4 | The apparatus turns only 45° farther, toward `y-x`. The dot plot contracts to one literal point at the origin while `score(u)=81.785` appears; then the testing apparatus clears back to the bare line cloud. | The axes never compared the two coordinates. A mixed direction exposes the dependence, so testing must extend beyond the axes. |
 
-The current draft narration is 133 spoken words and the low-quality render is
-45.20 seconds. It uses three continuous spoken passages and bookmark-locks the
+The current narration is 152 spoken words and the Archer/1080p60 review render
+is 52.25 seconds. It uses three continuous spoken passages and bookmark-locks the
 x projection, dot-plot stack, y turn, mixed turn, zero contraction and verdict
-to the phrases that motivate them. The previous `x+y` wide-shadow example was
+to the phrases that motivate them. The setup now names the coordinate axes as
+the two natural directions available after one direction failed, says “drop
+every point” instead of making “project” sound like it modifies `x`, and uses
+the causal “if … then” construction when the same apparatus turns to `y`. It
+names the coordinate-wise strategy's limitation before introducing a mixed
+direction. The previous `x+y` wide-shadow example was
 cut: it was mathematically correct but did not add a necessary inference once
 the `y-x` collapse had exposed the missed dependence. The source and
-`SCRIPT_chapterC.md` are the authority for this review draft. It has **not**
-received an owner-authorized ElevenLabs/1080p delivery; the 60.97-second file
-documents the superseded cut.
+`SCRIPT_chapterC.md` are the authority for this review render. The final-quality
+file exists for owner review but is not owner-approved yet; it supersedes the
+former 60.97-second cut.
 
 **Superseded 2026-08-18 production record.** The notes below describe the
 previous strip-and-merge cut; they are retained for provenance and reusable
@@ -617,49 +637,165 @@ it as implementation authority.
 
 ---
 
-### C06 — Every direction, and the same target in each
-*(handoff Scene F · ~1:30 · density: high — theorem qualification lives here)*
+### C06 — Every direction gives a batch
+*(handoff Scene F · **2026-08-23b narration-pacing revision, ~2:53** · density: high)*
+
+**Current authority — 2026-08-23b narration-pacing revision.** C06 still
+does not recall C02's failed matching or re-teach C03/C04's projection
+mechanics — the viewer already knows what `u^T z` means, twice over, and by
+C05 has earned the right not to be retaught it. But the same-day
+2026-08-23a cut went too far the other direction: the narration had
+collapsed into clipped, SRT-fragment sentences strung on em-dashes, narrated
+the animation's mechanics directly instead of the reasoning behind them, and
+read equations off symbol-by-symbol rather than explaining what they mean —
+and the opening had no room to breathe, racing a full wheel-build and a
+Gaussian morph through under 14 seconds of speech. This revision keeps the
+no-recap opening but writes it, and the whole scene, in full reasoned prose:
+`u` turns once while all eight shadow plots fade in together ("Keep turning
+the direction u. Each new angle draws another shadow of the same cloud, and
+by the time u has swept all the way around, every direction has had its
+turn."), with an explicit hold after the establishing fade-in before the
+wheel starts moving.
+
+The cloud morphs to a representative isotropic Gaussian sample and the
+forward equation `u^T Z ~ N(0, u^T I u) = N(0,1)` fades in, narration now
+explaining the equation's content ("Its spread is the identity in every
+direction, so projecting onto any unit direction u leaves variance exactly
+one") rather than reading it, with a hold after the morph completes before
+the equation appears on top of it. One more rotation shows the finite batch
+wiggle while the amber target holds still.
+
+**The converse: derived on the wheel, re-read as frequency space — with the
+graph-to-spoke handoff made explicit, and Cramér–Wold named before, not
+while, specialising to this cloud's Gaussian target.** No theorem card. One
+direction's characteristic-function panel (`layout.rig_cf_axes`, C03's
+geometry) appears beside the wheel; three equation lines perform the
+substitution `φ_{u^T Z}(t) = E[e^{it(u^T Z)}] = E[e^{i(tu)^T Z}] = φ_Z(tu)` —
+regrouping a scalar inside an exponent, not a citation. A marker then runs
+outward along the live spoke as `t` goes `0 → CF_T_MAX`, tracing `ξ = tu`
+alone, no value attached yet — establishing what the *point* is before
+anything is said about its *value*. Only then are three example points
+carried explicitly: a dot flashes on the graph at `t ∈ {0.5, 1.6, 3.0}`, and
+a `TransformFromCopy` sends a copy of it to the matching point on the spoke,
+now shaded by that same height as brightness — the viewer watches the value
+travel from graph-coordinate to frequency-space brightness three times before
+the rest of the curve transfers at once. This replaces the prior revision's
+continuous placement-frame **bend**, which physically carried the whole curve
+through the wheel's own plane and made it look like the curve *lived* in
+frequency space; it doesn't — only the point `ξ = tu`, and the value attached
+to it, do.
+
+The live ray (brightness-encoded from the moment it exists, never a height
+curve) then turns with `u` through a full turn while a trail of 47 static
+rays reveals itself behind it, filling the disc. Only after the sweep
+completes — while the field is still the general ray-fan, nothing yet said
+about Gaussians — does the scene state Fourier uniqueness in plain language
+("if two distributions share the same characteristic function everywhere,
+they're the same distribution — the function determines the law uniquely"),
+recall the equation (`φ_X=φ_Y ⟹ X=_d Y`, MUTED, inherited from Chapter B),
+and only then name "Cramér–Wold": the general argument, not a hedged
+Gaussian-only case, and not read off the equation but stated as reasoning
+first. **Only then** does the scene specialise — "For the target we're
+using, that shared value has a name: each shadow's characteristic function
+is e to the minus t squared over two — the standard Gaussian's own
+fingerprint" — names one concrete point `ξ` (`t = ‖ξ‖`, `u = ξ/‖ξ‖`), and
+resolves the ray-fan into 26 concentric `Annulus` rings shaded by
+`e^{-‖ξ‖²/2}`, labelled `ξ₁`/`ξ₂` and "frequency space" so the field cannot
+read as a density. This resolve is now two sequential steps, not one
+crossfade: the ray/trail/example-point overlay fades out completely first,
+then the labelled ring field fades in against a clean frame — the earlier
+single-`self.play` version faded both at once, which produced a frame where
+the field equation ghosted straight through the ray sunburst mid-transition,
+unreadable and reading as a layout bug. The field resolves into
+`Z ~ N(0,I_D)` as the cloud fades back in. Finally, most spokes and plots
+disappear, leaving the four off-axis `45°` directions — axes are not
+privileged, C07's own point — as C07's visible starting problem; narration
+folds the "shadows can lie" lesson into this handoff rather than restaging it.
 
 **Causal beat.**
-Inherited: no finite set of chosen directions is safe.
-Experiment: start from the cloud we actually want — independent standard Gaussian coordinates — and turn `u` anywhere at all.
-Observation: the shadow keeps the same bell and the amber target curve never moves.
-Conclusion (shown): if the cloud is `N(0, I_D)`, every unit projection is `N(0,1)`, so one target serves every direction.
-Conclusion (cited): the converse. Cramér–Wold, with Chapter B's uniqueness theorem.
-Handed on: "every direction" is a sphere, and a computer cannot visit a sphere.
+Inherited: C05 found one revealing mixed direction; C03/C04 already taught
+what a projection is.
+Experiment: turn `u`, let the wheel of shadows build; zoom into one
+direction's characteristic function and read it as a radial slice of the
+cloud's own, carried explicitly onto the spoke a few points at a time.
+Observation: the whole family of shadows describes the cloud; sweeping every
+direction paints the whole frequency plane; for the standard Gaussian, every
+population shadow is the same fixed bell even though a finite sample wiggles.
+Conclusion (derived): the projection identity plus the covering argument
+*is* Cramér–Wold's "if" direction, given Fourier uniqueness (cited, Chapter
+B) — named as the general argument before specialising.
+Conclusion (applied): every unit projection standard Gaussian identifies
+`Z ~ N(0,I_D)`.
+Handed on: the continuum is mathematically sufficient but must be replaced by
+a finite set of directions for computation.
 
 **Narration.**
 
-> Then the test has to be every direction at once.
+> <bookmark mark='turn'/>Keep turning the direction u. <bookmark mark='fill'/>Each new angle draws another shadow of the same cloud, and by the time u has swept all the way around, every direction has had its turn.
 >
-> <bookmark mark='isotropic'/>Start from the cloud we actually want — coordinates that are independent standard Gaussians — and turn the direction anywhere you like. <bookmark mark='fixed'/>The shadow keeps the same bell, and the target curve never moves. So a single target serves every direction, which is what makes the scores comparable at all.
+> <bookmark mark='gaussian'/>Suppose the cloud itself is standard Gaussian. <bookmark mark='spread'/>Its spread is the identity in every direction, so projecting onto any unit direction u leaves variance exactly one — <bookmark mark='reason'/>every unit direction produces the same standard Gaussian shadow. <bookmark mark='turn'/>The finite batch still wiggles a little around that shape; the target itself does not.
 >
-> <bookmark mark='theorem'/>The converse is a theorem, and we're citing it rather than proving it. If every one-dimensional projection of a distribution is a standard Gaussian, then the distribution itself is the standard Gaussian in D dimensions. That's Cramer Wold, together with the uniqueness result from Chapter B.
+> <bookmark mark='one'/>Take one of those shadows, and ask about its characteristic function as t varies. <bookmark mark='sub'/>By definition, that's the average of a unit arrow, e to the i t times u transpose z, over the whole cloud. <bookmark mark='regroup'/>But the exponent is just a dot product — t times u transpose z is the same number as t u, dotted with z — so we can regroup it that way instead. <bookmark mark='identity'/>Read like that, the expression is no longer about the shadow at all: it's the whole cloud's own characteristic function, evaluated at the point t u. <bookmark mark='trace'/>As t runs from zero outward, the point t u sweeps out a single ray through this frequency plane — one ray for every direction u. <bookmark mark='reading'/>So each shadow's characteristic function is really just one reading of that same function, taken along its own ray. <bookmark mark='points'/>Pick a few points along that curve. <bookmark mark='value'/>Each one is a value of the cloud's characteristic function at a particular t u — real, and between zero and one for this cloud — so instead of a height, we can mark it as brightness right at that point. <bookmark mark='brightness'/>Carry the rest of the curve over the same way, and the whole ray becomes a line of light: brightest near the centre, fading outward exactly as the curve does. <bookmark mark='rotate'/>Turn u through a full circle, and this ray sweeps around with it, filling in the plane one direction at a time. <bookmark mark='together'/>Once every direction has had its turn, we've filled in the cloud's characteristic function everywhere in this plane — because every point out here sits on somebody's ray. <bookmark mark='theorem'/>A theorem already does the heavy lifting from here: if two distributions share the same characteristic function everywhere, they're the same distribution — the function determines the law uniquely. <bookmark mark='built'/>We've just built that function across the whole plane, one projected direction at a time, so any cloud matching every one of these shadows would match this cloud's characteristic function everywhere, and therefore share its exact distribution. <bookmark mark='name'/>That's the Cramér–Wold idea: matching projections in every direction is already enough to match the cloud itself. <bookmark mark='specialize'/>For the target we're using, that shared value has a name: each shadow's characteristic function is e to the minus t squared over two — the standard Gaussian's own fingerprint. <bookmark mark='pick'/>Take any point out here, and its value is fixed the same way, by the direction and distance that put it there. <bookmark mark='resolve'/>So that fingerprint belongs to exactly one cloud: <bookmark mark='conclude'/>Z itself, standard Gaussian in every dimension.
+>
+> But in training, there is a continuum of possible directions, and we cannot compute all of them. <bookmark mark='finite'/>So the loss needs a finite sample — one that does not just settle for the convenient directions, like the coordinate axes.
 
 **Persistent objects.**
 
 | | |
 |---|---|
-| Enters | the isotropic cloud (the C01/C02/C03 cloud, restored — same dot instances, ideally same seed), the `DIRECTION` arrow, the compact rig showing the empirical curve against the fixed amber target |
-| Transforms | the direction sweeps continuously; the `CLOUD` curve wiggles inside sampling noise; the `TARGET` curve is drawn once and held rigid — the invariant is the point |
-| Remains | the amber target curve, which will still be the target in C07, C08, C09 |
-| Exits | the theorem card, after its hold |
+| Enters | C05's line cloud and plane, wheel apparatus at zero opacity |
+| Transforms | `u` turns once while all eight shadow plots fade in; the same 200 dots morph line → round; a forward-derivation equation fades over the morph; cloud and shadow plots fade down; one direction's CF panel appears, its identity derived on screen; a marker traces `ξ=tu`; three points transfer explicitly graph→spoke; the rest transfers at once into a live brightness-encoded ray; the ray sweeps a full turn as a trail; uniqueness and Cramér–Wold are named while the field is still general; the field then specialises and resolves into a labelled radial field, then back into the cloud and `Z~N(0,I_D)`; continuum → eight retained direction lines and four representative (off-axis) plots |
+| Remains | the Gaussian cloud, active direction, dimmed wheel ring/spokes and finite family of amber-target shadow plots for C07 |
+| Exits | the CF panel, the equation stack, the transfer-demo dots, the ray fan, the ring field, the uniqueness recall — everything built to derive the converse, once it has |
 
-**The theorem card.** Two lines, plainly separated:
+**What the converse beat actually derives, and why the transfer is explicit.**
+The wheel is re-read, not replaced: angle is `u`, radius is `t = ‖ξ‖`. The
+projection identity `φ_{u^T Z}(t) = φ_Z(tu)` is substitution, shown on
+screen, not cited. Sweeping `u` over the circle and `t ≥ 0` covers all of
+`ξ`-space exactly once, so the family of one-dimensional projection
+characteristic functions *is* `φ_Z` in polar form — the complete argument for
+Cramér–Wold's "if" direction once Fourier uniqueness (cited, Chapter B,
+recalled visibly and never re-derived) is granted. The graph's height was
+never a *frequency-space* quantity; it is a value attached to the frequency-
+space *point* `ξ = tu`. An earlier draft bent the whole curve through the
+wheel's own plane to make this transition, which conflated the two — the
+curve appeared to live where only `ξ` does. Naming three points, carrying
+each explicitly by copy, and only then transferring the rest keeps the two
+coordinate systems visually distinct throughout. `SOURCE_MAP.md` §6e has the
+full account of what's derived and what's cited. The resolved field is this
+cloud's real-valued target, `e^{-‖ξ‖²/2}` — labelled "frequency space" with
+`ξ₁`/`ξ₂` axes, and named only *after* Cramér–Wold, precisely so the sweep
+itself never implies "characteristic functions in general are brightness
+fields" — only this cloud's real, non-negative one legitimately is.
 
-```
- shown        Z ~ N(0, I_D)          ⟹  u^T Z ~ N(0,1)  for every unit u
- cited        u^T Z ~ N(0,1) ∀u      ⟹  Z ~ N(0, I_D)          Cramér–Wold
-```
-
-The cited line gets a visible marker — a small `MUTED` "theorem, not proved here" label, matching how `b08` handled Fourier uniqueness. `SOURCE_MAP.md` §6e: "This must never be narrated with 'therefore' or 'we have shown'." The narration above says "we're citing it rather than proving it" explicitly.
-
-**Reuse vs new.** Reuses the C01 cloud, `CloudProjectionRig`, `layout.gaussian_frequency_curve` / the rig's target curve, `b08`'s theorem-card visual grammar. New: the theorem card's two-line split.
+**Reuse vs new.** Reuses `CloudRig`, `layout.stack_levels`, `layout.rig_cf_axes`,
+`common.wrap.gaussian_cf`, C05's plane and the established projection-foot,
+green-shadow and amber-target grammar. New: the forward-derivation equation
+and the trace/transfer/sweep/name/specialise/resolve converse mechanism (all
+in `c06_every_direction.py`, nothing added to `common/` — this apparatus
+belongs to one scene). The scene uses `data.gaussian_2d(seed=76)`, selected
+and checked before animation so all 37 inspected half-turn projections score
+`0.019–0.181`; this prevents an unlucky finite sample from contradicting the
+narrated population behavior.
 
 **Claim flags.**
-- `theorem_statement` — Cramér–Wold. Cited. Never "therefore."
-- `exact_derivation` — the forward direction. This one *is* elementary and the rotation demonstrates it; it may be narrated as a fact.
-- Do not let the sweep imply the converse has been checked. The narration must own the asymmetry, and it does.
+- `exact_derivation`, verified in `facts.py` (`projection_cf_equals_radial_slice`)
+  — `φ_{u^T Z}(t) = φ_Z(tu)` to machine precision, any finite sample, several
+  directions and `t`. The identity the converse beat performs on screen.
+- `exact_derivation`, verified in `facts.py`
+  (`swept_projections_match_the_gaussian_fingerprint`) — the resolved field's
+  formula, checked against the actual sampled cloud's empirical CF at several
+  directions and `t`, real part close and imaginary part small.
+- `exact_derivation` — the forward Gaussian projection fact
+  `u^T Z ~ N(0, u^T I u) = N(0,1)`, now shown as an equation, not only
+  illustrated by the eight rotating bells.
+- `theorem_statement` — Fourier uniqueness alone. Cited from Chapter B,
+  now stated in plain language ("if two distributions share the same
+  characteristic function everywhere, they're the same distribution") and
+  recalled visibly on screen, named before the Gaussian specialisation,
+  never re-derived. See `SOURCE_MAP.md` §6e for the full three-way split
+  between what's derived, what's cited, and what changed across the
+  2026-08-22, 2026-08-23a and 2026-08-23b revisions.
 
 ---
 
@@ -862,9 +998,9 @@ Handoff §9 requires all five fields per boundary. Audio: every scene opens and 
 | **C01 → C02** | "Suppose we want it to follow a standard Gaussian in D dimensions." | centred 3-D cloud, `Z`, and the target label | "Suppose the cloud starts losing its spread." | the same cloud geometry | Cloud and axes persist in content; C02 begins manipulating the object C01 just named, then motivates why this target and a trainable loss are needed. |
 | **C02 → C03** | "…the loss has to compare distributions rather than assign partners." | the round cloud, restored | "Choose a unit direction u." | the same cloud | Cloud persists. Pairing arrows and partner dots are gone before the cut. |
 | **C03 → C04** *(built)* | "…but it cannot tell us whether the whole cloud does." | cloud at `phi=76°, theta=12°`, `u_3` arrow, its line, its 220 shadow feet, `score(u_3)=0.872` | "Now suppose the cloud has structure." | **the identical frame**, rebuilt from the same `CloudRig` and a `CloudProjectionRig` on `u=(0,1,0)` | Cloud persists. C03's arrow, line, shadow and score fade out on the first beat before the cloud changes, so the beat has one focal event; the rig itself was already gone (C03 phase 9). |
-| **C04 → C05** *(built)* | "…It tells you nothing about the cloud behind it." | two-clump cloud, direction arrow, score-vs-angle trace | "One direction was not enough." | coordinate axes pulse, then the diagonal `y=x` cloud appears | **Genuine reset.** No testing apparatus persists, but "So" carries the argument across the cut: once one direction is insufficient, the coordinate axes are the natural next shortcut. |
-| **C05 → C06** | "…test directions that mix the coordinates." | bare diagonal cloud on a plane, labelled `y=x` | "Then the test has to be every direction at once." | the isotropic cloud | Reset. "Then" carries the causal link; C05 leaves no direction, shadow, or target on screen, so C06 opens cleanly on the broader turn. |
-| **C06 → C07** | "…together with the uniqueness result from Chapter B." | theorem card over the isotropic cloud | "Every direction is a whole sphere of them…" | the same cloud, card gone | Cloud persists; the theorem card exits during C06's own final beat, not at the cut. |
+| **C04 → C05** *(built)* | "…It tells you nothing about the cloud behind it." | two-clump cloud, direction arrow, score-vs-angle trace | "One direction wasn't enough. The coordinate axes give us two natural directions to try next…" | coordinate axes pulse, then the diagonal `y=x` cloud appears | **Genuine reset.** No testing apparatus persists. The narration carries the argument across the cut by naming the axes as the natural next strategy after one direction failed. |
+| **C05 → C06** | "…test directions that mix the coordinates." | bare diagonal cloud on a plane, labelled `y=x` | "There was nothing special about that diagonal. Or the axes." | the identical frame; the mixed direction returns and begins turning | Exact visual seam. The apparatus grows from C05's successful direction instead of resetting the argument. |
+| **C06 → C07** | "…keep only a finite sample of directions." | Gaussian cloud with eight retained spokes and radial shadow plots | "Every direction is a whole sphere of them…" | the same finite-direction problem | C06 performs the continuum-to-finite collapse itself, so C07 begins from the objects it must explain how to sample. |
 | **C07 → C08** | "They don't turn a finite batch into a proof." | cloud, direction fan, purple average | "One of those scores is still an integral…" | B11's gap axes and weighted area | Deliberate object return to Chapter B's picture. Hard cut. |
 | **C08 → C09** | "…not much left to gain." | knots on the gap axes, `K` | "Every piece of this is already on screen." | the C07 frame restored | Hard cut back to the cloud and fan. Justified: C09 assembles from *visible* objects, so they must be visible. |
 | **C09 → C10** | "…the average over M directions is the whole regularizer." | the SIGReg formula | "Run it on the shapes from earlier." | formula pinned small, C02's cloud rig entering | Formula persists, demoted to a corner. Cloud rig returns. |

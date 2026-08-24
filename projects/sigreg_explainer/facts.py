@@ -427,6 +427,90 @@ def only_the_axes_look_right():
             f"below 1.0, in exactly two arcs")
 
 
+@claim("c06", "their distribution keeps the same bell")
+def isotropic_sweep_stays_representative():
+    """Guard C06's finite visual sweep against a misleading sample draw.
+
+    The theorem is population-level, but the animation necessarily moves a
+    finite dot plot.  Every inspected direction should therefore remain within
+    ordinary Gaussian sampling variation rather than producing one visibly bad
+    shadow that contradicts the narration.
+    """
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+
+    z = data.gaussian_2d()
+    z = (z - z.mean(axis=0)) / z.std(axis=0)
+    angles = np.linspace(0.0, np.pi, 37)
+    scores = np.array([
+        epps_pulley(
+            z @ np.array([np.cos(angle), np.sin(angle)]),
+            EP_LAMBDA,
+            EP_GRID,
+        )
+        for angle in angles
+    ])
+    assert float(scores.max()) < 0.25, scores
+    return (f"37 half-turn shadows: score {scores.min():.3f}--"
+            f"{scores.max():.3f}, mean {scores.mean():.3f}")
+
+
+@claim("c06", "it's the whole cloud's own characteristic function, "
+              "evaluated at the point t u")
+def projection_cf_equals_radial_slice():
+    """C06's central identity: phi_{u^T Z}(t) = phi_Z(t u), by substitution.
+
+    Not asymptotic: for any finite sample, exp(i t (u^T z_n)) and
+    exp(i (t u)^T z_n) are the same complex number term by term, so their
+    sample means agree to machine precision regardless of what Z's
+    distribution is. This is the identity the scene derives on screen and
+    then reads geometrically (SOURCE_MAP.md SS6e) -- checked here on the
+    actual cloud c06 draws, at several directions and several t, because the
+    animation claims to derive this, not merely illustrate it.
+    """
+    z = data.gaussian_2d()
+    worst = 0.0
+    for angle in (0.35, 1.1, 2.4):
+        u = np.array([np.cos(angle), np.sin(angle)])
+        for t in (0.5, 1.7, 3.0):
+            direct = np.mean(np.exp(1j * t * (z @ u)))
+            regrouped = np.mean(np.exp(1j * (t * u) @ z.T))
+            worst = max(worst, abs(direct - regrouped))
+    assert worst < 1e-9, worst
+    return f"phi_(u^T Z)(t) = phi_Z(t u) to {worst:.1e}, 3 directions x 3 t"
+
+
+@claim("c06", "each shadow's characteristic function is e to the minus t "
+              "squared over two — the standard Gaussian's own fingerprint")
+def swept_projections_match_the_gaussian_fingerprint():
+    """The resolved field's formula, grounded in the actual sampled cloud.
+
+    C06 draws phi_Z(xi) = e^{-|xi|^2/2} as the resolved field on the strength
+    of "every one of our shadows was standard Gaussian." Checked against the
+    same standardized isotropic cloud c06_every_direction.py's
+    _standardized_isotropic_points builds (data.gaussian_2d, seed 76,
+    centred and rescaled), at the t values the drawn ring field actually
+    spans: several projections' empirical characteristic functions should
+    track the population target within ordinary finite-sample noise, and
+    stay close to real-valued -- the field is this cloud's real target, not
+    a generic complex phi_Z.
+    """
+    points = data.gaussian_2d(n=200)
+    points = (points - points.mean(axis=0)) / points.std(axis=0)
+    angles = np.deg2rad([10, 95, 200, 300])
+    ts = np.array([0.5, 1.5, 2.5, 3.5])
+    target = gaussian_cf(ts)
+    worst_real, worst_imag = 0.0, 0.0
+    for angle in angles:
+        u = np.array([np.cos(angle), np.sin(angle)])
+        empirical = ecf(points @ u, ts)
+        worst_real = max(worst_real, float(np.max(np.abs(empirical.real - target))))
+        worst_imag = max(worst_imag, float(np.max(np.abs(empirical.imag))))
+    assert worst_real < 0.13, worst_real
+    assert worst_imag < 0.15, worst_imag
+    return (f"4 directions x 4 t: empirical CF within {worst_real:.3f} of "
+            f"e^-t^2/2, imaginary part within {worst_imag:.3f} of 0")
+
+
 @claim("c03", "the arrows average to a pull toward the origin")
 def random_target_pulls_to_origin():
     rng = np.random.default_rng(3)

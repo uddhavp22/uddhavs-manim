@@ -27,6 +27,7 @@ COLLAPSE = "#E8615A"  # the gap, the error, imaginary parts, the failure case
 AVERAGE = "#9D6FE0"   # the average arrow, once it has been introduced
 MAGNITUDE = "#E2549C" # |phi(t)|, a fingerprint's magnitude, distinct from its
                        # real/imaginary parts and from the Gaussian target
+RIVAL = "#38DCC9"     # a second, competing distribution's fingerprint
 DIRECTION = "#5FCF80" # directions u, projections, shadows
 ACCENT = "#EDF0F4"    # the single "look here now" highlight
 

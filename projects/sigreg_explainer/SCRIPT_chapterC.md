@@ -17,7 +17,7 @@ source order, which tracks playback order but
 is not guaranteed to equal it: on-screen text is often constructed a few
 lines before the passage that reveals it.
 
-**5 scenes · 1,470 spoken words · 0:00**
+**6 scenes · 2,119 spoken words · 0:00**
 
 | Scene | Words | Duration | Words/min |
 |---|---:|---:|---:|
@@ -25,7 +25,8 @@ lines before the passage that reveals it.
 | [`c02_the_shape_is_the_goal`](#c02-the-shape-is-the-goal) | 552 | — | — |
 | [`c03_one_shadow`](#c03-one-shadow) | 413 | — | — |
 | [`c04_one_shadow_is_not_enough`](#c04-one-shadow-is-not-enough) | 192 | — | — |
-| [`c05_gaussian_marginals`](#c05-gaussian-marginals) | 158 | — | — |
+| [`c05_gaussian_marginals`](#c05-gaussian-marginals) | 177 | — | — |
+| [`c06_every_direction`](#c06-every-direction) | 630 | — | — |
 
 ---
 
@@ -251,25 +252,119 @@ the cloud behind it.
 
 *Chapter C.05 — coordinate checks can miss a bad joint cloud.*
 
-One direction wasn't enough, so a natural shortcut is to try the two
-coordinate axes. Start with the horizontal coordinate: project every point
-straight onto that axis. Those projected values line up closely with the
-standard bell, so its score is low.
+One direction wasn't enough. The coordinate axes give us two natural
+directions to try next: horizontal and vertical. Start with the horizontal
+one. Drop every point straight onto that axis. Those landing positions are the
+horizontal coordinates. They line up closely with the standard bell, so the
+score is low.
 
 <sub>cues: x_drop, x_stack</sub>
 
-Now turn the same projection onto the vertical axis. Nothing changes, because
-each vertical coordinate copies its horizontal partner. It is the same batch,
-with the same low score.
+Now, if we turn that same projection onto the vertical axis, then nothing
+changes. Each vertical coordinate copies its horizontal partner, so we get the
+same batch and the same low score.
 
 <sub>cues: y_turn, y_settle</sub>
 
-But those two checks never compare the coordinates. So turn the line forty-
-five degrees, toward the diagonal that subtracts one from the other. Since the
-coordinates are equal, every projection lands at zero. Both coordinate scores
-were low while the cloud still lay on a line. The axes miss this dependence,
-so we have to test directions that mix the coordinates.
+But this strategy checks each coordinate separately. It never asks whether
+they move together. So turn the line forty-five degrees, toward the diagonal
+that subtracts one coordinate from the other. Since the coordinates are equal,
+every point lands at zero. Both axis scores were low even though the cloud
+still lies on a line. The axes miss this dependence, so we have to test
+directions that mix the coordinates.
 
 <sub>cues: mix, zero, verdict</sub>
+
+---
+
+## c06_every_direction
+
+*Chapter C.06 — every direction produces a batch, and all batches identify the cloud.*
+
+Keep turning the direction u. Each new angle draws another shadow of the same
+cloud, and by the time u has swept all the way around, every direction has had
+its turn.
+
+<sub>cues: turn, fill</sub>
+
+> **ON SCREEN** — u^\top Z\sim\mathcal N(0,\,u^\top I u)=\mathcal N(0,1)
+
+> **ON SCREEN** — \mathrm{Var}[u^\top Z]\approx
+
+Suppose the cloud itself is standard Gaussian. Its spread is the identity in
+every direction, so projecting onto any unit direction leaves the variance
+exactly one. The direction can swing anywhere it likes and that number stays
+where it is — every unit direction produces the same standard Gaussian shadow.
+The finite batch still wiggles a little around that shape; the target itself
+does not.
+
+<sub>cues: gaussian, spread, hold, reason, turn</sub>
+
+> **ON SCREEN** — \varphi_{u^\top Z}(t)
+
+> **ON SCREEN** — \varphi_{u^\top Z}(t)=\mathbb E\!\left[e^{it(u^\top Z)}\right]
+
+> **ON SCREEN** — =\mathbb E\!\left[e^{i(tu)^\top Z}\right]
+
+Take one of those shadows on its own, and ask what its characteristic function
+is. For a projection, that means averaging a unit arrow whose angle is t times
+the projected value. But the projection is already a dot product, so the t can
+move inside it: the angle is the point z, dotted with t u. Which makes it the
+whole cloud's characteristic function, read off at the single point t u. So as
+t runs from zero outward, that point traces a ray across frequency space, and
+the curve's height travels with it as brightness. Pick a few heights off the
+curve at random, and each one lands at exactly the brightness it predicts.
+Turn u through a full circle and the ray turns with it, one direction at a
+time. Once every direction has had its turn, the cloud's characteristic
+function is filled in everywhere, because every point of frequency space lies
+on somebody's ray.
+
+<sub>cues: one, define, regroup, identity, trace, points, rotate, together</sub>
+
+> **ON SCREEN** — Gaussian cloud
+
+> **ON SCREEN** — ring cloud
+
+> **ON SCREEN** — same distribution
+
+> **ON SCREEN** — \varphi_X=\varphi_Y\ \Longrightarrow\ X\overset{d}{=}Y
+
+Now a second cloud, shaped nothing like the first — its points sit out around
+a ring instead of piling up in the middle. It has the same mean and the same
+covariance as the Gaussian, so no test built on those two could tell them
+apart. Run the same construction on it, every direction and every distance,
+and its field fills in too — but it fills in with bright rings and dark gaps,
+where the Gaussian has one smooth peak. Push its points until they sit the way
+the Gaussian's do, and the field follows them the whole way: the gaps close,
+the rings wash out, and the two only agree once the clouds themselves agree.
+That is the uniqueness theorem — distributions that share a characteristic
+function at every point are the same distribution.
+
+<sub>cues: rival, rivalfield, push, match, unique</sub>
+
+> **ON SCREEN** — \varphi_{u^\top X}(t)=\varphi_{u^\top Y}(t)\ \ \forall u,t\quad\Longrightarrow\quad X\overset{d}{=}Y
+
+But that field was never measured directly. Every value in it arrived from a
+shadow: one direction, one distance along it. So if two clouds cast the same
+shadow in every single direction, they fill in the same field — and uniqueness
+finishes the argument for us. They are the same cloud. That step, from every
+one-dimensional projection up to the joint distribution, is the Cramér–Wold
+theorem. For the target we're matching, each shadow's fingerprint is the
+standard Gaussian's own, e to the minus t squared over two. And any single
+point of the field is fixed the same way: its distance from the origin gives
+t, its direction gives u. So that fingerprint belongs to exactly one cloud — Z
+itself, standard Gaussian in every dimension. Which is what the theorem buys
+us: pinning down a distribution in D dimensions never requires looking at it
+in D dimensions — a family of one-dimensional shadows is enough.
+
+<sub>cues: never, cw, name, specialize, pick, resolve, conclude, payoff</sub>
+
+> **ON SCREEN** — \varphi_{u^\top Z}(t)=e^{-t^2/2}
+
+> **ON SCREEN** — t=\|\xi\|,\ \ u=\xi/\|\xi\|
+
+> **ON SCREEN** — frequency space
+
+> **ON SCREEN** — Z\sim\mathcal N(0,I_D)
 
 ---

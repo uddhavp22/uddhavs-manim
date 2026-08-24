@@ -26,6 +26,7 @@ from voiceover.services.say import SayService
 VOICE = os.environ.get("LENEPA_VOICE", "draft")
 DRAFT_VOICE = os.environ.get("LENEPA_DRAFT_VOICE", "Evan (Enhanced)")
 ARCHER = "Fahco4VZzobUeiPqni1S"
+ARCHER_SPEED = float(os.environ.get("LENEPA_ELEVEN_SPEED", "0.90"))
 ARCHER_SETTINGS = {
     "stability": 0.65,
     "similarity_boost": 0.75,
@@ -34,8 +35,12 @@ ARCHER_SETTINGS = {
 }
 
 ELEVEN_PRONUNCIATIONS = (
-    (r"\bLeNEPA\b", "leh NEP uh"),
-    (r"\bNEPA\b", "NEP uh"),
+    # The author will pronounce the method names in the final recording.  The
+    # preview voice consistently splits or mangles them, so give ElevenLabs a
+    # contextual referent while subtitles retain the real technical spelling.
+    (r"\bLeNEPA\b", "This version"),
+    (r"\bLeJEPA\b", "the previous method"),
+    (r"\bNEPA\b", "Neppa"),
     (r"\bSIGReg\b", "sig reg"),
     (r"\bJEPA\b", "JEP uh"),
     (r"\bPTB-XL\b", "P T B X L"),
@@ -99,6 +104,7 @@ class LenepaScene(VoiceoverScene):
                 voice_id=ARCHER,
                 voice_settings=ARCHER_SETTINGS,
                 transcription_model="base",
+                global_speed=ARCHER_SPEED,
             )
         else:
             raise ValueError(

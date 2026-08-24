@@ -10,7 +10,7 @@ adopt the underlying discipline: create a need for each idea, let the viewer
 reason from a concrete visual, preserve object identity, and make every spoken
 sentence arrive with the visual evidence that supports it.
 
-## Current production status — 2026-08-16
+## Current production status — 2026-08-20
 
 This section supersedes the stale implementation-state wording in §2 below.
 The protected idea arc and style contract remain binding.
@@ -119,11 +119,14 @@ The protected idea arc and style contract remain binding.
   explanations were unclear and slightly redundant, that the chapter's
   conversational connectors ("if / then / now / so") were missing, and that the
   ending was weak. Changes, all binding on C05–C10:
-  - **Deleted phrases, by owner instruction: "and it should", "if we", and
+  - **Deleted phrases in that C04 revision, by owner instruction: "and it should", "if we", and
     "the cloud stays the same" / "the cloud never changed".** Restating that
     the cloud is fixed is redundant with the animation, which shows it. The
     same goes for "Every embedding still lands somewhere on the line", cut from
     beat 2 — the shadow arriving on screen is that sentence.
+    This was not a chapter-wide ban on causal language: the 2026-08-20 C05
+    review explicitly restores “if … then” where it makes the rotation and its
+    consequence sound conversational.
   - Every beat now opens on a connector rather than a construction: "Now
     suppose…", "Take the direction…", "Then the shadow…", "Now turn…", "Keep
     turning…", "So pick one of them…".
@@ -243,7 +246,7 @@ The protected idea arc and style contract remain binding.
   `chapterB/` while `output_path.py` was answering with the flat path — so its
   freshness guard was rebuilding every scene every time. Note `-s` still frames
   are unaffected: `images_dir` was deliberately left alone.
-- `SCRIPT_chapterC.md` is now generated from C01–C05. Continue regenerating it
+- `SCRIPT_chapterC.md` is now generated from C01–C06. Continue regenerating it
   after narration changes; do not edit it by hand.
 - C01 and C02 have authorized final ElevenLabs/1920×1080/60 deliveries. C02's
   former final was superseded by the 2026-08-16 owner-directed rewrite, and the
@@ -255,12 +258,14 @@ The protected idea arc and style contract remain binding.
 - C02's delivered ElevenLabs file is
   `media/videos/sigreg_explainer/chapterC/c02_the_shape_is_the_goal/1080p60/C02.mp4`
   (163.87 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo, Archer voice).
-- C05's delivered ElevenLabs file is
+- C05's current final-quality owner-review file is
   `media/videos/sigreg_explainer/chapterC/c05_gaussian_marginals/1080p60/C05.mp4`
-  (60.97 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo, Archer voice).
+  (52.25 s, H.264 1920×1080 at 60 fps, AAC 48 kHz stereo, Archer voice).
+  It is awaiting owner approval; the superseded cut at the same output path
+  ran 60.97 seconds.
 - **C05 is in owner-directed review again as of 2026-08-20.** The 60.97-second
-  ElevenLabs file above is the last delivered master, but its content is
-  superseded by the current source and a 45.20-second low-quality draft. The
+  cut was superseded by the current source and the 52.25-second final-quality
+  review render above. The
   owner identified four related failures: “score the coordinates” was not
   shown as an actual projection onto the axes; separate reveals made the
   transitions feel choppy; narration was list-like and poorly synchronized;
@@ -273,10 +278,43 @@ The protected idea arc and style contract remain binding.
   onto y, where `score(y)=0.244` joins it. A final 45-degree turn toward `y-x`
   contracts the stacked shadow back to one literal point at zero and displays
   `score(u)=81.785`. The apparatus clears back to the bare diagonal cloud.
-  Narration is 133 spoken words in three passages, with six semantic bookmarks;
-  it uses horizontal/vertical-coordinate wording rather than asking TTS to
-  carry repeated bare “x” and “y.” No new ElevenLabs/1080p render is authorized
-  yet. The current storyboard section records the full decision.
+  Narration is 152 spoken words in three passages, with six semantic bookmarks.
+  The latest owner pass replaces the ambiguous “project x” delivery with “drop
+  every point straight onto that axis,” introduces horizontal and vertical as
+  the two natural directions to try, uses “Now, if we turn that same projection
+  … then nothing changes,” and states the coordinate-wise strategy's limitation
+  before turning to a mixed direction. The Archer transcript preserved that
+  wording. The current storyboard section records the full decision, and the
+  render remains awaiting owner approval.
+- **C06 has a new final-quality review render (2026-08-21).** It
+  opens with two quick failure recalls: independent pointwise Gaussian partners
+  average toward the origin, while one selected projection can conceal a
+  structured cloud. The first recall begins centrally and moves left only when
+  the second enters. The scene then computes two batches literally: selected
+  points drop to a direction line, their scalar coordinates collect into a
+  green one-dimensional batch, and the computation repeats after `u` turns.
+  The remaining batches then accumulate into the sixteen-line, eight-plot
+  wheel. The same 200 dots morph into the desired isotropic sample while green
+  finite batches vary and the eight amber population bells stay fixed. For the
+  characteristic-function beat now begins with one isolated projected batch.
+  A variation of the last chapter's live rider puts the scalar characteristic
+  function beside the joint frequency plane. The same `t` drives both riders:
+  `tu` moves from the negative side, through zero, to the positive side while
+  `u` stays fixed on a visible unit circle. The exact identity
+  `φ_{u^T Z}(t)=E[e^{it u^T Z}]=φ_Z(tu)` then identifies that full line through
+  the origin as one radial slice. Rotating `u` fills the frequency plane,
+  and Gaussian contours assemble from the matching radial slices. The equation
+  explicitly shows that a standard-Gaussian projection supplies the slice
+  `e^{-t²/2}`. The uniqueness theorem from the last chapter bridges the filled joint
+  characteristic function to the distribution. The frequency display clears
+  before `Cramér–Wold` enters quickly on its own card; the implication follows.
+  There is no rhetorical question, “in symbols” aside, proof-skipping aside,
+  backwards rewind, or theorem/equation overlap. The
+  final beat retains eight direction lines and four representative plots for
+  C07. Narration is 438 spoken words in five passages. Current review
+  file:
+  `media/videos/sigreg_explainer/chapterC/c06_every_direction/1080p60/C06.mp4`
+  (154.03 s, 1920×1080 at 60 fps, Archer ElevenLabs voice).
 - **Historical C05 implementation notes (2026-08-18).** The following traps
   and reusable components came from the superseded strip-and-merge cut. They
   remain useful engineering context, but its narration, meter, trace, and
@@ -394,12 +432,14 @@ The protected idea arc and style contract remain binding.
   one focal event at a time, per §5. Superseded the prior 109.67 s cut.
 - Validation: the current files pass `py_compile`; `preflight` reports no
   undefined names; narration audit passes every budget (bookmark-stripped
-  spoken words: C01 140, C02 476, C03 344, C04 156, C05 133, total 1,249);
-  `dead_air.py --frozen` reports no dead air in the current C05 low-quality
-  draft; and `facts.py` passes
-  27/27, the two newest claims being C05's construction and its displayed
-  scores. Note that `SCRIPT_chapterC.md`'s header reads 1,470 for the same
-  five scenes: `script_dump.py` counts `[A-Za-z']+` tokens on the raw passage
+  spoken words: C01 140, C02 476, C03 344, C04 156, C05 152, C06 438,
+  total 1,706); the current C06 final-quality render has no dead-air interval;
+  `dead_air.py --frozen` reports no dead air in the current C05
+  final-quality render or C06 final-quality review render. C06's intentional
+  still windows during spoken holds top out at 3.5 s; and `facts.py` passes 28/28.
+  The newest check covers C06's full representative direction sweep. Note that
+  `SCRIPT_chapterC.md`'s header reads 2,021 for the same six scenes:
+  `script_dump.py` counts `[A-Za-z']+` tokens on the raw passage
   text, so each `<bookmark mark='x'/>` adds three to its total. The two
   numbers are not in conflict, and neither is wrong — but quote the
   bookmark-stripped one when talking about narration length.
@@ -414,11 +454,11 @@ The protected idea arc and style contract remain binding.
   every direction / Cramér–Wold → `M` sampled directions, with quadrature `K`
   introduced only when computation requires it. Do not pull C06–C08's results
   into C01–C03.
-- After the owner approves the current C05 review draft, next implementation
-  work begins at C06. Do not reopen C01–C04 unless a new rendered observation
-  identifies a regression. C05's old score-vs-angle panel remains removed;
-  the current draft makes the coordinate shortcut and one revealing mixed
-  direction directly.
+- C06's final-quality Cramér–Wold review render is now the active review target. Do not
+  start C07 or reopen C01–C04 until owner feedback on C06, unless a new rendered
+  observation identifies a regression. C05's old score-vs-angle panel remains
+  removed; the current cut makes the coordinate shortcut and one revealing
+  mixed direction directly.
 
 Relevant 3Blue1Brown source patterns were consulted in the local source tree,
 with C01 now specifically grounded in `_2017/nn/part1.py::NetworkMobject`,
