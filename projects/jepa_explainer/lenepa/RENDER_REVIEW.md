@@ -1,5 +1,81 @@
 # LeNEPA segment — render review
 
+## Scene 04 layout and projection-beat repair — 2026-08-24
+
+| | |
+|---|---|
+| Artifact | `media/videos/jepa_explainer/lenepa/LeNEPA04_review_eleven_qh.mp4` |
+| Delivery | 80.48 s; 1920×1080 at 60 fps |
+| Scope | Composition A relaid out and repaced; composition B stripped back to dots plus one spread ring; composition C sweep bars and label placement fixed; `SCRIPT_ELEVENLABS.md` §4 and `STORYBOARD.md` §4 resynced |
+| Mechanical checks | ElevenLabs `-qh` at 1080p60 clean; `narration_audit`, `.venv` preflight, `facts.py` all pass; no silence interval ≥ 3 s |
+| Visual review | Dense `video_detail` passes over A, B and C at 0.4–1 fps, before and after each change |
+| Verdict | **READY FOR OWNER REVIEW** |
+
+The owner rejected the four-composition entry below with two frames and a
+blunt verdict on the organisation. Reviewing the delivered render frame by
+frame confirmed every complaint and turned up more:
+
+**Composition A.** Frames at 4, 6, 8 and 10 s were pixel-identical — eight
+seconds of one finished static row on an otherwise empty frame. Row `b=3`
+was clipped by the bottom frame edge for the composition's entire duration:
+rows 2 and 3 were placed relative to row 1's *pre-shift* position, so they
+landed at `y=-1.9` and `y=-3.8` and, at row height 1.15, row 3's bottom
+bracket sat at `-4.375` against a frame edge at `-4.0`. The same bug made
+the `b1→b2` gap (3.8) twice the `b2→b3` gap (1.9). Rows 2 and 3 dimmed to
+0.4 opacity were mud on this background. The collapse outline — the payoff
+of the whole composition — was `Create`d in 0.55 s and cleared about a
+second later, so it only ever appeared as a stray red dash near the time
+arrow's tip; that is what the owner was asking about.
+
+*Fixed:* the slot pitch is now solved so the row spans a fixed target width;
+rows sit at `+dy/0/-dy` about the frame centre; the row arrives token by
+token under the opening clause; rows 2 and 3 enter on a `LaggedStart` so
+row 1 has vacated the centre slot before row 2 occupies it; the dim is 0.58;
+the outline draws over 0.9 s and is held for 1.1 s.
+
+**Composition B.** Six seconds of a *single* red dot on an empty crosshair
+while the narration said "take every representation in the batch" — all six
+`b=1` dots were exactly coincident, so the `LaggedStart(GrowFromCenter)`
+across them was invisible. At radius 0.12 the collapsed set rendered as a
+coral sausage larger than anything else on screen. The reference density
+curve was an unlabelled S-stroke spanning the full frame height and crossing
+the axes. Dimmed `b=2` dots were still sitting under the bright `b=3` dots
+at 44–51 s — accumulation, inside a single composition.
+
+Beyond the defects, the beat was over-built for its own argument: it proves
+one thing, that the batch still looks healthy while one sequence collapsed,
+and it was spending a direction arrow, a projection line, an Epps–Pulley
+reference density and a numeric score on it — four unexplained objects and a
+score on a scale the viewer was never given. All of that is gone. What
+remains is the point cloud, axes fitted independently so it fills the frame,
+and one *containing* ring per row. A first pass at radius 0.075 over-shrank
+the dots to dust and flattened the `b=1` knot back into a single lozenge;
+the jitter is now applied in plane units after the fit, so six dots stay
+countable. A batch-level ring was tried and cut: a circle reads as a
+boundary, and leaving half the batch outside it looked like a failure rather
+than a measure. The dots pulse instead.
+
+**Composition C.** `sweep_bar` built a full-row-width rectangle and animated
+it from `row.get_left()` to `row.get_right()`, so it began and ended half off
+the row and read as a selection band hanging in empty space past the last
+vector — replaced by a lagged `Indicate` along the glyphs.
+`TransformFromCopy(VGroup(tap0, tap8), layers_label)` flew MathTex copies
+across the chamber and left a doubled, half-formed `ℓ` ghosted over its
+interior; the taps are pulsed and the set is stated instead. The
+"causal Transformer" label floated at the right margin attached to nothing
+while the chamber sat empty — it now sits inside, and `depth_plates` uses an
+even count so no plate strikes through it.
+
+Also fixed throughout: `across()` stretches its animation over all remaining
+narration, which is right for fades and traversals but turned a small
+`Create(Circle)` into a 4.7 s crawl and a label fade into 3 s. A local
+`settle()` helper caps the drawing and lets a pause absorb the rest.
+
+Four imports (`PlaneProjectionRig`, `mini_axes`, `TIME_DIR`,
+`LATENT_SCALE`) were orphaned by the composition B rewrite and removed.
+`common/project.py` now has no caller in this chapter; it is left in place
+rather than deleted, but nothing depends on it.
+
 ## Scene 04 four-composition rebuild — 2026-08-24
 
 | | |

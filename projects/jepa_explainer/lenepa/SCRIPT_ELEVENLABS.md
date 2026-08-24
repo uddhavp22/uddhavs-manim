@@ -6,7 +6,7 @@ truth when replacing the audio; its voiceover blocks drive the animations.
 
 Preview voice: Archer (`eleven_multilingual_v2`) at 90% tempo, stability 0.65,
 similarity 0.75, style 0, speaker boost on. Approximate script length:
-**873 words**.
+**870 words**.
 `common/scene.py` automatically sends the phonetic forms below to ElevenLabs
 while retaining the conventional spellings in subtitles.
 
@@ -78,12 +78,12 @@ position ends up carrying the same embedding.
 Now suppose we take every representation in the batch and put it into the
 same projected plane. Across the whole batch, there's still plenty of spread.
 
-Now follow the first sequence across time. All six of its representations
-have landed in essentially the same place, so its score comes out large.
+But now follow just the first sequence across time. All six of its
+representations have landed in essentially the same place.
 
-The second sequence hasn't collapsed, so it spreads out and scores low — and
-the third looks the same way. So for each sequence, we run SIGReg across its
-own tokens over time.
+The second sequence hasn't collapsed, so it still covers real ground — and
+the third looks the same way. So the check has to run inside each sequence,
+across its own tokens over time.
 
 Tokens exist at every depth of the network, not just one. LeNEPA does this at
 two places: the patch embeddings at layer zero, and again after layer eight.

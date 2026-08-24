@@ -980,15 +980,26 @@ class C06(ActScene, ThreeDScene):
                 color=MAGNITUDE,
             ).to_edge(UP, buff=0.7)
             layout.fit_in_frame(specialize_eq)
-            specialize_window = tracker.time_until_bookmark("pick")
+            # Two steps, not one crossfade. `specialize_eq` sits at the top
+            # edge, which is exactly the band `cw_statement` occupies with
+            # `cw_label` right beneath it, so fading the theorem out while the
+            # specialisation faded in stacked three lines of text on top of
+            # each other and left all three unreadable for about three
+            # seconds. Clear the theorem first, then write the specialisation
+            # against an empty top edge -- the same fix, and the same reason,
+            # as the closing crossfade further down.
+            specialize_budget = max(
+                2 / config.frame_rate, tracker.time_until_bookmark("pick") - 0.5,
+            )
             self.play(
                 FadeOut(cw_statement), FadeOut(cw_label),
+                run_time=specialize_budget * 0.35,
+            )
+            self.play(
                 FadeIn(specialize_eq, shift=0.06 * UP),
                 # Settle before "any single point" begins. A minimum runtime
                 # here can overrun the bookmark and steal the point's window.
-                run_time=max(
-                    1 / config.frame_rate, specialize_window - 0.5,
-                ),
+                run_time=specialize_budget * 0.65,
             )
             self.wait_until_bookmark("pick")
 

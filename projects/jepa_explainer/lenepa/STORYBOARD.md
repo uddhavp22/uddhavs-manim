@@ -135,19 +135,33 @@ it was rejected.
 - **A.** A brief silent recap of scene 3's exit frame, fully cleared, then a
   large `(B, T)` grid of real layer-0 token glyphs: row `b=1` is scene 1's
   own token sequence; rows `b=2`, `b=3` are drawn the same way from a new
-  seed. Row `b=1`'s entries then genuinely converge in place
+  seed. The row arrives token by token under the opening clause rather than
+  landing whole and then holding still for it. The slot pitch is solved so
+  the row spans a fixed target width, and the three rows sit at `+dy/0/-dy`
+  about the frame centre -- placing them relative to row 1's *pre-shift*
+  position pushed row 3's bottom bracket off the frame edge and left the
+  first gap twice the second. Row `b=1`'s entries then genuinely converge in place
   (`ChangeDecimalToValue`, never a color change mid-morph) onto one shared
   value; only once every value has actually landed does a coral outline mark
   the row as collapsed.
 - **B.** All eighteen tokens in the batch -- not three separate per-sample
   clouds -- pool onto one large shared latent plane, built fresh (dots
   arriving via `GrowFromCenter`, never a `Transform` from a complex vector
-  glyph into a dot, which produces mangled interpolation garbage). Row
-  `b=1`'s six points land on one coincident spot; rows `b=2`/`b=3` keep real
-  spread. Only then does the SIGReg chapter's own projection grammar (one
-  `PlaneProjectionRig`, one direction, one line, one reference curve, no
-  dashed guide-line clutter) run across each row in turn: `b=1`'s identical
-  points spike and score high, `b=2`/`b=3` spread and score low.
+  glyph into a dot, which produces mangled interpolation garbage). The
+  plane's two axes are fitted independently so the cloud fills the frame.
+  Row `b=1`'s six points land in one tight knot -- jittered in plane units
+  so six dots stay countable, since collapse is "essentially the same
+  place," not bit-identical -- while `b=2`/`b=3` keep real spread. Each row
+  is then ringed in turn by a *containing* circle around its own points:
+  `b=1`'s is a dot, `b=2`/`b=3`'s are large.
+- This beat proves exactly one thing -- the batch still looks healthy while
+  one sequence has collapsed -- so it is drawn with exactly one geometry.
+  An earlier version imported the SIGReg chapter's whole projection
+  apparatus for it (direction arrow, projection line, Epps-Pulley reference
+  density, numeric score): four unexplained objects and a score on a scale
+  the viewer was never given, to deliver one bit. None of it survives. The
+  ring is a containing radius rather than a mean one, because a circle
+  reads as a boundary and leaving points outside it looks like a mistake.
 - **C.** Layer 0 and layer 8 are pulled out of an actual, large transformer
   chamber -- `u^(0)` is scene 1's token row, `u^(8)` reuses scene 2's
   post-mixing carriers -- as real spatial extraction points (glyphs emerging

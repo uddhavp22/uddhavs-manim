@@ -38,18 +38,15 @@ from common.data import (
     BATCH_T,
     BATCH_TOKENS,
     COLLAPSED_TOKEN,
-    LATENT_SCALE,
     LAYER8_ROW,
     MIXED_VALUES,
     PRD_ROW_Y,
     PRED_H,
     TGT_ROW_Y,
-    TIME_DIR,
     TOKEN_H,
     TOKEN_VALUES,
     latent,
 )
-from common.project import PlaneProjectionRig
 from common.palette import (
     AXIS,
     BACKBONE,
@@ -74,7 +71,6 @@ from common.visuals import (
     latent_column,
     latent_row,
     LayerMap,
-    mini_axes,
     numeric_embedding,
     scalar_dot,
     span_bracket,
@@ -1242,6 +1238,20 @@ class LeNEPA04TemporalSIGReg(LenepaScene):
     """
 
     def construct(self):
+        def settle(tracker, *animations, run_time: float) -> None:
+            """Draw at a natural speed, then hold for the rest of the clause.
+
+            ``across`` stretches an animation over all remaining narration,
+            which suits fades and long traversals but turns a small
+            ``Create(Circle)`` into a four-second crawl and a label fade into
+            a three-second dissolve.  Cap the drawing; let a pause absorb the
+            leftover time.
+            """
+            self.play(*animations, run_time=run_time)
+            rest = tracker.get_remaining_duration()
+            if rest > 0.05:
+                self.wait(rest)
+
         # ==================================================================
         # Composition A -- the temporal batch.
         # ==================================================================
@@ -1279,33 +1289,32 @@ class LeNEPA04TemporalSIGReg(LenepaScene):
         self.wait(0.5)
         self.play(FadeOut(VGroup(fan_group, fan_brace, recap_eq)), run_time=0.5)
 
-        ROW_H = 1.15
-        ROW_DY = 1.9
-        row1 = VGroup(*(
-            numeric_embedding(v, color=BACKBONE, shown=3, height=ROW_H)
-            for v in BATCH_TOKENS[0]
-        ))
-        slot_dx = max(g.width for g in row1) + 0.55
+        # Three rows at +ROW_DY / 0 / -ROW_DY keeps the grid vertically
+        # centered and symmetric.  The earlier version placed rows 2 and 3
+        # relative to row 1's *pre-shift* position, which pushed row 3's
+        # bottom bracket to y=-4.375 -- clipped by the frame edge -- and left
+        # the b1->b2 gap twice the b2->b3 gap.
+        ROW_H = 1.30
+        ROW_DY = 2.20
+        ROW_TARGET_W = 11.4
+
+        def build_row(values) -> VGroup:
+            return VGroup(*(
+                numeric_embedding(v, color=BACKBONE, shown=3, height=ROW_H)
+                for v in values
+            ))
+
+        row1, row2, row3 = (build_row(BATCH_TOKENS[b]) for b in range(BATCH_B))
+        # Solve the slot pitch so the row spans ROW_TARGET_W exactly, rather
+        # than leaving a third of the frame empty on both sides.
+        glyph_w = max(g.width for g in (*row1, *row2, *row3))
+        slot_dx = max(glyph_w + 0.55, (ROW_TARGET_W - glyph_w) / (BATCH_T - 1))
 
         def place_row(row: VGroup, y: float) -> None:
             for i, g in enumerate(row):
-                g.move_to(np.array([(i - 2.5) * slot_dx, y, 0.0]))
+                g.move_to(np.array([(i - 0.5 * (BATCH_T - 1)) * slot_dx, y, 0.0]))
 
         place_row(row1, 0.0)
-        if row1.width > 12.6:
-            scale = 12.6 / row1.width
-            row1.scale(scale)
-            slot_dx *= scale
-            place_row(row1, 0.0)
-
-        row2 = VGroup(*(
-            numeric_embedding(v, color=BACKBONE, shown=3, height=ROW_H)
-            for v in BATCH_TOKENS[1]
-        ))
-        row3 = VGroup(*(
-            numeric_embedding(v, color=BACKBONE, shown=3, height=ROW_H)
-            for v in BATCH_TOKENS[2]
-        ))
         place_row(row2, 0.0)
         place_row(row3, 0.0)
 
@@ -1330,25 +1339,46 @@ class LeNEPA04TemporalSIGReg(LenepaScene):
                  "batch holds several such sequences, each with its own "
                  "tokens across time."
         ) as tracker:
+            # The first clause runs ~7s.  Holding a finished static row for
+            # all of it reads as a stall, so the row arrives token by token
+            # under the narration instead of landing in one cut.
+            lead = max(1.6, tracker.time_until_bookmark("batch") - 0.35)
+            self.play(FadeIn(time_arrow), FadeIn(time_word), run_time=0.45)
             self.play(
-                FadeIn(row1, shift=0.10 * UP),
-                FadeIn(b_labels[0]),
-                run_time=max(1.0, tracker.time_until_bookmark("batch") - 0.2),
+                LaggedStart(
+                    *(FadeIn(g, shift=0.16 * UP) for g in row1),
+                    lag_ratio=0.55,
+                ),
+                run_time=max(1.0, lead - 0.95),
             )
+            self.play(FadeIn(b_labels[0], shift=0.12 * RIGHT), run_time=0.5)
             self.wait_until_bookmark("batch")
-            row2.move_to(row1).shift(ROW_DY * DOWN)
-            row3.move_to(row1).shift(2 * ROW_DY * DOWN)
+            # Rows 2 and 3 are placed at their *final* slots (0 and -ROW_DY)
+            # while row 1 rises to +ROW_DY, so the settled grid is symmetric
+            # about the frame center and nothing runs off the bottom edge.
+            place_row(row2, 0.0)
+            place_row(row3, -ROW_DY)
             b_labels[1].next_to(row2, LEFT, buff=0.32)
             b_labels[2].next_to(row3, LEFT, buff=0.32)
+            # Staggered so row 1 has vacated the y=0 slot before row 2
+            # arrives in it -- played flat, the two rows interleave for a
+            # few frames and read as clutter.
             self.across(
                 tracker,
-                row1.animate.shift(ROW_DY * UP),
-                b_labels[0].animate.shift(ROW_DY * UP),
-                FadeIn(row2, shift=0.08 * DOWN),
-                FadeIn(row3, shift=0.08 * DOWN),
-                FadeIn(b_labels[1]), FadeIn(b_labels[2]),
-                FadeIn(time_arrow), FadeIn(time_word),
-                floor=1.2,
+                LaggedStart(
+                    AnimationGroup(
+                        row1.animate.shift(ROW_DY * UP),
+                        b_labels[0].animate.shift(ROW_DY * UP),
+                    ),
+                    AnimationGroup(
+                        FadeIn(row2, shift=0.22 * UP), FadeIn(b_labels[1]),
+                    ),
+                    AnimationGroup(
+                        FadeIn(row3, shift=0.22 * UP), FadeIn(b_labels[2]),
+                    ),
+                    lag_ratio=0.38,
+                ),
+                floor=1.4,
             )
 
         # ------------------------------------------------------------------
@@ -1362,25 +1392,30 @@ class LeNEPA04TemporalSIGReg(LenepaScene):
             entry_first, entry_last = decimal_entries(g)
             collapse_anims.append(ChangeDecimalToValue(entry_first, float(COLLAPSED_TOKEN[0])))
             collapse_anims.append(ChangeDecimalToValue(entry_last, float(COLLAPSED_TOKEN[-1])))
-        collapse_outline = SurroundingRectangle(row1, buff=0.24, color=ERROR, stroke_width=2.6)
+        collapse_outline = SurroundingRectangle(row1, buff=0.28, color=ERROR, stroke_width=3.2)
 
         with self.voiceover(
             text="Nothing stops the tokens in one sequence from drifting "
                  "together, until every position ends up carrying the same "
                  "embedding."
         ) as tracker:
+            # 0.4 opacity on this background turned rows 2 and 3 into mud.
             self.play(
-                row2.animate.set_opacity(0.4), row3.animate.set_opacity(0.4),
-                b_labels[1].animate.set_opacity(0.4), b_labels[2].animate.set_opacity(0.4),
+                row2.animate.set_opacity(0.58), row3.animate.set_opacity(0.58),
+                b_labels[1].animate.set_opacity(0.58),
+                b_labels[2].animate.set_opacity(0.58),
                 run_time=0.5,
             )
+            # The outline is the payoff of the whole composition; drawing it
+            # in 0.55s and clearing ~1s later left it reading as a stray red
+            # dash.  Draw it deliberately and hold it.
             self.across(
                 tracker,
                 LaggedStart(*collapse_anims, lag_ratio=0.05),
-                floor=2.2,
+                floor=1.9,
             )
-            self.play(Create(collapse_outline), run_time=0.55)
-            self.wait(0.4)
+            self.play(Create(collapse_outline), run_time=0.9)
+        self.wait(1.1)
 
         self.play(
             FadeOut(VGroup(
@@ -1390,29 +1425,82 @@ class LeNEPA04TemporalSIGReg(LenepaScene):
         )
 
         # ==================================================================
-        # Composition B -- the shared latent plane.
+        # Composition B -- one shared latent plane, dots only.
+        #
+        # This beat proves exactly one thing: the batch as a whole still
+        # looks healthy while one sequence has collapsed.  An earlier version
+        # imported the SIGReg chapter's full projection apparatus (direction
+        # arrow, projection line, Epps-Pulley reference density, numeric
+        # score) to deliver that single bit -- four unexplained graphical
+        # objects, plus scores on a scale the viewer was never given.  All of
+        # it is gone.  What remains is the point cloud and one spread ring,
+        # which is a geometry the frame explains by itself.
         # ==================================================================
-        PLANE_SCALE = 1.30
-        PLANE_CENTER = np.array([0.0, -0.15, 0.0])
-        axes = mini_axes(PLANE_CENTER, width=9.6, height=6.0)
+        PLANE_CENTER = np.array([0.0, 0.28, 0.0])
+        DOT_R = 0.10
 
-        def plane_point(u9) -> np.ndarray:
-            xy = latent(np.asarray(u9)) * PLANE_SCALE
-            return PLANE_CENTER + np.array([xy[0], xy[1], 0.0])
+        raw_rows = [
+            [latent(COLLAPSED_TOKEN)] * BATCH_T,
+            [latent(v) for v in BATCH_TOKENS[1]],
+            [latent(v) for v in BATCH_TOKENS[2]],
+        ]
+        _flat = np.array([p for row in raw_rows for p in row])
+        _lo, _hi = _flat.min(axis=0), _flat.max(axis=0)
+        _mid, _span = 0.5 * (_lo + _hi), np.maximum(_hi - _lo, 1e-6)
+        # Scale the axes independently.  This is an abstract plane with no
+        # units, and a single isotropic factor left the binding axis filled
+        # while the other kept a third of the frame empty.
+        plane_fit = np.array([9.9 / _span[0], 4.4 / _span[1]])
 
-        collapsed_row = [COLLAPSED_TOKEN] * BATCH_T
+        def plane_point(xy) -> np.ndarray:
+            d = (np.asarray(xy) - _mid) * plane_fit
+            return PLANE_CENTER + np.array([d[0], d[1], 0.0])
+
+        # Collapse is "essentially the same place," not bit-identical.  The
+        # jitter is applied in plane units *after* the fit so the six b=1
+        # points read as a countable tight knot -- scaled beforehand it
+        # shrank to a single lozenge, which contradicts "all six of its
+        # representations."
+        jitter = np.random.default_rng(7).normal(scale=0.115, size=(BATCH_T, 2))
         b1_dots = VGroup(*(
-            scalar_dot(ERROR, radius=0.12).move_to(plane_point(COLLAPSED_TOKEN))
-            for _ in range(BATCH_T)
+            scalar_dot(BACKBONE, radius=DOT_R).move_to(
+                plane_point(raw_rows[0][0]) + np.array([j[0], j[1], 0.0])
+            )
+            for j in jitter
         ))
-        b2_dots = VGroup(*(
-            scalar_dot(BACKBONE, radius=0.11).move_to(plane_point(v))
-            for v in BATCH_TOKENS[1]
-        ))
-        b3_dots = VGroup(*(
-            scalar_dot(BACKBONE, radius=0.11).move_to(plane_point(v))
-            for v in BATCH_TOKENS[2]
-        ))
+        b2_dots, b3_dots = (
+            VGroup(*(
+                scalar_dot(BACKBONE, radius=DOT_R).move_to(plane_point(p))
+                for p in row
+            ))
+            for row in raw_rows[1:]
+        )
+        all_dots = VGroup(*b1_dots, *b2_dots, *b3_dots)
+
+        plane_frame = RoundedRectangle(
+            width=11.6, height=5.7, corner_radius=0.18,
+        ).move_to(PLANE_CENTER)
+        plane_frame.set_stroke(MUTED, 1.2, opacity=0.22).set_fill(opacity=0.0)
+
+        def spread_ring(dots: VGroup, color: str, opacity: float = 0.75) -> Circle:
+            """A circle at the points' centroid, sized by their mean radius.
+
+            One honest geometric measure of "how much ground does this set
+            cover" -- it replaces the numeric scores, which meant nothing to
+            a viewer who was never told their scale.
+            """
+            pts = np.array([d.get_center()[:2] for d in dots])
+            centre = pts.mean(axis=0)
+            # A containing radius, not a mean one.  A circle reads as a
+            # boundary, so leaving half the row's points outside it looks
+            # like a mistake rather than like a measure of spread.  Clamped
+            # to the plane's half-height so it never crosses the border.
+            radius = float(np.max(np.linalg.norm(pts - centre, axis=1))) * 1.10
+            radius = min(max(radius, 0.30), 2.45)
+            ring = Circle(radius=radius)
+            ring.set_stroke(color, 2.2, opacity=opacity).set_fill(opacity=0.0)
+            ring.move_to(np.array([centre[0], centre[1], 0.0]))
+            return ring
 
         with self.voiceover(
             text="Now suppose we take every representation in the batch "
@@ -1420,125 +1508,122 @@ class LeNEPA04TemporalSIGReg(LenepaScene):
                  "<bookmark mark='spread'/>Across the whole batch, there's "
                  "still plenty of spread."
         ) as tracker:
-            self.play(FadeIn(axes), run_time=0.4)
+            self.play(FadeIn(plane_frame), run_time=0.4)
+            shuffled = list(all_dots)
+            random.Random(5).shuffle(shuffled)
             self.play(
-                LaggedStart(*(GrowFromCenter(d) for d in b1_dots), lag_ratio=0.20),
-                run_time=max(1.3, tracker.time_until_bookmark("spread") - 0.3),
+                LaggedStart(*(GrowFromCenter(d) for d in shuffled), lag_ratio=0.11),
+                run_time=max(1.6, tracker.time_until_bookmark("spread") - 0.5),
             )
             self.wait_until_bookmark("spread")
-            self.across(
+            # Eighteen scattered dots already are the evidence for "plenty
+            # of spread" -- a batch-level ring left points outside itself
+            # and so read as a boundary that had failed.  A pulse across the
+            # whole cloud makes the same claim without a new object.
+            settle(
                 tracker,
-                LaggedStart(*(
-                    GrowFromCenter(d) for d in list(b2_dots) + list(b3_dots)
-                ), lag_ratio=0.05),
-                floor=1.3,
-            )
-        self.wait(0.5)
-
-        def row_rig(values9_list) -> PlaneProjectionRig:
-            return PlaneProjectionRig(
-                latent(np.array(values9_list)),
-                origin=PLANE_CENTER, scale=PLANE_SCALE, direction=TIME_DIR,
-            )
-
-        rig_b1 = row_rig(collapsed_row)
-        arrow = rig_b1.direction_arrow(length=1.8)
-        proj_line = rig_b1.projection_line()
-        bell = rig_b1.target_bell(height=0.7, gap=0.55)
-
-        with self.voiceover(
-            text="Now follow the first sequence across time. "
-                 "<bookmark mark='spike'/>All six of its representations "
-                 "have landed in essentially the same place, so its score "
-                 "comes out large."
-        ) as tracker:
-            self.play(
-                b2_dots.animate.set_opacity(0.30), b3_dots.animate.set_opacity(0.30),
-                run_time=0.5,
-            )
-            self.play(GrowArrow(arrow), Create(proj_line), run_time=0.7)
-            self.play(Create(bell), run_time=0.5)
-            self.wait_until_bookmark("spike")
-            shadow_pts_1 = rig_b1.shadow_points()
-            self.play(
-                *(d.animate.move_to(p) for d, p in zip(b1_dots, shadow_pts_1)),
-                run_time=1.0,
-            )
-            score_label = ty.maths(rf"{rig_b1.score():.1f}", size=ty.EQ_DISPLAY, color=ERROR)
-            score_label.next_to(proj_line, DOWN, buff=0.55)
-            self.across(
-                tracker,
-                FadeIn(score_label, shift=0.08 * UP),
-                Indicate(b1_dots, color=ERROR, scale_factor=1.2),
-                floor=0.6,
-            )
-
-        def sweep_to_line(tracker, dots, values9_list, run_time: float):
-            rig = row_rig(values9_list)
-            shadow_pts = rig.shadow_points()
-            new_score = ty.maths(f"{rig.score():.1f}", size=ty.EQ_DISPLAY, color=SIGREG)
-            new_score.move_to(score_label)
-            self.play(
-                *(d.animate.move_to(p) for d, p in zip(dots, shadow_pts)),
-                Transform(score_label, new_score),
-                run_time=run_time,
+                LaggedStart(
+                    *(Indicate(d, color=BACKBONE, scale_factor=1.9) for d in all_dots),
+                    lag_ratio=0.045,
+                ),
+                run_time=1.3,
             )
 
         with self.voiceover(
-            text="The second sequence hasn't collapsed, so it spreads out "
-                 "and scores low -- and the third looks the same way. "
-                 "<bookmark mark='notation'/>So for each sequence, we run "
-                 "SIGReg across its own tokens over time."
+            text="But now follow just the first sequence across time. "
+                 "<bookmark mark='tight'/>All six of its representations "
+                 "have landed in essentially the same place."
         ) as tracker:
             self.play(
-                b2_dots.animate.set_opacity(1.0), b3_dots.animate.set_opacity(0.30),
+                b2_dots.animate.set_opacity(0.22),
+                b3_dots.animate.set_opacity(0.22),
+                run_time=0.55,
+            )
+            # Colour changes only after the dots have finished moving and
+            # settling -- never during a shape or position animation.
+            self.play(b1_dots.animate.set_color(ERROR), run_time=0.45)
+            self.wait_until_bookmark("tight")
+            ring1 = spread_ring(b1_dots, ERROR)
+            settle(tracker, Create(ring1), run_time=0.9)
+        self.wait(0.4)
+
+        def show_row(dots: VGroup, dim: list[VGroup], run_time: float) -> Circle:
+            ring = spread_ring(dots, SIGREG)
+            self.play(
+                dots.animate.set_opacity(1.0),
+                *(d.animate.set_opacity(0.22) for d in dim),
                 run_time=0.4,
             )
-            sweep_to_line(tracker, b2_dots, list(BATCH_TOKENS[1]), 1.3)
-            self.play(
-                b3_dots.animate.set_opacity(1.0), b2_dots.animate.set_opacity(0.30),
-                run_time=0.35,
-            )
-            sweep_to_line(tracker, b3_dots, list(BATCH_TOKENS[2]), 1.0)
+            self.play(Create(ring), run_time=run_time)
+            return ring
+
+        with self.voiceover(
+            text="The second sequence hasn't collapsed, so it still covers "
+                 "real ground -- and the third looks the same way. "
+                 "<bookmark mark='notation'/>So the check has to run inside "
+                 "each sequence, across its own tokens over time."
+        ) as tracker:
+            self.play(FadeOut(ring1), b1_dots.animate.set_opacity(0.22), run_time=0.4)
+            ring2 = show_row(b2_dots, [b3_dots], 0.8)
+            self.play(FadeOut(ring2), b2_dots.animate.set_opacity(0.22), run_time=0.35)
+            ring3 = show_row(b3_dots, [b2_dots], 0.7)
             self.wait_until_bookmark("notation")
             notation = ty.maths(
                 R"\operatorname{SIGReg}\big(\{z_{b,t}\}_{t=1}^{T}\big)",
                 size=ty.EQ, color=SIGREG,
             )
-            notation.next_to(axes, DOWN, buff=0.35)
-            self.across(tracker, FadeIn(notation, shift=0.08 * UP), floor=0.9)
+            notation.next_to(plane_frame, DOWN, buff=0.28)
+            self.across(
+                tracker,
+                FadeOut(ring3),
+                all_dots.animate.set_opacity(1.0),
+                FadeIn(notation, shift=0.08 * UP),
+                floor=0.9,
+            )
 
         self.play(
-            FadeOut(VGroup(
-                axes, b1_dots, b2_dots, b3_dots, arrow, proj_line, bell,
-                score_label, notation,
-            )),
+            FadeOut(VGroup(plane_frame, all_dots, notation)),
             run_time=0.6,
         )
 
         # ==================================================================
         # Composition C -- layer 0 and layer 8, pulled from an actual chamber.
         # ==================================================================
-        block = transformer_block(width=7.4, height=3.6, color=BACKBONE)
-        block.shift(np.array([0.0, -0.15, 0.0]) - block.shell.get_center())
-        plates = depth_plates(block, count=9, color=BACKBONE)
+        block = transformer_block(width=8.4, height=3.3, color=BACKBONE)
+        block.shift(np.array([0.0, -0.05, 0.0]) - block.shell.get_center())
+        # An even count leaves no plate on the chamber's centre line, so the
+        # label below does not sit struck through by one.
+        plates = depth_plates(block, count=8, color=BACKBONE)
+        # The label floated at the right margin, attached to nothing, while
+        # the chamber itself sat empty.  Put it where it belongs.
+        block.label.move_to(block.shell.get_center()).set_opacity(0.42)
 
-        u0_row = VGroup(*(
-            numeric_embedding(v, color=BACKBONE, shown=3, height=0.62)
-            for v in TOKEN_VALUES
-        )).arrange(RIGHT, buff=0.30)
-        u0_row.next_to(block.shell, UP, buff=0.40)
-        u8_row = VGroup(*(
-            numeric_embedding(v, color=BACKBONE, shown=3, height=0.62)
-            for v in LAYER8_ROW
-        )).arrange(RIGHT, buff=0.30)
-        u8_row.next_to(block.shell, DOWN, buff=0.40)
+        def token_row(values) -> VGroup:
+            row = VGroup(*(
+                numeric_embedding(v, color=BACKBONE, shown=3, height=0.74)
+                for v in values
+            )).arrange(RIGHT, buff=0.46)
+            if row.width > 8.0:
+                row.scale_to_fit_width(8.0)
+            return row
 
-        def sweep_bar(row: VGroup) -> Rectangle:
-            bar = Rectangle(width=row.width + 0.28, height=row.height + 0.24)
-            bar.set_stroke(opacity=0).set_fill(SIGREG, opacity=0.16)
-            bar.move_to(row.get_left())
-            return bar
+        u0_row = token_row(TOKEN_VALUES)
+        u0_row.next_to(block.shell, UP, buff=0.42)
+        u8_row = token_row(LAYER8_ROW)
+        u8_row.next_to(block.shell, DOWN, buff=0.42)
+
+        def sweep(row: VGroup) -> LaggedStart:
+            """A highlight that runs the row and stops at its last glyph.
+
+            The old ``sweep_bar`` was a full-width rectangle animated from
+            ``row.get_left()`` to ``row.get_right()``, so it began and ended
+            half off the row -- on screen it read as a selection band left
+            hanging in empty space past the final vector.
+            """
+            return LaggedStart(
+                *(Indicate(g, color=SIGREG, scale_factor=1.10) for g in row),
+                lag_ratio=0.13,
+            )
 
         with self.voiceover(
             text="Tokens exist at every depth of the network, not just "
@@ -1555,31 +1640,29 @@ class LeNEPA04TemporalSIGReg(LenepaScene):
             tap0 = ty.maths(R"\ell=0", size=ty.LABEL, color=SIGREG)
             tap0.next_to(u0_row, UP, buff=0.18)
             self.play(FadeIn(u0_row, shift=0.35 * UP), FadeIn(tap0), run_time=0.8)
-            sweep0 = sweep_bar(u0_row)
-            self.play(sweep0.animate.move_to(u0_row.get_right()), run_time=0.7)
+            self.play(sweep(u0_row), run_time=0.85)
             self.wait_until_bookmark("l8")
             tap8 = ty.maths(R"\ell=8", size=ty.LABEL, color=SIGREG)
             tap8.next_to(u8_row, DOWN, buff=0.18)
             self.play(FadeIn(u8_row, shift=0.35 * DOWN), FadeIn(tap8), run_time=0.8)
-            sweep8 = sweep_bar(u8_row)
-            self.across(tracker, sweep8.animate.move_to(u8_row.get_right()), floor=0.7)
+            self.across(tracker, sweep(u8_row), floor=0.85)
 
         with self.voiceover(
             text="Those two layers are the layer set L T."
         ) as tracker:
-            layers_label = ty.maths(R"L_T=\{0,8\}", size=ty.EQ_DISPLAY, color=SIGREG)
-            layers_label.next_to(block.shell, RIGHT, buff=0.55)
-            self.across(
-                tracker,
-                TransformFromCopy(VGroup(tap0, tap8), layers_label),
-                floor=1.0,
-            )
+            layers_label = ty.maths(R"L_T=\{0,8\}", size=ty.EQ, color=SIGREG)
+            layers_label.next_to(block.shell, RIGHT, buff=0.50)
+            # ``TransformFromCopy`` from the two taps flew MathTex copies
+            # straight across the chamber, leaving a doubled, half-formed
+            # "l" ghosted over the interior mid-flight.  Pulse the sources,
+            # then state the set.
+            self.play(Indicate(tap0, color=SIGREG), Indicate(tap8, color=SIGREG), run_time=0.6)
+            settle(tracker, FadeIn(layers_label, shift=0.10 * LEFT), run_time=0.7)
         self.wait(0.4)
 
         self.play(
             FadeOut(VGroup(
-                block, plates, u0_row, u8_row, tap0, tap8, sweep0, sweep8,
-                layers_label,
+                block, plates, u0_row, u8_row, tap0, tap8, layers_label,
             )),
             run_time=0.6,
         )
