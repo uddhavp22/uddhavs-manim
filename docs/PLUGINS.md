@@ -39,17 +39,6 @@ repo's `manim>=0.20.1` and wouldn't be obvious from the package page alone.
   before this becomes a standing render-review gate rather than an
   available tool.
 
-- **`manim-slides`** (installed 2026-08-10, `pyproject.toml`) — the
-  live-presentation engine for `projects/AP-BIO/`, which (unlike the SIGReg
-  explainer) is meant to be presented as a click-through deck rather than
-  delivered as narrated video. See the "Relevant for `projects/AP-BIO/`"
-  section below for the compatibility research; confirmed with a real spike
-  render (`Slide` subclass, `self.next_slide()`, `manim-slides render`) that
-  it works end-to-end against this repo's editable `../manim-ce` source and
-  does not disturb plain `manim` invocations. No `pyqt6`/`pyside6` extra
-  installed yet — add one only if the live desktop presenter is needed;
-  HTML/RevealJS export via `manim-slides convert` works without it.
-
 ## Needs a decision — compatible, on-topic, not yet installed
 
 - **`statanim`** (`manim>=0.18.0` ✓, adds `scipy`) — pre-built Normal/
@@ -88,40 +77,6 @@ they're broken. Revisit if the project's output format changes.
 Has no hard compatibility blocker recorded against `manim>=0.20.1` — that
 check should be re-run against current PyPI metadata before installing, since
 this doc reflects an August 2026 snapshot.
-
-## Relevant for `projects/AP-BIO/` — the click-through deck fit
-
-This doc previously listed a single "`manim-presentations`" entry citing
-[ManimSlides](https://github.com/jeertmans/manim-slides) as its source. That
-conflated two different PyPI packages — corrected 2026-08-10:
-
-- **`manim-slides`** (`jeertmans/manim-slides`, PyPI `manim-slides`, v5.6.0,
-  `requires-python>=3.9`) — the actual live-presentation engine. Scenes
-  subclass `Slide` (or `ThreeDSlide`) instead of `Scene` and call
-  `self.next_slide()` to mark slide breaks; `manim-slides render` drives
-  manim to render the animations, then `manim-slides <SceneName>` opens a
-  Qt-based live presenter, or `manim-slides convert` exports to
-  RevealJS/HTML, PDF, or PPTX. Its base `requires-dist` does **not** include
-  `manim` at all (manim only appears behind the `manim`/`full`/`magic`/
-  `pyqt6-full` extras, each pinned `manim>=0.19` — compatible with this
-  repo's `manim>=0.20.1`), so `uv add manim-slides` alone should not try to
-  pull a second manim from PyPI alongside this repo's editable
-  `../manim-ce` source. The live GUI presenter needs a Qt binding extra
-  (`pyqt6` or `pyside6`); the HTML/RevealJS export path needs neither.
-  Checked its wheel's `entry_points.txt` directly (the same check that
-  caught `chanim`'s breakage below) — it only registers a `console_scripts`
-  entry (`manim-slides` the CLI), no `manim.plugins` entry point, so
-  installing it carries none of that risk.
-- **`manim-presentations`** (PyPI, `SimLej18/manim-presentations`, v0.1.71,
-  `requires-python>=3.8`) — a separate, smaller composability layer built
-  *on top of* `manim-slides` (`requires-dist` includes `manim-slides`
-  directly). Only worth adding once actual `manim-slides` decks exist and
-  composing multiple decks together becomes a real need — not a
-  prerequisite for a first AP-BIO slide deck.
-
-`manim-slides` is now installed — see "Adopted" above. `manim-presentations`
-is still not installed; add it only once composing multiple `manim-slides`
-decks together becomes a real need.
 
 ## Hard compatibility blockers — do not attempt without re-checking first
 

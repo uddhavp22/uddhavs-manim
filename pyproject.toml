@@ -22,7 +22,6 @@ dependencies = [
     # binary, which needs nothing; gTTS is the cross-platform stand-in.
     "gtts>=2.5",
     "manim-vision>=0.2.0",
-    "manim-slides>=5.6.0",
 ]
 
 [project.optional-dependencies]
