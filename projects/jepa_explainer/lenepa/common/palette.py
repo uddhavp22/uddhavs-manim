@@ -6,9 +6,7 @@ not make colour decisions.
 """
 
 from projects.sigreg_explainer.common.palette import (
-    ACCENT,
     AXIS,
-    BG,
     CLOUD,
     COLLAPSE,
     DIRECTION,
@@ -39,4 +37,3 @@ PROJECTOR = "#7C8EB8"
 VIEW_GLOBAL = "#E58A3A"
 KEEP = DIRECTION
 DISCARD = MUTED
-

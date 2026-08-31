@@ -1,4 +1,4 @@
-"""Continuity constants shared between LeNEPA scenes 2 and 3.
+"""Deterministic data and continuity constants shared by the LeNEPA scenes.
 
 Scene classes are separate ``Scene`` subclasses with no direct object
 sharing, so cross-scene continuity -- the same token row, the same landing
@@ -244,9 +244,3 @@ def depth_values(b: int, t: int, ell: float) -> np.ndarray:
     u0 = np.asarray(BATCH_TOKENS[b][t], dtype=float)
     u8 = np.asarray(LAYER8_ROWS[b][t], dtype=float)
     return (1.0 - frac) * u0 + frac * u8
-
-# ``TIME_DIR`` lived here.  It was chosen to put a *numeric* Epps-Pulley score
-# in a readable band, and the scene no longer prints a score: a bare number on
-# a scale the viewer was never taught is not evidence.  The direction the
-# shadow beat uses is ``SWEEP_DIR``, chosen for legibility of the picture
-# instead.

@@ -9,33 +9,20 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[4]))
 
 from projects.sigreg_explainer.common.type import (  # noqa: E402
-    BODY,
     CAPTION,
     EQ,
     EQ_DISPLAY,
     EQ_HERO,
     LABEL,
-    MIN_SIZE,
-    READOUT,
     STATEMENT,
     TICK,
-    TITLE,
-    Text,
-    below,
-    caption,
-    curve_label,
-    label,
     line,
     maths,
-    readout,
-    statement,
     title,
     words,
 )
 
 __all__ = [
-    "BODY", "CAPTION", "EQ", "EQ_DISPLAY", "EQ_HERO", "LABEL",
-    "MIN_SIZE", "READOUT", "STATEMENT", "TICK", "TITLE", "Text",
-    "below", "caption", "curve_label", "label", "line", "maths",
-    "readout", "statement", "title", "words",
+    "CAPTION", "EQ", "EQ_DISPLAY", "EQ_HERO", "LABEL", "STATEMENT",
+    "TICK", "line", "maths", "title", "words",
 ]

@@ -13,10 +13,8 @@ import itertools as it
 
 import numpy as np
 from manim import (
-    Arrow,
     Circle,
     DecimalNumber,
-    DashedLine,
     Dot,
     Line,
     ManimColor,
@@ -32,7 +30,57 @@ from manim import (
 )
 
 from . import type as ty
-from .palette import AXIS, GRID, INK, MUTED
+from .palette import MUTED
+
+
+def _shown_indices(dim: int, shown: int) -> tuple[int | None, ...]:
+    if shown == 5:
+        return (0, 1, None, dim - 2, dim - 1)
+    if shown == 3:
+        return (0, None, dim - 1)
+    raise ValueError(f"unsupported abbreviated embedding size: {shown!r}")
+
+
+def _embedding_entries(values: np.ndarray, *, indices, color: str,
+                       font_size: float) -> tuple[VGroup, list]:
+    entries = VGroup()
+    numeric = []
+    for index in indices:
+        if index is None:
+            entry = MathTex(r"\vdots", font_size=font_size, color=color)
+        else:
+            entry = DecimalNumber(
+                float(values[index]),
+                num_decimal_places=1,
+                include_sign=True,
+                font_size=font_size,
+                color=color,
+            )
+            numeric.append((index, entry))
+        entries.add(entry)
+    entries.arrange(DOWN, buff=0.075)
+    return entries, numeric
+
+
+def _vector_brackets(entries: VGroup, *, color: str) -> VGroup:
+    pad = 0.12
+    tick = 0.12
+    left_x = entries.get_left()[0] - pad
+    right_x = entries.get_right()[0] + pad
+    top_y = entries.get_top()[1] + 0.06
+    bottom_y = entries.get_bottom()[1] - 0.06
+    return VGroup(
+        VGroup(
+            Line([left_x + tick, top_y, 0], [left_x, top_y, 0]),
+            Line([left_x, top_y, 0], [left_x, bottom_y, 0]),
+            Line([left_x, bottom_y, 0], [left_x + tick, bottom_y, 0]),
+        ),
+        VGroup(
+            Line([right_x - tick, top_y, 0], [right_x, top_y, 0]),
+            Line([right_x, top_y, 0], [right_x, bottom_y, 0]),
+            Line([right_x, bottom_y, 0], [right_x - tick, bottom_y, 0]),
+        ),
+    ).set_stroke(color, 1.8)
 
 
 class LayerMap(VGroup):
@@ -138,46 +186,13 @@ def numeric_embedding(
     """
     values = np.asarray(values, dtype=float)
     if abbreviate:
-        if shown == 5:
-            entry_values = (values[0], values[1], None, values[-2], values[-1])
-        elif shown == 3:
-            entry_values = (values[0], None, values[-1])
-        else:
-            raise ValueError(f"numeric_embedding: unsupported shown={shown!r}")
+        indices = _shown_indices(len(values), shown)
     else:
-        entry_values = tuple(values)
-    entries = VGroup()
-    for value in entry_values:
-        if value is None:
-            entry = MathTex(r"\vdots", font_size=ty.LABEL, color=color)
-        else:
-            entry = DecimalNumber(
-                float(value),
-                num_decimal_places=1,
-                include_sign=True,
-                font_size=ty.LABEL,
-                color=color,
-            )
-        entries.add(entry)
-    entries.arrange(DOWN, buff=0.075)
-
-    pad = 0.12
-    tick = 0.12
-    left_x = entries.get_left()[0] - pad
-    right_x = entries.get_right()[0] + pad
-    top_y = entries.get_top()[1] + 0.06
-    bottom_y = entries.get_bottom()[1] - 0.06
-    left_bracket = VGroup(
-        Line([left_x + tick, top_y, 0], [left_x, top_y, 0]),
-        Line([left_x, top_y, 0], [left_x, bottom_y, 0]),
-        Line([left_x, bottom_y, 0], [left_x + tick, bottom_y, 0]),
-    ).set_stroke(color, 1.8)
-    right_bracket = VGroup(
-        Line([right_x - tick, top_y, 0], [right_x, top_y, 0]),
-        Line([right_x, top_y, 0], [right_x, bottom_y, 0]),
-        Line([right_x, bottom_y, 0], [right_x - tick, bottom_y, 0]),
-    ).set_stroke(color, 1.8)
-    brackets = VGroup(left_bracket, right_bracket)
+        indices = tuple(range(len(values)))
+    entries, _ = _embedding_entries(
+        values, indices=indices, color=color, font_size=ty.LABEL,
+    )
+    brackets = _vector_brackets(entries, color=color)
     vector = VGroup(entries, brackets)
     if height is not None:
         vector.set_height(height)
@@ -270,40 +285,13 @@ class TokenColumn(VGroup):
         carrier_radius: float = 0.075,
     ) -> None:
         values = np.asarray(values, dtype=float)
-        entries = VGroup()
-        numeric = []
-        for index in self._shown_indices(len(values)):
-            if index is None:
-                entries.add(MathTex(r"\vdots", font_size=font_size, color=color))
-            else:
-                entry = DecimalNumber(
-                    float(values[index]),
-                    num_decimal_places=1,
-                    include_sign=True,
-                    font_size=font_size,
-                    color=color,
-                )
-                entries.add(entry)
-                numeric.append((index, entry))
-        entries.arrange(DOWN, buff=0.075)
-
-        pad, tick = 0.12, 0.12
-        left_x = entries.get_left()[0] - pad
-        right_x = entries.get_right()[0] + pad
-        top_y = entries.get_top()[1] + 0.06
-        bottom_y = entries.get_bottom()[1] - 0.06
-        brackets = VGroup(
-            VGroup(
-                Line([left_x + tick, top_y, 0], [left_x, top_y, 0]),
-                Line([left_x, top_y, 0], [left_x, bottom_y, 0]),
-                Line([left_x, bottom_y, 0], [left_x + tick, bottom_y, 0]),
-            ),
-            VGroup(
-                Line([right_x - tick, top_y, 0], [right_x, top_y, 0]),
-                Line([right_x, top_y, 0], [right_x, bottom_y, 0]),
-                Line([right_x, bottom_y, 0], [right_x - tick, bottom_y, 0]),
-            ),
-        ).set_stroke(color, 1.8)
+        entries, numeric = _embedding_entries(
+            values,
+            indices=_shown_indices(len(values), self.SHOWN),
+            color=color,
+            font_size=font_size,
+        )
+        brackets = _vector_brackets(entries, color=color)
 
         # Anchors are measured against the *brackets*, which nothing in
         # ``set_values`` ever touches.  Measuring them against ``entries``
@@ -336,10 +324,6 @@ class TokenColumn(VGroup):
         self.token_values = values
         self.body_alpha = 1.0
         self._paint()
-
-    @staticmethod
-    def _shown_indices(dim: int) -> tuple[int | None, ...]:
-        return (0, 1, None, dim - 2, dim - 1)
 
     def set_values(self, values: np.ndarray | list[float]) -> "TokenColumn":
         """Rewrite the coordinates in place, without moving the column."""
@@ -513,29 +497,6 @@ def transformer_block(*, width: float, height: float, color: str,
     return group
 
 
-def depth_plates(block: VGroup, *, count: int = 9, color: str) -> VGroup:
-    """Faint horizontal lines filling a ``transformer_block``'s interior.
-
-    Unfolds ``block``'s single ``\\vdots`` ``depth_glyph`` into ``count``
-    evenly spaced plates, index 0 topmost -- this scene's flow runs top to
-    bottom (matching scene 2), so depth increases downward.  Pure geometry;
-    does not touch or replace ``depth_glyph`` itself.
-    """
-    shell = block.shell
-    inset = 0.20
-    half_span = 0.5 * shell.width - 0.34
-    top_y = shell.get_top()[1] - inset
-    bottom_y = shell.get_bottom()[1] + inset
-    center_x = shell.get_x()
-    ys = np.linspace(top_y, bottom_y, count)
-    return VGroup(*(
-        Line(
-            [center_x - half_span, y, 0.0], [center_x + half_span, y, 0.0],
-        ).set_stroke(color, 1.2, opacity=0.16)
-        for y in ys
-    ))
-
-
 def decimal_entries(mob) -> VGroup:
     """Every ``DecimalNumber`` in ``mob``'s family, in document order."""
     return VGroup(*(
@@ -577,22 +538,6 @@ def span_bracket(mob, *, color: str, label: str | tuple[str, ...] | None = None,
     return group
 
 
-def labelled_arrow(start, end, label: str | None = None, *, color: str,
-                   dashed: bool = False) -> VGroup:
-    line_type = DashedLine if dashed else Arrow
-    if dashed:
-        arrow = line_type(start, end, dash_length=0.12).set_stroke(color, 2.0)
-    else:
-        arrow = line_type(start, end, buff=0.08, stroke_width=2.5,
-                          max_tip_length_to_length_ratio=0.18).set_color(color)
-    group = VGroup(arrow)
-    if label:
-        text = ty.words(label, size=ty.LABEL, color=color)
-        text.next_to(arrow, UP, buff=0.10)
-        group.add(text)
-    return group
-
-
 def caption_pill(text: str, *, color: str, width: float | None = None,
                  size: float | None = None) -> VGroup:
     """A labelled pill.
@@ -612,14 +557,6 @@ def caption_pill(text: str, *, color: str, width: float | None = None,
     ).set_stroke(color, 1.5).set_fill(color, 0.05)
     label.move_to(box)
     return VGroup(box, label)
-
-
-def mini_axes(center: np.ndarray, *, width: float = 2.5,
-              height: float = 1.35) -> VGroup:
-    return VGroup(
-        Line(center + width * 0.5 * LEFT, center + width * 0.5 * RIGHT),
-        Line(center + height * 0.5 * DOWN, center + height * 0.5 * UP),
-    ).set_stroke(AXIS, 1.4, opacity=0.65)
 
 
 def scalar_dot(color: str, radius: float = 0.075) -> Dot:

@@ -2,7 +2,7 @@
 
 Chapter C's projection rig lives in a ``ThreeDScene`` and drives a turning
 ``ValueTracker``.  LeNEPA's temporal-SIGReg scene needs the same *picture* --
-cloud, direction, shadow, score -- inside a plain 2-D scene, at one fixed
+cloud, direction, and shadow -- inside a plain 2-D scene, at one fixed
 direction per instance (no updaters).  Reusing ``CloudProjectionRig``'s
 method names, rather than inventing a new vocabulary, keeps the two chapters
 reading as one visual grammar even though nothing else is shared code.
@@ -19,15 +19,13 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from manim import Arrow, DashedLine, Line, ParametricFunction, VGroup
+from manim import Arrow, DashedLine, Line, VGroup
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
 from projects.sigreg_explainer.common.layout import stack_levels
-from projects.sigreg_explainer.common.score import EP_GRID, EP_LAMBDA, epps_pulley
 
 from .palette import MUTED, SIGREG
-from .visuals import scalar_dot
 
 
 class PlaneProjectionRig:
@@ -40,8 +38,7 @@ class PlaneProjectionRig:
     """
 
     def __init__(self, values, *, origin, scale: float, direction,
-                 line_offset: float = 0.0,
-                 lam: float = EP_LAMBDA, grid=EP_GRID):
+                 line_offset: float = 0.0):
         self.values = np.asarray(values, dtype=float)
         self.origin = np.asarray(origin, dtype=float)
         self.scale = float(scale)
@@ -62,7 +59,6 @@ class PlaneProjectionRig:
         self._offset3 = self.line_offset * self._normal3
 
         self._projected = self.values @ self.direction
-        self._score = epps_pulley(self._projected, lam, grid)
 
     def world_points(self) -> np.ndarray:
         pts = np.zeros((len(self.values), 3))
@@ -137,32 +133,3 @@ class PlaneProjectionRig:
             .set_stroke(color, 1.15, opacity=0.40)
             for start, end in zip(self.world_points(), self._feet())
         ))
-
-    def shadow_dots(self, *, radius: float = 0.055, color: str = SIGREG) -> VGroup:
-        return VGroup(*(
-            scalar_dot(color, radius=radius).move_to(point)
-            for point in self.shadow_points()
-        ))
-
-    def target_bell(self, *, height: float = 0.55, gap: float = 0.45,
-                     color: str = MUTED) -> ParametricFunction:
-        """A standard-normal density silhouette, offset beside the line.
-
-        ``gap`` pushes the whole curve a fixed distance off the line before
-        the density bulge starts, so it reads as a reference sitting beside
-        the axis rather than a stroke crossing through the projected points.
-        """
-        def point(x: float) -> np.ndarray:
-            density = np.exp(-x * x / 2.0)
-            return (
-                self._line_origin()
-                + x * self.scale * self._direction3
-                + (gap + height * density) * self._normal3
-            )
-
-        curve = ParametricFunction(point, t_range=(-3.0, 3.0, 0.05))
-        curve.set_stroke(color, 1.6, opacity=0.45)
-        return curve
-
-    def score(self) -> float:
-        return self._score

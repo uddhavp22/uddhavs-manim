@@ -70,7 +70,6 @@ from common.scene import LenepaScene
 from common.visuals import (
     caption_pill,
     decimal_entries,
-    latent_column,
     latent_row,
     LayerMap,
     numeric_embedding,
@@ -79,18 +78,6 @@ from common.visuals import (
     TokenColumn,
     transformer_block,
 )
-
-
-# ``scene_title`` lived here.  No scene in this segment carries a title card,
-# a header, or a floating sentence standing in for one: objects are labelled
-# where they sit, and only a chapter break gets words of its own.  The helper
-# is gone rather than merely unused, so the rule cannot be re-broken by
-# autocomplete.
-
-
-def small_note(text: str, color: str = MUTED) -> Mobject:
-    return ty.words(text, size=ty.LABEL, color=color)
-
 
 class LeNEPA01Tokens(LenepaScene):
     """One signal passes through a visible shared encoder into ordered tokens."""
@@ -2354,7 +2341,7 @@ class LeNEPA08Landing(LenepaScene):
             # statements share the middle band, and crossfading them stacks
             # two unreadable layers for the length of the play.
             self.play(FadeOut(VGroup(flow, arrows)), run_time=0.5)
-            block = VGroup(phrases, subline).move_to(0.15 * UP)
+            VGroup(phrases, subline).move_to(0.15 * UP)
             self.play(FadeIn(phrases), run_time=0.7)
             self.across(tracker, FadeIn(subline, shift=0.08 * UP), floor=1.2)
 
