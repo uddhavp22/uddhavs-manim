@@ -19,6 +19,7 @@ from manim import (
     DashedLine,
     Dot,
     Line,
+    ManimColor,
     MathTex,
     Rectangle,
     RoundedRectangle,
@@ -27,6 +28,7 @@ from manim import (
     LEFT,
     RIGHT,
     UP,
+    interpolate_color,
 )
 
 from . import type as ty
@@ -200,6 +202,212 @@ def numeric_embedding(
         group.add(label_mob)
         group.label = label_mob
     return group
+
+
+class TokenColumn(VGroup):
+    """One representation vector, showing its coordinates, changeable in place.
+
+    Same object as ``numeric_embedding`` draws -- signed decimals between
+    brackets, abbreviated with a ``\\vdots`` -- and deliberately so: these are
+    the same token vectors scenes 1 to 3 already put on screen, and a viewer
+    who has been reading numbers off them for two minutes should not arrive at
+    the temporal-collapse scene to find the vectors have quietly turned into
+    unlabelled bars.  The whole argument here is that six *values* become one
+    value, so the values are what is drawn.
+
+    What this adds over ``numeric_embedding`` is that the vector can be
+    rewritten every frame.  ``set_values`` calls ``DecimalNumber.set_value``
+    on each shown coordinate and re-anchors it, so:
+
+    * a single ``ValueTracker`` can drive a whole row continuously;
+    * the entry count never changes, so nothing re-lays-out mid-animation.
+
+    That last point is load-bearing and depends on the data: with
+    ``include_sign=True`` and one decimal place, every value in ``(-10, 10)``
+    renders as exactly four glyphs (sign, digit, point, digit).  Token
+    coordinates are unit normals, so the glyph count is constant and CE's
+    ``set_value`` zips old and new submobjects one-to-one.  Feeding this class
+    values that can cross +-10 would reintroduce the desync
+    ``numeric_embedding``'s docstring warns about.
+
+    Magnitude is additionally carried by brightness, following
+    ``_2024/transformers/helpers.py::value_to_color``: near-zero coordinates
+    sit close to ``MUTED``, large ones at full colour.  It is a second channel
+    on top of the digits, never a replacement for them -- at row-in-a-batch
+    size the pattern stays legible from across the frame while the digits stay
+    there to be read.
+
+    ``carrier`` is a persistent anchor dot at the column's centre, invisible
+    until a caller reveals it.  It is what travels into the latent plane when
+    the column stops being drawn as a vector and starts being drawn as a
+    point -- the *same* Mobject before and after, so token-to-point identity
+    is structural rather than implied.  ``numeric_embedding``'s docstring
+    records why the alternative (Transforming a bracketed glyph straight into
+    a ``Dot``) cannot be used: the point counts do not correspond and the
+    interpolation is visibly mangled.
+    """
+
+    #: Which coordinates of a D-dimensional vector are drawn:
+    #: ``v0, v1, \vdots, v_{-2}, v_{-1}``.  Identical to
+    #: ``numeric_embedding(shown=5)``, so a column here and a column in scene
+    #: 2 are the same picture of the same vector.
+    SHOWN = 5
+    #: Coordinate magnitude that reaches full colour.  Unit-normal coordinates
+    #: rarely exceed this, and clipping above it costs nothing: no beat reads
+    #: a magnitude off the brightness, only off the digits.
+    VREF = 1.45
+    #: Brightness floor.  Zero would make small coordinates unreadable, which
+    #: defeats the point of drawing digits at all.
+    DIM = 0.38
+
+    def __init__(
+        self,
+        values: np.ndarray | list[float],
+        *,
+        color: str,
+        height: float = 1.60,
+        font_size: float = ty.LABEL,
+        carrier_radius: float = 0.075,
+    ) -> None:
+        values = np.asarray(values, dtype=float)
+        entries = VGroup()
+        numeric = []
+        for index in self._shown_indices(len(values)):
+            if index is None:
+                entries.add(MathTex(r"\vdots", font_size=font_size, color=color))
+            else:
+                entry = DecimalNumber(
+                    float(values[index]),
+                    num_decimal_places=1,
+                    include_sign=True,
+                    font_size=font_size,
+                    color=color,
+                )
+                entries.add(entry)
+                numeric.append((index, entry))
+        entries.arrange(DOWN, buff=0.075)
+
+        pad, tick = 0.12, 0.12
+        left_x = entries.get_left()[0] - pad
+        right_x = entries.get_right()[0] + pad
+        top_y = entries.get_top()[1] + 0.06
+        bottom_y = entries.get_bottom()[1] - 0.06
+        brackets = VGroup(
+            VGroup(
+                Line([left_x + tick, top_y, 0], [left_x, top_y, 0]),
+                Line([left_x, top_y, 0], [left_x, bottom_y, 0]),
+                Line([left_x, bottom_y, 0], [left_x + tick, bottom_y, 0]),
+            ),
+            VGroup(
+                Line([right_x - tick, top_y, 0], [right_x, top_y, 0]),
+                Line([right_x, top_y, 0], [right_x, bottom_y, 0]),
+                Line([right_x, bottom_y, 0], [right_x - tick, bottom_y, 0]),
+            ),
+        ).set_stroke(color, 1.8)
+
+        # Anchors are measured against the *brackets*, which nothing in
+        # ``set_values`` ever touches.  Measuring them against ``entries``
+        # instead -- the obvious choice, and the one this class shipped with
+        # -- is a feedback loop: re-placing the entries moves the group whose
+        # centre and height the placement is derived from, so every call
+        # compounds the last one.  Over a two-second updater the digits crawl
+        # out of their own brackets and the group's bounding box inflates by
+        # more than double.  A reference frame must not be something the
+        # thing being placed is part of.
+        anchors = [entry.get_center() - brackets.get_center()
+                   for _, entry in numeric]
+        built_brackets_height = float(brackets.height)
+
+        body = VGroup(entries, brackets)
+        body.set_height(height)
+        carrier = scalar_dot(color, radius=carrier_radius)
+        carrier.move_to(entries.get_center()).set_opacity(0.0)
+
+        # Carrier last, so it draws over the body it will replace.
+        super().__init__(body, carrier)
+        self.colour = color
+        self.entries = entries
+        self.numeric = numeric
+        self._anchors = anchors
+        self._built_brackets_height = built_brackets_height
+        self.brackets = brackets
+        self.body = body
+        self.carrier = carrier
+        self.token_values = values
+        self.body_alpha = 1.0
+        self._paint()
+
+    @staticmethod
+    def _shown_indices(dim: int) -> tuple[int | None, ...]:
+        return (0, 1, None, dim - 2, dim - 1)
+
+    def set_values(self, values: np.ndarray | list[float]) -> "TokenColumn":
+        """Rewrite the coordinates in place, without moving the column."""
+        self.token_values = np.asarray(values, dtype=float)
+        # Both the origin and the scale come off the brackets: they are the
+        # one part of the column that ``set_values`` never writes to, so they
+        # stay a fixed frame no matter how many times this runs.  See the
+        # note where ``anchors`` is built.
+        centre = self.brackets.get_center()
+        scale = self.brackets.height / self._built_brackets_height
+        for (index, entry), anchor in zip(self.numeric, self._anchors):
+            entry.set_value(float(self.token_values[index]))
+            entry.move_to(centre + scale * anchor)
+        return self._paint()
+
+    def set_body_alpha(self, alpha: float) -> "TokenColumn":
+        """Fade the vector drawing without discarding what it is drawing.
+
+        Opacity is kept as a separate multiplier that ``_paint`` re-applies,
+        rather than being written straight onto the entries: brightness here
+        encodes magnitude, and a plain ``set_opacity`` round trip would flatten
+        eighteen distinctly-shaded vectors into eighteen identical ones.
+        """
+        self.body_alpha = float(np.clip(alpha, 0.0, 1.0))
+        return self._paint()
+
+    def _paint(self) -> "TokenColumn":
+        alpha = self.body_alpha
+        for (index, entry), _ in zip(self.numeric, self._anchors):
+            level = min(1.0, abs(float(self.token_values[index])) / self.VREF)
+            entry.set_color(interpolate_color(
+                ManimColor(MUTED), ManimColor(self.colour),
+                self.DIM + (1.0 - self.DIM) * level,
+            ))
+            entry.set_opacity(alpha)
+        for entry in self.entries:
+            if not isinstance(entry, DecimalNumber):
+                entry.set_color(MUTED).set_opacity(alpha)
+        self.brackets.set_stroke(self.colour, 1.8, opacity=alpha)
+        return self
+
+    def set_carrier_radius(self, radius: float) -> "TokenColumn":
+        """Give the carrier an absolute world radius again.
+
+        Resizing the column scales everything inside it, carrier included --
+        correct while the carrier is a hidden anchor riding along, and wrong
+        the moment it becomes a point in a plane, where its size is the
+        plane's business and not the column's.  A row shrunk from hero size
+        to grid size drags its carriers down by the same factor, and they
+        reach the plane as specks a third the size of their own shadows.
+        """
+        current = max(float(self.carrier.width), 1e-6)
+        self.carrier.scale(2.0 * float(radius) / current)
+        return self
+
+    def recolor(self, color: str) -> "TokenColumn":
+        """Restate which colour the digits, brackets and carrier are drawn in."""
+        self.colour = color
+        self.carrier.set_fill(color).set_stroke(color, width=0)
+        return self._paint()
+
+    def carrier_home(self) -> np.ndarray:
+        """Where the carrier sits when the column is drawn as a vector.
+
+        Taken off the brackets for the same reason ``set_values`` is: the
+        entries' bounding box depends on which digits are currently shown.
+        """
+        return self.brackets.get_center()
 
 
 def latent_column(
@@ -385,11 +593,21 @@ def labelled_arrow(start, end, label: str | None = None, *, color: str,
     return group
 
 
-def caption_pill(text: str, *, color: str, width: float | None = None) -> VGroup:
-    label = ty.words(text, size=ty.LABEL, color=color)
+def caption_pill(text: str, *, color: str, width: float | None = None,
+                 size: float | None = None) -> VGroup:
+    """A labelled pill.
+
+    ``size`` picks the label's type tier.  It exists because the pill is the
+    main object in several scenes rather than an annotation on one, and a
+    ``LABEL``-sized word inside a box sized to the frame reads as a caption
+    that has floated loose.  ``width`` still overrides the box, but the box
+    now grows from the text by default, so asking for bigger text cannot
+    silently clip it.
+    """
+    label = ty.words(text, size=size or ty.LABEL, color=color)
     box = RoundedRectangle(
-        width=width or label.width + 0.48,
-        height=label.height + 0.30,
+        width=max(width or 0.0, label.width + 0.48),
+        height=label.height + 0.34,
         corner_radius=0.14,
     ).set_stroke(color, 1.5).set_fill(color, 0.05)
     label.move_to(box)

@@ -115,8 +115,29 @@ class LenepaScene(VoiceoverScene):
 
     def across(self, tracker, *animations, floor: float = 1.0,
                reserve: float = 0.0, **kwargs) -> None:
+        """Stretch an animation over everything left of the current clause.
+
+        Correct for a fade, a long traversal, or a sweep whose *speed* is the
+        thing being read.  Wrong for anything with a natural tempo -- see
+        ``settle``.
+        """
         run_time = max(floor, tracker.get_remaining_duration() - reserve)
         self.play(*animations, run_time=run_time, **kwargs)
+
+    def settle(self, tracker, *animations, run_time: float,
+               reserve: float = 0.0, **kwargs) -> None:
+        """Play at a fixed natural tempo, then hold for the rest of the clause.
+
+        ``across`` turns a 0.7-second emphasis gesture into a six-second crawl
+        whenever the clause is long, which reads as a stall rather than as
+        emphasis.  The chapter-B playbook's rhythm is *move, then settle*: cap
+        the motion at the speed it wants, and let a ``wait`` absorb the
+        leftover narration on a held, inspectable frame.
+        """
+        self.play(*animations, run_time=run_time, **kwargs)
+        rest = tracker.get_remaining_duration() - reserve
+        if rest > 0.05:
+            self.wait(rest)
 
     @contextmanager
     def voiceover(self, text: str | None = None, **kwargs) -> Generator:

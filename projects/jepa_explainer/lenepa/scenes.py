@@ -38,13 +38,15 @@ from common.data import (
     BATCH_T,
     BATCH_TOKENS,
     COLLAPSED_TOKEN,
-    LAYER8_ROW,
+    DEPTH_LAYERS,
     MIXED_VALUES,
     PRD_ROW_Y,
     PRED_H,
+    SWEEP_DIR,
     TGT_ROW_Y,
     TOKEN_H,
     TOKEN_VALUES,
+    depth_values,
     latent,
 )
 from common.palette import (
@@ -63,25 +65,27 @@ from common.palette import (
     SIGREG,
     VIEW_GLOBAL,
 )
+from common.project import PlaneProjectionRig
 from common.scene import LenepaScene
 from common.visuals import (
     caption_pill,
     decimal_entries,
-    depth_plates,
     latent_column,
     latent_row,
     LayerMap,
     numeric_embedding,
     scalar_dot,
     span_bracket,
+    TokenColumn,
     transformer_block,
 )
 
 
-def scene_title(text: str) -> Mobject:
-    title = ty.title(text)
-    title.to_edge(UP, buff=0.48)
-    return title
+# ``scene_title`` lived here.  No scene in this segment carries a title card,
+# a header, or a floating sentence standing in for one: objects are labelled
+# where they sit, and only a chapter break gets words of its own.  The helper
+# is gone rather than merely unused, so the rule cannot be re-broken by
+# autocomplete.
 
 
 def small_note(text: str, color: str = MUTED) -> Mobject:
@@ -1214,520 +1218,763 @@ class LeNEPA03PredictionLoss(LenepaScene):
         self.inspect(1.8)
         self.clear_beat(1.0)
 
-
 class LeNEPA04TemporalSIGReg(LenepaScene):
-    """A shared latent plane proves temporal collapse survives a healthy batch.
+    """One batch of representations, followed through four ways of looking at it.
 
-    Four clean compositions, each fully cleared before the next begins -- no
-    object survives a composition boundary unless it is deliberately rebuilt.
-    No title card anywhere in this scene.
+    The scene makes a single argument and never resets to make it: eighteen
+    ``TokenColumn`` objects are built once in beat 1 and are still the things
+    on screen in beat 7.  They are drawn as vectors, then as points in a
+    latent plane, then as shadows on one direction, then as vectors again,
+    then carried down a transformer's depth.  Nothing is faded out and
+    respawned as a look-alike, so "this token became that point" is a fact
+    about the scene graph rather than a claim the narration has to make.
 
-    A) A (B, T) grid of real token glyphs, large.  Sample b=1's row collapses
-       as a genuine ``ChangeDecimalToValue`` convergence -- color never
-       changes mid-morph; a coral outline marks the row only once every
-       value has actually landed on the same number.
-    B) Every token in the batch pools onto one large shared latent plane, so
-       "the batch still looks fine" is watched, not asserted.  The SIGReg
-       chapter's own projection grammar (one direction, one line, one score)
-       is reused directly: b=1's identical points spike and score high;
-       b=2/b=3 spread and score low.
-    C) Layer 0 and layer 8 are pulled out of an actual, large transformer
-       chamber -- real spatial extraction points, not floating pill labels.
-    D) The temporal equation and the restored prediction loss land together,
-       on an otherwise empty frame.
+    There is no title card, and no header, caption, or floating sentence
+    standing in for one -- a chapter-wide rule.
+
+    Beat 1  one sequence's six representations converge, driven by one alpha
+    Beat 2  the batch widens to three sequences; the collapsed row stays put
+    Beat 3  every token's carrier travels into one shared latent plane
+    Beat 4  the SIGReg grammar: one direction, guides, a stacked 1-D shadow
+    Beat 5  the collapsed sequence alone -- six points, one spike
+    Beat 6  the other two sequences through the same apparatus, trial by trial
+    Beat 7  back to the rows; the span across t names what is being checked
+    Beat 8  one row travels layer 0 to layer 8; L_T is read off the markers
+    Beat 9  the equation transcribes what was watched
+
+    What the earlier version did instead, and why none of it survived, is in
+    ``RENDER_REVIEW.md``'s 2026-08-24 rebuild entry.
     """
 
+    # -- geometry, world units; the frame is 14.22 x 8.00 --------------------
+    #
+    # Every height here is set by one requirement: the coordinates have to be
+    # *readable*.  A ``TokenColumn`` at height h draws its digits at about
+    # 0.13h world units, i.e. 18h pixels at 1080p, so h = 1.7 is the floor for
+    # a number a viewer can actually read (~30px) and the batch grid is built
+    # down to exactly that rather than to whatever left the nicest margins.
+    HERO_H = 3.60          # one row alone: ~64px digits, 13.6 of 14.22 wide
+    HERO_Y = 0.05
+    GRID_H = 1.70          # three rows sharing the frame: ~30px digits
+    GRID_DY = 2.25
+    GRID_Y = 0.35
+    PITCH = 2.22           # slot pitch along t, shared by beats 1, 2 and 7, so
+                           # shrinking the hero row moves it *only* vertically
+
+    PLANE_ORIGIN = np.array([0.0, 1.05, 0.0])
+    PLANE_SCALE = 2.30     # isotropic: see common/data.py::_latent_basis
+    LINE_OFFSET = -3.60    # readout axis, along the normal, clear of the cloud
+    DOT_R = 0.105
+    STACK_MIN_DX = 0.17
+    STACK_STEP = 0.16
+
+    # Depth is read off an axis beside the row, not off a stack of plates the
+    # row travels through.  Nine evenly spaced layers in a 5.2-unit column are
+    # 0.65 apart, and a row of readable vectors is three times that tall, so a
+    # row "resting on layer 0" visibly covered layers 0, 1 and 2.  Either the
+    # numbers shrink until they cannot be read -- which is the whole point of
+    # this beat -- or depth stops being a position the row occupies.  The row
+    # stays still and large; the marker moves.
+    DEPTH_TOP = 2.60
+    DEPTH_BOT = -2.60
+    DEPTH_AXIS_X = -5.60
+    DEPTH_ROW_X = 0.95
+    DEPTH_H = 2.20
+    DEPTH_PITCH = 2.05
+
     def construct(self):
-        def settle(tracker, *animations, run_time: float) -> None:
-            """Draw at a natural speed, then hold for the rest of the clause.
-
-            ``across`` stretches an animation over all remaining narration,
-            which suits fades and long traversals but turns a small
-            ``Create(Circle)`` into a four-second crawl and a label fade into
-            a three-second dissolve.  Cap the drawing; let a pause absorb the
-            leftover time.
-            """
-            self.play(*animations, run_time=run_time)
-            rest = tracker.get_remaining_duration()
-            if rest > 0.05:
-                self.wait(rest)
-
         # ==================================================================
-        # Composition A -- the temporal batch.
-        # ==================================================================
-        fan_rng = np.random.default_rng(43)
-
-        def mini_pair(x: float, y: float) -> VGroup:
-            pred_mini = numeric_embedding(
-                fan_rng.normal(scale=0.5, size=9),
-                color=PREDICTION, shown=3, height=0.50,
-            )
-            targ_mini = numeric_embedding(
-                fan_rng.normal(scale=0.5, size=9),
-                color=NEXT_TARGET, shown=3, height=0.50,
-            )
-            pair = VGroup(pred_mini, targ_mini).arrange(DOWN, buff=0.10)
-            pair.move_to(np.array([x, y, 0.0]))
-            return pair
-
-        fan_group = VGroup(*(mini_pair(x, 0.85) for x in np.linspace(-3.4, 3.4, 6)))
-        fan_brace = Brace(fan_group, DOWN, color=ERROR)
-        recap_eq = ty.maths(
-            R"\mathcal L_{\rm pred}=\frac{1}{B(T-1)}\sum_{b,t}"
-            R"\|h_\psi(\hat z_{b,t}) - h_\psi(z_{b,t+1})\|_2^2",
-            size=ty.EQ, color=INK,
-        )
-        if recap_eq.width > 11.5:
-            recap_eq.scale_to_fit_width(11.5)
-        recap_eq.next_to(fan_brace, DOWN, buff=0.28)
-
-        self.play(
-            LaggedStart(*(FadeIn(p, shift=0.06 * UP) for p in fan_group), lag_ratio=0.09),
-            run_time=0.5,
-        )
-        self.play(GrowFromCenter(fan_brace), FadeIn(recap_eq, shift=0.08 * UP), run_time=0.5)
-        self.wait(0.5)
-        self.play(FadeOut(VGroup(fan_group, fan_brace, recap_eq)), run_time=0.5)
-
-        # Three rows at +ROW_DY / 0 / -ROW_DY keeps the grid vertically
-        # centered and symmetric.  The earlier version placed rows 2 and 3
-        # relative to row 1's *pre-shift* position, which pushed row 3's
-        # bottom bracket to y=-4.375 -- clipped by the frame edge -- and left
-        # the b1->b2 gap twice the b2->b3 gap.
-        ROW_H = 1.30
-        ROW_DY = 2.20
-        ROW_TARGET_W = 11.4
-
-        def build_row(values) -> VGroup:
-            return VGroup(*(
-                numeric_embedding(v, color=BACKBONE, shown=3, height=ROW_H)
-                for v in values
-            ))
-
-        row1, row2, row3 = (build_row(BATCH_TOKENS[b]) for b in range(BATCH_B))
-        # Solve the slot pitch so the row spans ROW_TARGET_W exactly, rather
-        # than leaving a third of the frame empty on both sides.
-        glyph_w = max(g.width for g in (*row1, *row2, *row3))
-        slot_dx = max(glyph_w + 0.55, (ROW_TARGET_W - glyph_w) / (BATCH_T - 1))
-
-        def place_row(row: VGroup, y: float) -> None:
-            for i, g in enumerate(row):
-                g.move_to(np.array([(i - 0.5 * (BATCH_T - 1)) * slot_dx, y, 0.0]))
-
-        place_row(row1, 0.0)
-        place_row(row2, 0.0)
-        place_row(row3, 0.0)
-
-        b_labels = VGroup(*(
-            ty.maths(rf"b={i + 1}", size=ty.LABEL, color=MUTED)
-            for i in range(BATCH_B)
-        ))
-        b_labels[0].next_to(row1, LEFT, buff=0.32)
-
-        time_arrow = Arrow(
-            np.array([-2.5 * slot_dx - 0.6, ROW_DY + 1.05, 0.0]),
-            np.array([2.5 * slot_dx + 0.6, ROW_DY + 1.05, 0.0]),
-            buff=0, stroke_width=2.0, max_tip_length_to_length_ratio=0.020,
-        ).set_color(MUTED).set_opacity(0.85)
-        time_word = ty.words("time", size=ty.LABEL, color=MUTED)
-        time_word.next_to(time_arrow, UP, buff=0.06).align_to(time_arrow, LEFT)
-
-        with self.voiceover(
-            text="The prediction loss compares projected vectors, but "
-                 "temporal SIGReg works on the raw tokens themselves, one "
-                 "sequence at a time. <bookmark mark='batch'/>Now suppose a "
-                 "batch holds several such sequences, each with its own "
-                 "tokens across time."
-        ) as tracker:
-            # The first clause runs ~7s.  Holding a finished static row for
-            # all of it reads as a stall, so the row arrives token by token
-            # under the narration instead of landing in one cut.
-            lead = max(1.6, tracker.time_until_bookmark("batch") - 0.35)
-            self.play(FadeIn(time_arrow), FadeIn(time_word), run_time=0.45)
-            self.play(
-                LaggedStart(
-                    *(FadeIn(g, shift=0.16 * UP) for g in row1),
-                    lag_ratio=0.55,
-                ),
-                run_time=max(1.0, lead - 0.95),
-            )
-            self.play(FadeIn(b_labels[0], shift=0.12 * RIGHT), run_time=0.5)
-            self.wait_until_bookmark("batch")
-            # Rows 2 and 3 are placed at their *final* slots (0 and -ROW_DY)
-            # while row 1 rises to +ROW_DY, so the settled grid is symmetric
-            # about the frame center and nothing runs off the bottom edge.
-            place_row(row2, 0.0)
-            place_row(row3, -ROW_DY)
-            b_labels[1].next_to(row2, LEFT, buff=0.32)
-            b_labels[2].next_to(row3, LEFT, buff=0.32)
-            # Staggered so row 1 has vacated the y=0 slot before row 2
-            # arrives in it -- played flat, the two rows interleave for a
-            # few frames and read as clutter.
-            self.across(
-                tracker,
-                LaggedStart(
-                    AnimationGroup(
-                        row1.animate.shift(ROW_DY * UP),
-                        b_labels[0].animate.shift(ROW_DY * UP),
-                    ),
-                    AnimationGroup(
-                        FadeIn(row2, shift=0.22 * UP), FadeIn(b_labels[1]),
-                    ),
-                    AnimationGroup(
-                        FadeIn(row3, shift=0.22 * UP), FadeIn(b_labels[2]),
-                    ),
-                    lag_ratio=0.38,
-                ),
-                floor=1.4,
-            )
-
-        # ------------------------------------------------------------------
-        # The collapse: entries converge in place via ChangeDecimalToValue --
-        # color never changes mid-morph, so there is no red/blue double
-        # exposure.  Only once every value has actually landed does a coral
-        # outline mark the row as collapsed.
-        # ------------------------------------------------------------------
-        collapse_anims = []
-        for g in row1:
-            entry_first, entry_last = decimal_entries(g)
-            collapse_anims.append(ChangeDecimalToValue(entry_first, float(COLLAPSED_TOKEN[0])))
-            collapse_anims.append(ChangeDecimalToValue(entry_last, float(COLLAPSED_TOKEN[-1])))
-        collapse_outline = SurroundingRectangle(row1, buff=0.28, color=ERROR, stroke_width=3.2)
-
-        with self.voiceover(
-            text="Nothing stops the tokens in one sequence from drifting "
-                 "together, until every position ends up carrying the same "
-                 "embedding."
-        ) as tracker:
-            # 0.4 opacity on this background turned rows 2 and 3 into mud.
-            self.play(
-                row2.animate.set_opacity(0.58), row3.animate.set_opacity(0.58),
-                b_labels[1].animate.set_opacity(0.58),
-                b_labels[2].animate.set_opacity(0.58),
-                run_time=0.5,
-            )
-            # The outline is the payoff of the whole composition; drawing it
-            # in 0.55s and clearing ~1s later left it reading as a stray red
-            # dash.  Draw it deliberately and hold it.
-            self.across(
-                tracker,
-                LaggedStart(*collapse_anims, lag_ratio=0.05),
-                floor=1.9,
-            )
-            self.play(Create(collapse_outline), run_time=0.9)
-        self.wait(1.1)
-
-        self.play(
-            FadeOut(VGroup(
-                row1, row2, row3, b_labels, time_arrow, time_word, collapse_outline,
-            )),
-            run_time=0.6,
-        )
-
-        # ==================================================================
-        # Composition B -- one shared latent plane, dots only.
+        # Beat 1 -- one sequence starts to collapse.
         #
-        # This beat proves exactly one thing: the batch as a whole still
-        # looks healthy while one sequence has collapsed.  An earlier version
-        # imported the SIGReg chapter's full projection apparatus (direction
-        # arrow, projection line, Epps-Pulley reference density, numeric
-        # score) to deliver that single bit -- four unexplained graphical
-        # objects, plus scores on a scale the viewer was never given.  All of
-        # it is gone.  What remains is the point cloud and one spread ring,
-        # which is a geometry the frame explains by itself.
+        # Opens on the vectors themselves, at full size, with no preamble and
+        # no recap of scene 3.  The previous version replayed scene 3's
+        # prediction-loss fan for a second and threw it away, which is a
+        # flashback slide rather than continuity.
         # ==================================================================
-        PLANE_CENTER = np.array([0.0, 0.28, 0.0])
-        DOT_R = 0.10
+        rows = [self._build_row(BATCH_TOKENS[b]) for b in range(BATCH_B)]
+        row1 = rows[0]
+        self._place_row(row1, self.HERO_H, self.HERO_Y)
 
-        raw_rows = [
+        self.play(
+            LaggedStart(*(FadeIn(c, shift=0.20 * UP) for c in row1),
+                        lag_ratio=0.10),
+            run_time=0.65,
+        )
+
+        # One parameter owns the entire event.  Position t does not finish
+        # collapsing before position t+1 starts: there is no left-to-right
+        # propagation in temporal collapse, and staging one would assert a
+        # mechanism that does not exist.
+        alpha = ValueTracker(0.0)
+        for col, source in zip(row1, BATCH_TOKENS[0]):
+            self._bind_collapse(col, source, COLLAPSED_TOKEN, alpha)
+
+        with self.voiceover(
+            text="Suppose the representations along one sequence start "
+                 "drifting together, <bookmark mark='same'/>until every "
+                 "position is carrying essentially the same embedding."
+        ) as tracker:
+            # The collapse is split across the sentence rather than finished
+            # at the bookmark.  Running it all through the first clause left
+            # the second one -- "until every position is carrying essentially
+            # the same embedding" -- playing over four seconds of a frame that
+            # had stopped changing, which is the one thing a convergence beat
+            # cannot afford.  Now the numbers are still closing as that clause
+            # is spoken, and they arrive on the word.
+            lead = tracker.time_until_bookmark("same")
+            self.play(
+                alpha.animate.set_value(0.72),
+                run_time=max(1.5, lead - 0.10),
+                rate_func=rate_functions.ease_in_sine,
+            )
+            self.play(
+                alpha.animate.set_value(1.0),
+                run_time=max(1.0, tracker.get_remaining_duration() - 1.05),
+                rate_func=rate_functions.ease_out_sine,
+            )
+            for col in row1:
+                col.clear_updaters()
+            # The sameness is already on screen, in six columns of identical
+            # digits, before any colour is applied.  Colour then *records* it:
+            # the row turns coral and stays coral for the rest of the scene,
+            # so b=1 arrives in the latent plane already marked and beat 5 has
+            # one less thing to announce.  A pulse would have said the same
+            # thing and left nothing behind.
+            self.settle(
+                tracker,
+                AnimationGroup(*(self._recolor(c, ERROR) for c in row1)),
+                run_time=0.9,
+            )
+
+        # ==================================================================
+        # Beat 2 -- the same row, plus two more sequences.
+        #
+        # Row 1 is not cleared and rebuilt smaller; it *is* resized and moved,
+        # so the collapsed sequence a viewer has been watching stays the
+        # sequence at b=1.
+        # ==================================================================
+        row2, row3 = rows[1], rows[2]
+        row_ys = [self.GRID_Y + (1 - b) * self.GRID_DY for b in range(BATCH_B)]
+        for b, row in enumerate(rows):
+            if b:
+                self._place_row(row, self.GRID_H, row_ys[b])
+        # Labels are placed against the geometry the rows will *settle* into,
+        # not the geometry row 1 has right now.  Anchored to the un-shrunk
+        # hero row, "b=1" stayed at the frame's middle and was printed on top
+        # of "b=2".
+        label_x = min(row.get_left()[0] for row in rows[1:]) - 0.34
+        labels = VGroup(*(
+            ty.maths(rf"b={b + 1}", size=ty.LABEL, color=MUTED)
+            .move_to(np.array([label_x, row_ys[b], 0.0]), aligned_edge=RIGHT)
+            for b in range(BATCH_B)
+        ))
+
+        with self.voiceover(
+            text="Now suppose there are a couple more sequences in the "
+                 "batch, <bookmark mark='more'/>each with its own tokens "
+                 "across time."
+        ) as tracker:
+            self.play(
+                *(col.animate.set(height=self.GRID_H)
+                  .move_to(self._slot(t, row_ys[0]))
+                  for t, col in enumerate(row1)),
+                run_time=max(0.7, tracker.time_until_bookmark("more") - 0.25),
+            )
+            self.play(FadeIn(labels[0], shift=0.10 * RIGHT), run_time=0.35)
+            self.wait_until_bookmark("more")
+            # Quickly.  Two more rows arriving token by token over several
+            # seconds would be filling time, not showing anything: the batch
+            # dimension is one fact and it lands in one gesture.
+            self.settle(
+                tracker,
+                AnimationGroup(
+                    FadeIn(row2, shift=0.24 * UP), FadeIn(row3, shift=0.24 * UP),
+                    FadeIn(labels[1]), FadeIn(labels[2]),
+                    lag_ratio=0.12,
+                ),
+                run_time=0.85,
+            )
+
+        # ==================================================================
+        # Beat 3 -- the same eighteen tokens, as points in one latent plane.
+        #
+        # Every column already contains a carrier dot at its centre.  The
+        # bodies fade where they stand and the carriers, which have been
+        # there all along, travel.  Nothing is created at the destination, so
+        # there is no moment where a viewer has to take on trust that a new
+        # dot corresponds to an old vector -- and no Transform is attempted
+        # between a bracketed column and a Dot, which is what produced the
+        # mangled interpolation in an earlier build.
+        # ==================================================================
+        columns = [col for row in rows for col in row]
+        # The rows have been resized twice by now, which scaled the carriers
+        # along with everything else inside them.  From here the carrier is a
+        # point in a plane and owns its own size.
+        for col in columns:
+            col.set_carrier_radius(self.DOT_R)
+        carriers = [[rows[b][t].carrier for t in range(BATCH_T)]
+                    for b in range(BATCH_B)]
+
+        plane = [
             [latent(COLLAPSED_TOKEN)] * BATCH_T,
             [latent(v) for v in BATCH_TOKENS[1]],
             [latent(v) for v in BATCH_TOKENS[2]],
         ]
-        _flat = np.array([p for row in raw_rows for p in row])
-        _lo, _hi = _flat.min(axis=0), _flat.max(axis=0)
-        _mid, _span = 0.5 * (_lo + _hi), np.maximum(_hi - _lo, 1e-6)
-        # Scale the axes independently.  This is an abstract plane with no
-        # units, and a single isotropic factor left the binding axis filled
-        # while the other kept a third of the frame empty.
-        plane_fit = np.array([9.9 / _span[0], 4.4 / _span[1]])
 
-        def plane_point(xy) -> np.ndarray:
-            d = (np.asarray(xy) - _mid) * plane_fit
-            return PLANE_CENTER + np.array([d[0], d[1], 0.0])
-
-        # Collapse is "essentially the same place," not bit-identical.  The
-        # jitter is applied in plane units *after* the fit so the six b=1
-        # points read as a countable tight knot -- scaled beforehand it
-        # shrank to a single lozenge, which contradicts "all six of its
-        # representations."
-        jitter = np.random.default_rng(7).normal(scale=0.115, size=(BATCH_T, 2))
-        b1_dots = VGroup(*(
-            scalar_dot(BACKBONE, radius=DOT_R).move_to(
-                plane_point(raw_rows[0][0]) + np.array([j[0], j[1], 0.0])
+        with self.voiceover(
+            text="Take every representation in the batch into one shared "
+                 "latent space."
+        ) as tracker:
+            # The vector leaves first, then the carrier arrives.  Crossfading
+            # them -- even in the same ``play`` -- means a half-second where
+            # both are at half opacity and every column has a solid dot
+            # sitting on top of its ellipsis, which reads as eighteen typos.
+            # Sequential is the only ordering with no frame showing both.
+            self.play(*self._fade_bodies(columns, 0.0), FadeOut(labels),
+                      run_time=0.45)
+            self.play(
+                *(c.animate.set_opacity(1.0) for row in carriers for c in row),
+                run_time=0.3,
             )
-            for j in jitter
-        ))
-        b2_dots, b3_dots = (
-            VGroup(*(
-                scalar_dot(BACKBONE, radius=DOT_R).move_to(plane_point(p))
-                for p in row
-            ))
-            for row in raw_rows[1:]
+            # Sample by sample, not shuffled.  A randomised arrival order
+            # destroys the one thing this move exists to preserve: which row
+            # a point came out of.  The travel is given the whole rest of the
+            # clause rather than a fixed two seconds: a long traversal is
+            # exactly the kind of animation that should fill its sentence,
+            # and finishing early left four seconds of a finished frame.
+            self.play(
+                LaggedStart(*(
+                    AnimationGroup(*(
+                        carriers[b][t].animate.move_to(
+                            self._plane_point(plane[b][t]))
+                        for t in range(BATCH_T)
+                    ))
+                    for b in range(BATCH_B)
+                ), lag_ratio=0.42),
+                run_time=max(2.1, tracker.get_remaining_duration() - 0.1),
+            )
+
+        # ==================================================================
+        # Beat 4 -- the SIGReg grammar, reused rather than reinvented.
+        #
+        # Direction, projection line, dashed guides, stacked shadow dots: the
+        # same objects, stroke weights and rhythm the SIGReg chapter spent
+        # minutes teaching, via the same PlaneProjectionRig helper.  Nothing
+        # here is a new metaphor for spread, and no score is printed -- the
+        # viewer was never given that scale, and the picture does not need it.
+        # ==================================================================
+        flat = np.array([p for row in plane for p in row])
+        rig = PlaneProjectionRig(
+            flat, origin=self.PLANE_ORIGIN, scale=self.PLANE_SCALE,
+            direction=SWEEP_DIR, line_offset=self.LINE_OFFSET,
         )
-        all_dots = VGroup(*b1_dots, *b2_dots, *b3_dots)
+        line = rig.projection_line(color=SIGREG, pad=0.45)
+        span = float(np.max(np.abs(rig.projected_values())))
+        normal = np.array([-SWEEP_DIR[1], SWEEP_DIR[0], 0.0])
+        arrow = rig.direction_arrow(color=SIGREG, length=1.55, at=-span - 0.10)
+        arrow.shift(0.34 * normal)
+        guides = rig.guide_lines(color=MUTED)
+        feet = rig.shadow_points(stack_min_dx=self.STACK_MIN_DX,
+                                 stack_step=self.STACK_STEP)
+        # A shadow is painted in the colour of the point casting it, so the
+        # collapsed sequence's stack is already coral when it appears rather
+        # than being recoloured later to make a point about it.
+        shadows = VGroup(*(
+            scalar_dot(ERROR if i < BATCH_T else BACKBONE,
+                       radius=self.DOT_R * 0.82).move_to(p)
+            for i, p in enumerate(feet)
+        ))
+        shadow_rows = [shadows[b * BATCH_T:(b + 1) * BATCH_T]
+                       for b in range(BATCH_B)]
+        cloud = VGroup(*(c for row in carriers for c in row))
 
-        plane_frame = RoundedRectangle(
-            width=11.6, height=5.7, corner_radius=0.18,
-        ).move_to(PLANE_CENTER)
-        plane_frame.set_stroke(MUTED, 1.2, opacity=0.22).set_fill(opacity=0.0)
+        # "Across the whole batch there's plenty of variation" used to open
+        # this block.  It asserted what the cloud on screen already shows, and
+        # it bought three seconds of narration with nothing to animate under
+        # it; the beat now starts on the first thing that actually happens.
+        with self.voiceover(
+            text="SIGReg picks a direction, <bookmark mark='shadow'/>and "
+                 "looks at how the batch spreads out along it."
+        ) as tracker:
+            self.play(Create(line), GrowArrow(arrow), run_time=0.6)
+            self.wait_until_bookmark("shadow")
+            self.play(LaggedStart(*(Create(g) for g in guides), lag_ratio=0.02),
+                      run_time=0.9)
+            self.play(TransformFromCopy(cloud, shadows), run_time=1.15)
+            # The guides have done their work.  Eighteen tall dashes left
+            # standing bury the two things now worth comparing.  One is kept
+            # aside for beat 5, where a single sequence's guide is exactly
+            # what "they all land together" means.
+            b1_guide = guides[0].copy()
+            self.settle(tracker, FadeOut(guides), run_time=0.45)
 
-        def spread_ring(dots: VGroup, color: str, opacity: float = 0.75) -> Circle:
-            """A circle at the points' centroid, sized by their mean radius.
-
-            One honest geometric measure of "how much ground does this set
-            cover" -- it replaces the numeric scores, which meant nothing to
-            a viewer who was never told their scale.
-            """
-            pts = np.array([d.get_center()[:2] for d in dots])
-            centre = pts.mean(axis=0)
-            # A containing radius, not a mean one.  A circle reads as a
-            # boundary, so leaving half the row's points outside it looks
-            # like a mistake rather than like a measure of spread.  Clamped
-            # to the plane's half-height so it never crosses the border.
-            radius = float(np.max(np.linalg.norm(pts - centre, axis=1))) * 1.10
-            radius = min(max(radius, 0.30), 2.45)
-            ring = Circle(radius=radius)
-            ring.set_stroke(color, 2.2, opacity=opacity).set_fill(opacity=0.0)
-            ring.move_to(np.array([centre[0], centre[1], 0.0]))
-            return ring
+        # ==================================================================
+        # Beat 5 -- the collapsed sequence alone.
+        #
+        # Its six points are genuinely coincident, so they are drawn
+        # coincident: no jitter is added to make them countable, because
+        # falsifying the geometry to make a count legible trades away the
+        # exact fact the beat is proving.  The count is stated instead -- and
+        # in the shadow it does not need stating at all, since stack_levels
+        # piles six equal projections into a visible column of six.
+        # ==================================================================
+        dim_cloud = VGroup(*carriers[1], *carriers[2])
+        dim_shadow = VGroup(*shadow_rows[1], *shadow_rows[2])
+        knot = ty.maths(R"\times 6", size=ty.LABEL, color=ERROR)
+        knot.next_to(carriers[0][0], RIGHT, buff=0.18)
+        # One measurement, built once for all three sequences and drawn in the
+        # same place each time, so the only thing that differs between trials
+        # is the length of the rule.
+        rules = [self._extent(rig, b, ERROR if b == 0 else SIGREG)
+                 for b in range(BATCH_B)]
 
         with self.voiceover(
-            text="Now suppose we take every representation in the batch "
-                 "and put it into the same projected plane. "
-                 "<bookmark mark='spread'/>Across the whole batch, there's "
-                 "still plenty of spread."
+            text="Now follow just the first sequence. <bookmark mark='point'/>"
+                 "Its six tokens sit at one point, <bookmark mark='shadow'/>"
+                 "so they all land together in the shadow."
         ) as tracker:
-            self.play(FadeIn(plane_frame), run_time=0.4)
-            shuffled = list(all_dots)
-            random.Random(5).shuffle(shuffled)
+            # The dim is given the clause rather than half a second of it.
+            # It is the only event in "Now follow just the first sequence",
+            # and at 0.5 s it left the rest of the sentence on a still frame.
             self.play(
-                LaggedStart(*(GrowFromCenter(d) for d in shuffled), lag_ratio=0.11),
-                run_time=max(1.6, tracker.time_until_bookmark("spread") - 0.5),
+                dim_cloud.animate.set_opacity(0.28),
+                dim_shadow.animate.set_opacity(0.28),
+                run_time=max(0.5, tracker.time_until_bookmark("point") - 0.20),
             )
-            self.wait_until_bookmark("spread")
-            # Eighteen scattered dots already are the evidence for "plenty
-            # of spread" -- a batch-level ring left points outside itself
-            # and so read as a boundary that had failed.  A pulse across the
-            # whole cloud makes the same claim without a new object.
-            settle(
-                tracker,
-                LaggedStart(
-                    *(Indicate(d, color=BACKBONE, scale_factor=1.9) for d in all_dots),
-                    lag_ratio=0.045,
-                ),
-                run_time=1.3,
+            # No recolouring here.  This row has been coral since beat 1 and
+            # its shadows were cast in coral; dimming the other two is the
+            # whole state change the sentence needs.
+            self.wait_until_bookmark("point")
+            self.play(
+                FadeIn(knot),
+                Indicate(carriers[0][0], color=ERROR, scale_factor=1.7),
+                run_time=0.7,
             )
+            self.wait_until_bookmark("shadow")
+            # Six coincident points cast one guide line, and that single line
+            # running down to a stack of six is what "they all land together"
+            # looks like.  It is beat 4's own guide, kept rather than a new
+            # object invented for the sentence.
+            b1_guide.set_stroke(ERROR, 1.5, opacity=0.75)
+            self.play(Create(b1_guide), run_time=0.5)
+            # The measured quantity itself, not a pulse standing in for it.
+            # ``span_bracket`` rules the extent of this row's six projections
+            # along the direction, and for a collapsed row that extent is
+            # zero -- so the rule renders as a single tick.  Its degeneracy is
+            # the reading, which is why nothing was jittered upstream to give
+            # it width.
+            self.settle(tracker, FadeIn(rules[0]), run_time=0.55)
+
+        # ==================================================================
+        # Beat 6 -- the same apparatus, the other two sequences.
+        #
+        # Chapter B's repeated-trial rhythm: trial, settle, trial, settle,
+        # with readable endpoint states.  Each trial ends on a rule of a
+        # different length in the same place on screen, so three sequences are
+        # compared by one measurement repeated, not by three light shows.
+        # ==================================================================
+        def trial(b: int, run_time: float) -> None:
+            others = [i for i in range(BATCH_B) if i != b]
+            self.play(
+                VGroup(*carriers[b]).animate.set_opacity(1.0),
+                shadow_rows[b].animate.set_opacity(1.0),
+                *(VGroup(*carriers[i]).animate.set_opacity(0.28)
+                  for i in others),
+                *(shadow_rows[i].animate.set_opacity(0.28) for i in others),
+                FadeOut(rules[b - 1] if b else VGroup()),
+                run_time=0.45,
+            )
+            self.play(Create(rules[b].rule), FadeIn(rules[b].label),
+                      run_time=run_time)
 
         with self.voiceover(
-            text="But now follow just the first sequence across time. "
-                 "<bookmark mark='tight'/>All six of its representations "
-                 "have landed in essentially the same place."
+            text="The second sequence hasn't collapsed, so its tokens spread "
+                 "out. <bookmark mark='third'/>And so do the third's."
+        ) as tracker:
+            self.play(FadeOut(VGroup(knot, b1_guide)), run_time=0.25)
+            trial(1, 0.9)
+            self.wait_until_bookmark("third")
+            trial(2, 0.9)
+            self.wait(max(0.05, tracker.get_remaining_duration()))
+
+        # ==================================================================
+        # Beat 7 -- back to the rows, and the axis the check runs along.
+        #
+        # The carriers return to the columns they came out of, so the latent
+        # plane reads as a detour taken and come back from, not as a place
+        # the argument moved to permanently.
+        # ==================================================================
+        with self.voiceover(
+            text="So SIGReg runs separately inside each sequence, across "
+                 "that sample's own tokens over time. "
+                 "<bookmark mark='note'/>That's the quantity LeNEPA "
+                 "regularizes."
         ) as tracker:
             self.play(
-                b2_dots.animate.set_opacity(0.22),
-                b3_dots.animate.set_opacity(0.22),
-                run_time=0.55,
-            )
-            # Colour changes only after the dots have finished moving and
-            # settling -- never during a shape or position animation.
-            self.play(b1_dots.animate.set_color(ERROR), run_time=0.45)
-            self.wait_until_bookmark("tight")
-            ring1 = spread_ring(b1_dots, ERROR)
-            settle(tracker, Create(ring1), run_time=0.9)
-        self.wait(0.4)
-
-        def show_row(dots: VGroup, dim: list[VGroup], run_time: float) -> Circle:
-            ring = spread_ring(dots, SIGREG)
-            self.play(
-                dots.animate.set_opacity(1.0),
-                *(d.animate.set_opacity(0.22) for d in dim),
+                FadeOut(VGroup(line, arrow, shadows, rules[2])),
+                *(c.animate.set_opacity(1.0) for row in carriers for c in row),
                 run_time=0.4,
             )
-            self.play(Create(ring), run_time=run_time)
-            return ring
-
-        with self.voiceover(
-            text="The second sequence hasn't collapsed, so it still covers "
-                 "real ground -- and the third looks the same way. "
-                 "<bookmark mark='notation'/>So the check has to run inside "
-                 "each sequence, across its own tokens over time."
-        ) as tracker:
-            self.play(FadeOut(ring1), b1_dots.animate.set_opacity(0.22), run_time=0.4)
-            ring2 = show_row(b2_dots, [b3_dots], 0.8)
-            self.play(FadeOut(ring2), b2_dots.animate.set_opacity(0.22), run_time=0.35)
-            ring3 = show_row(b3_dots, [b2_dots], 0.7)
-            self.wait_until_bookmark("notation")
+            self.play(
+                *(carriers[b][t].animate.move_to(rows[b][t].carrier_home())
+                  for b in range(BATCH_B) for t in range(BATCH_T)),
+                run_time=1.0,
+            )
+            # Reassert the rows as the scene's own objects before restoring
+            # them.  Animating each column's carrier -- a submobject -- made
+            # ``Scene.add`` dissolve every column, and then every row, out of
+            # the top level into loose bodies and carriers; see
+            # ``_fade_bodies`` for what that silently breaks.
+            self.add(*rows)
+            # Sequential for the same reason the outbound trip is: a frame
+            # with both the point and the vector at half opacity puts a dot
+            # back on top of every ellipsis.
+            self.play(
+                *(c.animate.set_opacity(0.0) for row in carriers for c in row),
+                run_time=0.25,
+            )
+            self.play(*self._fade_bodies(columns, 1.0), FadeIn(labels),
+                      run_time=0.45)
+            # Built here, not before the carriers came home: a span measured
+            # while this row's six points were still scattered across the
+            # latent plane is a rule the width of the whole frame, sitting at
+            # the height of the cloud rather than of the row.
+            # One rule per row, each spanning that row's own six positions,
+            # and the axis named once at the bottom rather than three times.
+            # Repeating the label on every row would be repeating information
+            # the repetition of the *rule* already carries.
+            spans = VGroup(*(
+                span_bracket(
+                    rows[b], color=SIGREG, side=DOWN, buff=0.16,
+                    label=(R"$t=1\ldots T$",) if b == BATCH_B - 1 else None,
+                )
+                for b in range(BATCH_B)
+            ))
+            self.play(
+                LaggedStart(*(FadeIn(spans[b]) for b in range(BATCH_B)),
+                            lag_ratio=0.45),
+                run_time=1.3,
+            )
+            self.wait_until_bookmark("note")
             notation = ty.maths(
-                R"\operatorname{SIGReg}\big(\{z_{b,t}\}_{t=1}^{T}\big)",
+                R"\operatorname{SIGReg}\big(\{u_{b,t}\}_{t=1}^{T}\big)",
                 size=ty.EQ, color=SIGREG,
             )
-            notation.next_to(plane_frame, DOWN, buff=0.28)
-            self.across(
-                tracker,
-                FadeOut(ring3),
-                all_dots.animate.set_opacity(1.0),
-                FadeIn(notation, shift=0.08 * UP),
-                floor=0.9,
-            )
-
-        self.play(
-            FadeOut(VGroup(plane_frame, all_dots, notation)),
-            run_time=0.6,
-        )
+            notation.move_to(np.array([0.0, -3.62, 0.0]))
+            self.settle(tracker, FadeIn(notation, shift=0.08 * UP),
+                        run_time=0.7)
 
         # ==================================================================
-        # Composition C -- layer 0 and layer 8, pulled from an actual chamber.
+        # Beat 8 -- where layer 0 and layer 8 come from.
+        #
+        # b=2's row survives the transition and is the row that travels, so
+        # depth is shown happening to a sequence the viewer has already been
+        # introduced to.  It is the healthy one on purpose: watching a
+        # sequence that has been supposed into collapse evolve with depth
+        # would quietly contradict the supposition still standing.
         # ==================================================================
-        block = transformer_block(width=8.4, height=3.3, color=BACKBONE)
-        block.shift(np.array([0.0, -0.05, 0.0]) - block.shell.get_center())
-        # An even count leaves no plate on the chamber's centre line, so the
-        # label below does not sit struck through by one.
-        plates = depth_plates(block, count=8, color=BACKBONE)
-        # The label floated at the right margin, attached to nothing, while
-        # the chamber itself sat empty.  Put it where it belongs.
-        block.label.move_to(block.shell.get_center()).set_opacity(0.42)
+        axis_x = self.DEPTH_AXIS_X
+        tick_ys = np.linspace(self.DEPTH_TOP, self.DEPTH_BOT, DEPTH_LAYERS)
+        axis = Line([axis_x, self.DEPTH_TOP + 0.30, 0.0],
+                    [axis_x, self.DEPTH_BOT - 0.30, 0.0])
+        axis.set_stroke(MUTED, 1.6, opacity=0.55)
+        ticks = VGroup(*(
+            Line([axis_x - 0.13, y, 0.0], [axis_x + 0.13, y, 0.0])
+            .set_stroke(MUTED, 1.6, opacity=0.55)
+            for y in tick_ys
+        ))
+        marks = VGroup(*(
+            ty.maths(str(i), size=ty.LABEL, color=MUTED)
+            .next_to(ticks[i], LEFT, buff=0.16)
+            for i in range(DEPTH_LAYERS)
+        ))
+        ell_label = ty.maths(R"\ell", size=ty.LABEL, color=MUTED)
+        ell_label.next_to(axis, UP, buff=0.16)
+        cursor = scalar_dot(SIGREG, radius=0.11).move_to([axis_x, tick_ys[0], 0.0])
 
-        def token_row(values) -> VGroup:
-            row = VGroup(*(
-                numeric_embedding(v, color=BACKBONE, shown=3, height=0.74)
-                for v in values
-            )).arrange(RIGHT, buff=0.46)
-            if row.width > 8.0:
-                row.scale_to_fit_width(8.0)
-            return row
+        travel = row2
+        travel_targets = [
+            np.array([self.DEPTH_ROW_X + (t - 0.5 * (BATCH_T - 1))
+                      * self.DEPTH_PITCH, 0.0, 0.0])
+            for t in range(BATCH_T)
+        ]
+        # The row does not move, so nothing about its position says which
+        # depth it is showing -- and a row sitting level with tick 4 invites
+        # exactly that misreading.  A thin leader from the marker to the row
+        # makes the marker point at the vectors instead.
+        row_left_x = travel_targets[0][0] - 0.75
+        connector = Line([axis_x, tick_ys[0], 0.0], [row_left_x, 0.0, 0.0])
+        connector.set_stroke(SIGREG, 1.2, opacity=0.35)
 
-        u0_row = token_row(TOKEN_VALUES)
-        u0_row.next_to(block.shell, UP, buff=0.42)
-        u8_row = token_row(LAYER8_ROW)
-        u8_row.next_to(block.shell, DOWN, buff=0.42)
+        def at_depth(group: VGroup, ell: float) -> None:
+            """One parameter sets the marker's height and the row's contents.
 
-        def sweep(row: VGroup) -> LaggedStart:
-            """A highlight that runs the row and stops at its last glyph.
-
-            The old ``sweep_bar`` was a full-width rectangle animated from
-            ``row.get_left()`` to ``row.get_right()``, so it began and ended
-            half off the row -- on screen it read as a selection band left
-            hanging in empty space past the final vector.
+            Driven straight off an animation's alpha rather than off a
+            ``ValueTracker`` read by an updater: ``LaggedStart`` and
+            ``AnimationGroup`` wrap their members' mobjects in a fresh
+            ``Group``, ``Scene.play`` adds that group, and every ancestor of
+            those members is then dissolved out of ``scene.mobjects``, which
+            silently stops any updater bound to the ancestor.
             """
-            return LaggedStart(
-                *(Indicate(g, color=SIGREG, scale_factor=1.10) for g in row),
-                lag_ratio=0.13,
-            )
+            for t, col in enumerate(group):
+                col.set_values(depth_values(1, t, ell))
+            y = float(np.interp(ell, np.arange(DEPTH_LAYERS), tick_ys))
+            cursor.move_to([axis_x, y, 0.0])
+            connector.put_start_and_end_on([axis_x + 0.16, y, 0.0],
+                                           [row_left_x, 0.0, 0.0])
 
         with self.voiceover(
-            text="Tokens exist at every depth of the network, not just "
-                 "one. <bookmark mark='l0'/>LeNEPA does this at two "
-                 "places: the patch embeddings at layer zero, "
+            text="Representations like these exist at every depth of the "
+                 "network. <bookmark mark='l0'/>LeNEPA runs that check on "
+                 "the patch embeddings, at layer zero, "
                  "<bookmark mark='l8'/>and again after layer eight."
         ) as tracker:
             self.play(
-                FadeIn(block, shift=0.06 * UP),
-                LaggedStart(*(Create(p) for p in plates), lag_ratio=0.08),
-                run_time=1.1,
+                FadeOut(VGroup(row1, row3, labels, spans, notation)),
+                run_time=0.5,
             )
+            self.play(
+                *(col.animate.set(height=self.DEPTH_H).move_to(target)
+                  for col, target in zip(travel, travel_targets)),
+                Create(axis), FadeIn(ticks), FadeIn(marks), FadeIn(ell_label),
+                run_time=max(0.9, tracker.time_until_bookmark("l0") - 0.3),
+            )
+            # Snap to exact geometry before the alpha function owns the row,
+            # so a rounding difference between the animation's endpoint and
+            # its first frame cannot show up as a one-frame jump.
+            for t, col in enumerate(travel):
+                col.set(height=self.DEPTH_H)
+                col.move_to(travel_targets[t])
+            self.add(travel)
+            at_depth(travel, 0.0)
+
             self.wait_until_bookmark("l0")
-            tap0 = ty.maths(R"\ell=0", size=ty.LABEL, color=SIGREG)
-            tap0.next_to(u0_row, UP, buff=0.18)
-            self.play(FadeIn(u0_row, shift=0.35 * UP), FadeIn(tap0), run_time=0.8)
-            self.play(sweep(u0_row), run_time=0.85)
+            # ``FadeIn``, not ``Create``.  A diagonal leader drawn from one end
+            # spends its first frames as a short stub next to the axis, which
+            # looks like a stray mark rather than a line being aimed.
+            self.play(FadeIn(cursor, scale=0.4), FadeIn(connector),
+                      marks[0].animate.set_color(SIGREG), run_time=0.4)
+            # Beat 7's rule again, unchanged in kind: the same check, now at a
+            # stated depth.  Static, because the row is.
+            depth_rule = span_bracket(travel, color=SIGREG, side=DOWN,
+                                      buff=0.16)
+            self.play(FadeIn(depth_rule), run_time=0.5)
+            gap = tracker.time_until_bookmark("l8")
+            # The marker slides and the coordinates rewrite themselves under
+            # it.  This is the one beat where the digits earn their keep --
+            # every number on screen changes, continuously, and nothing else
+            # moves.
+            self.play(
+                UpdateFromAlphaFunc(
+                    travel,
+                    lambda m, a: at_depth(m, interpolate(0.0, 8.0, a)),
+                ),
+                run_time=max(1.6, gap - 0.25), rate_func=linear,
+            )
             self.wait_until_bookmark("l8")
-            tap8 = ty.maths(R"\ell=8", size=ty.LABEL, color=SIGREG)
-            tap8.next_to(u8_row, DOWN, buff=0.18)
-            self.play(FadeIn(u8_row, shift=0.35 * DOWN), FadeIn(tap8), run_time=0.8)
-            self.across(tracker, sweep(u8_row), floor=0.85)
-
-        with self.voiceover(
-            text="Those two layers are the layer set L T."
-        ) as tracker:
-            layers_label = ty.maths(R"L_T=\{0,8\}", size=ty.EQ, color=SIGREG)
-            layers_label.next_to(block.shell, RIGHT, buff=0.50)
-            # ``TransformFromCopy`` from the two taps flew MathTex copies
-            # straight across the chamber, leaving a doubled, half-formed
-            # "l" ghosted over the interior mid-flight.  Pulse the sources,
-            # then state the set.
-            self.play(Indicate(tap0, color=SIGREG), Indicate(tap8, color=SIGREG), run_time=0.6)
-            settle(tracker, FadeIn(layers_label, shift=0.10 * LEFT), run_time=0.7)
-        self.wait(0.4)
-
-        self.play(
-            FadeOut(VGroup(
-                block, plates, u0_row, u8_row, tap0, tap8, layers_label,
-            )),
-            run_time=0.6,
-        )
+            self.settle(tracker, marks[8].animate.set_color(SIGREG),
+                        run_time=0.45)
 
         # ==================================================================
-        # Composition D -- the temporal term, then the restored prediction
-        # loss, on an otherwise empty frame.
+        # Beat 9 -- the equation, as shorthand for what was watched.
+        #
+        # Built right to left: the operation the viewer has now seen twice
+        # appears first, and the two averages are prepended onto it.  The set
+        # L_T is read off the two lit markers with a digit-to-digit
+        # TransformFromCopy -- single glyphs of the same type, the one
+        # transform here that is structurally safe.  The scene ends on this
+        # term; scene 5 owns combining it with the prediction loss.
         # ==================================================================
-        temporal_eq = ty.maths(
-            R"\mathcal L_{\rm SIG}^{\rm time}="
-            R"\frac{1}{B}\sum_b\frac{1}{|L_T|}\sum_{\ell\in L_T}"
-            R"\operatorname{SIGReg}\big(\{u^{(\ell)}_{b,t}\}_{t=1}^{T}\big)",
-            size=ty.EQ, color=INK,
-        )
-        lt_label = ty.maths(R"L_T=\{0,8\}", size=ty.EQ, color=SIGREG)
-        top_row = VGroup(temporal_eq, lt_label).arrange(RIGHT, buff=0.6)
-        top_row.move_to(0.6 * UP)
+        set_tex = MathTex(R"L_T=", R"\{", "0", ",", "8", R"\}", color=SIGREG)
+        set_tex.move_to(np.array([0.0, -3.62, 0.0]))
 
         with self.voiceover(
-            text="Averaging those scores over the batch and over both "
-                 "layers gives the temporal SIGReg term. "
-                 "<bookmark mark='pair'/>Together with the prediction "
-                 "loss, that's what LeNEPA trains on."
+            text="Those two depths are the layer set L T. "
+                 "<bookmark mark='eq'/>Averaging the score over every sample "
+                 "and both layers gives the temporal SIGReg term."
         ) as tracker:
-            self.play(FadeIn(top_row, shift=0.08 * UP), run_time=1.1)
-            self.wait_until_bookmark("pair")
-            pred_eq = ty.maths(
-                R"\mathcal L_{\rm pred}=\frac{1}{B(T-1)}\sum_{b,t}"
-                R"\|h_\psi(\hat z_{b,t}) - h_\psi(z_{b,t+1})\|_2^2",
-                size=ty.EQ, color=INK,
+            # Given the whole clause rather than a fixed 0.9 s.  The two
+            # digits travelling out of the axis is the only event this
+            # sentence has, and finishing it in under a second left three
+            # seconds of a finished frame before the bookmark.
+            self.play(
+                FadeIn(VGroup(set_tex[0], set_tex[1], set_tex[3], set_tex[5])),
+                TransformFromCopy(marks[0], set_tex[2]),
+                TransformFromCopy(marks[8], set_tex[4]),
+                run_time=max(0.9, tracker.time_until_bookmark("eq") - 0.30),
             )
-            final = VGroup(pred_eq.copy(), top_row.copy()).arrange(DOWN, buff=0.6)
-            final.move_to(ORIGIN)
-            pred_eq.move_to(final[0])
-            self.across(
-                tracker,
-                top_row.animate.move_to(final[1]),
-                FadeIn(pred_eq, shift=0.08 * UP),
-                floor=1.3,
+            self.wait_until_bookmark("eq")
+            self.play(
+                FadeOut(VGroup(axis, ticks, marks, ell_label, cursor, connector,
+                               travel, depth_rule)),
+                set_tex.animate.move_to(np.array([0.0, -1.85, 0.0])),
+                run_time=0.6,
             )
+            equation = MathTex(
+                R"\mathcal L_{\rm SIG}^{\rm time}=\frac{1}{B}\sum_b",
+                R"\frac{1}{|L_T|}\sum_{\ell\in L_T}",
+                R"\operatorname{SIGReg}\big(\{u^{(\ell)}_{b,t}\}_{t=1}^{T}\big)",
+                color=INK,
+            )
+            # The closing card is the only thing on screen; 12.2 left it
+            # sitting in two thirds of the frame with margins on both sides.
+            if equation.width > 13.0:
+                equation.scale_to_fit_width(13.0)
+            equation.move_to(0.55 * UP)
+            equation[2].set_color(SIGREG)
+            # The three terms are paced off what is left of the clause
+            # instead of at a fixed 0.55/0.6/0.6, which assembled the whole
+            # equation in under two seconds and then held a finished frame for
+            # three more.
+            step = max(0.55, (tracker.get_remaining_duration() - 0.45) / 3.0)
+            self.play(FadeIn(equation[2], shift=0.10 * UP), run_time=step)
+            self.play(Indicate(set_tex, color=SIGREG, scale_factor=1.08),
+                      FadeIn(equation[1], shift=0.10 * UP), run_time=step)
+            self.settle(tracker, FadeIn(equation[0], shift=0.10 * UP),
+                        run_time=step)
 
-        self.inspect(1.8)
-        self.clear_beat(1.0)
+        self.inspect(1.6)
+        self.clear_beat(0.9)
+
+    # ----------------------------------------------------------------------
+    # Builders.  Kept as methods rather than module helpers because every one
+    # of them encodes a choice specific to this scene's layout.
+    # ----------------------------------------------------------------------
+    def _build_row(self, values) -> VGroup:
+        return VGroup(*(
+            TokenColumn(v, color=BACKBONE, height=self.HERO_H)
+            for v in values
+        ))
+
+    def _slot(self, t: int, y: float) -> np.ndarray:
+        return np.array([(t - 0.5 * (BATCH_T - 1)) * self.PITCH, y, 0.0])
+
+    def _place_row(self, row: VGroup, height: float, y: float) -> None:
+        """Resize and seat a row.  Every row is scaled from the same build, so
+        ``set_height`` alone keeps all three at one aspect -- setting height on
+        some rows and width on others gave row 1 a different aspect from rows
+        2 and 3 and left it visibly taller in the settled grid."""
+        for t, col in enumerate(row):
+            col.set(height=height)
+            col.move_to(self._slot(t, y))
+
+    def _fade_bodies(self, columns, target: float) -> list:
+        """Animate the columns' body opacity, one animation per column.
+
+        The natural way to write this is one ``ValueTracker`` and an updater
+        per column, and it silently stops working partway through the scene.
+        Animating a *submobject* -- here each column's carrier, on its way
+        into the latent plane -- makes ``Scene.add`` call
+        ``restructure_mobjects``, which dissolves any top-level mobject whose
+        family contains the animated one.  Each ``TokenColumn`` is therefore
+        replaced in ``scene.mobjects`` by its own body and carrier, the row
+        groups go the same way, and from that point an updater bound to the
+        column is simply never called again: the tracker advances, the
+        columns never repaint, and the rows come back invisible with no error
+        anywhere.  Binding each column to its own animation keeps the binding
+        on the object being animated, which no restructuring can detach.
+        """
+        return [
+            UpdateFromAlphaFunc(
+                col,
+                lambda m, a, start=col.body_alpha: m.set_body_alpha(
+                    interpolate(start, target, a)),
+            )
+            for col in columns
+        ]
+
+    def _plane_point(self, xy) -> np.ndarray:
+        return self.PLANE_ORIGIN + self.PLANE_SCALE * np.array(
+            [xy[0], xy[1], 0.0])
+
+    def _bind_collapse(self, col, source, target, alpha: ValueTracker) -> None:
+        source = np.asarray(source, dtype=float)
+        target = np.asarray(target, dtype=float)
+
+        def update(mob) -> None:
+            a = alpha.get_value()
+            mob.set_values((1.0 - a) * source + a * target)
+
+        col.add_updater(update)
+
+    @staticmethod
+    def _recolor(col: TokenColumn, color: str) -> UpdateFromAlphaFunc:
+        """Repaint a column's digits and carrier, as an animation.
+
+        ``TokenColumn`` paints its own digits -- brightness carries magnitude
+        -- so ``.animate.set_color`` would win the frame and then lose it
+        again the next time anything calls ``_paint``.  Interpolating the
+        column's *own* colour keeps the two channels consistent throughout.
+        """
+        start = ManimColor(col.colour)
+        end = ManimColor(color)
+        return UpdateFromAlphaFunc(
+            col, lambda m, a: m.recolor(interpolate_color(start, end, a)),
+        )
+
+    @staticmethod
+    def _extent(rig: PlaneProjectionRig, b: int, color: str) -> VGroup:
+        """A rule spanning one sequence's projections, labelled by sequence.
+
+        This is the quantity under discussion drawn at its own size: for a
+        healthy sequence a wide rule, for a collapsed one a rule of zero
+        length that renders as a single tick.  ``b=`` in the label rather than
+        colour alone, so the reading does not depend on telling coral from
+        violet.
+
+        Measured off the feet rather than off the shadow dots.  ``span_bracket``
+        would rule the dots' bounding box, which is one dot diameter wider than
+        the thing being measured -- invisible for a spread-out row, and for the
+        collapsed row the difference between "a single tick" and "a small
+        box", i.e. between no spread and a little spread.  Assumes the readout
+        axis runs along x, as it does throughout this scene.
+        """
+        feet = rig.foot_points()[b * BATCH_T:(b + 1) * BATCH_T]
+        lo, hi = float(np.min(feet[:, 0])), float(np.max(feet[:, 0]))
+        y = float(feet[0, 1]) - 0.34
+        tick = 0.20
+        rule = VGroup(
+            Line([lo, y + tick, 0.0], [lo, y, 0.0]),
+            Line([lo, y, 0.0], [hi, y, 0.0]),
+            Line([hi, y, 0.0], [hi, y + tick, 0.0]),
+        ).set_stroke(color, 2.4)
+        label = ty.maths(rf"b={b + 1}", size=ty.LABEL, color=color)
+        label.next_to(rule, DOWN, buff=0.12).set_x(0.5 * (lo + hi))
+        group = VGroup(rule, label)
+        group.rule = rule
+        group.label = label
+        return group
 
 
 class LeNEPA05Objective(LenepaScene):
     """Assemble the objective, then discard the training-only head."""
 
     def construct(self):
-        title = scene_title("The complete training step")
-        pred_loss = caption_pill(R"prediction loss", color=ERROR, width=2.95)
-        sig_loss = caption_pill(R"temporal SIGReg", color=SIGREG, width=3.25)
-        terms = VGroup(pred_loss, sig_loss).arrange(RIGHT, buff=1.05).move_to(0.95 * UP)
+        pred_loss = caption_pill(R"prediction loss", color=ERROR,
+                                 size=ty.CAPTION)
+        sig_loss = caption_pill(R"temporal SIGReg", color=SIGREG,
+                                size=ty.CAPTION)
+        terms = VGroup(pred_loss, sig_loss).arrange(RIGHT, buff=1.45)
+        terms.move_to(2.05 * UP)
         plus = ty.maths("+", size=ty.EQ_DISPLAY, color=INK).move_to(terms.get_center())
         equation = ty.maths(
             R"\mathcal L=\lambda_{\rm pred}\mathcal L_{\rm pred}"
             R"+\lambda_T\mathcal L_{\rm SIG}^{\rm time}",
-            size=ty.EQ_DISPLAY,
+            size=ty.EQ_HERO,
             color=INK,
-        ).move_to(0.55 * DOWN)
+        )
+        if equation.width > 12.4:
+            equation.scale_to_fit_width(12.4)
+        equation.move_to(0.15 * DOWN)
         weights = ty.maths(
             R"\lambda_{\rm pred}=1,\qquad\lambda_T=20",
             size=ty.EQ,
             color=MUTED,
-        ).next_to(equation, DOWN, buff=0.48)
+        ).next_to(equation, DOWN, buff=0.85)
+        # Centre the finished stack rather than the equation alone: with the
+        # pills above and the weights below, pinning the middle element left
+        # the whole beat sitting in the frame's upper two-thirds.
+        VGroup(terms, plus, equation, weights).move_to(0.10 * UP)
 
         with self.voiceover(
             text="Training combines the two scalars. The prediction term has "
@@ -1735,15 +1982,29 @@ class LeNEPA05Objective(LenepaScene):
                  "configuration. One term teaches what comes next; the other "
                  "resists temporal collapse."
         ) as tracker:
-            self.play(FadeIn(title), FadeIn(terms), FadeIn(plus), run_time=0.8)
-            self.play(TransformFromCopy(terms, equation), FadeIn(equation), run_time=1.35)
+            self.play(FadeIn(terms), FadeIn(plus), run_time=0.8)
+            # One animation for the equation.  This previously played
+            # ``TransformFromCopy(terms, equation)`` *and* ``FadeIn(equation)``
+            # on the same mobject in one call; the two fought each frame and
+            # the equation ended up absent from the finished render, which the
+            # old title card at the top of the frame made easy to miss.  The
+            # pills and the equation are also structurally unrelated -- two
+            # rounded boxes into a MathTex -- so pulsing the source and fading
+            # the result in is the honest version of that link.
+            self.play(
+                Indicate(terms, color=INK, scale_factor=1.04),
+                FadeIn(equation, shift=0.18 * UP),
+                run_time=1.35,
+            )
             self.across(tracker, FadeIn(weights, shift=0.08 * UP), floor=1.15)
 
-        patch = caption_pill("patch embedding", color=KEEP, width=2.9)
-        backbone = caption_pill("causal Transformer", color=KEEP, width=3.35)
-        projector = caption_pill("projector", color=PROJECTOR, width=2.25)
-        losses = caption_pill("losses", color=ERROR, width=1.85)
-        pipeline = VGroup(patch, backbone, projector, losses).arrange(RIGHT, buff=0.42)
+        patch = caption_pill("patch embedding", color=KEEP, size=ty.CAPTION)
+        backbone = caption_pill("causal Transformer", color=KEEP, size=ty.CAPTION)
+        projector = caption_pill("projector", color=PROJECTOR, size=ty.CAPTION)
+        losses = caption_pill("losses", color=ERROR, size=ty.CAPTION)
+        pipeline = VGroup(patch, backbone, projector, losses).arrange(RIGHT, buff=0.46)
+        if pipeline.width > 13.1:
+            pipeline.scale_to_fit_width(13.1)
         pipeline.move_to(0.15 * DOWN)
         pipe_arrows = VGroup(*(
             Arrow(a.get_right(), b.get_left(), buff=0.08,
@@ -1773,13 +2034,15 @@ class LeNEPA05Objective(LenepaScene):
                 FadeOut(VGroup(projector, losses, pipe_arrows[1:], discard_label),
                         shift=0.55 * DOWN),
                 VGroup(patch, backbone, pipe_arrows[0], keep_label)
-                .animate.move_to(ORIGIN).scale(1.10),
+                .animate.move_to(ORIGIN).scale(1.55),
                 FadeOut(blade),
                 run_time=1.15,
             )
+            # 1.025 was below the threshold of visibility -- two frames that
+            # sampled either side of it were identical.
             self.across(tracker,
                         Indicate(VGroup(patch, backbone), color=KEEP,
-                                 scale_factor=1.025), floor=1.0)
+                                 scale_factor=1.07), floor=1.0)
 
         self.inspect(0.7)
         self.clear_beat()
@@ -1789,29 +2052,36 @@ class LeNEPA06Protocol(LenepaScene):
     """Explain recipe reuse without implying checkpoint transfer."""
 
     def construct(self):
-        title = scene_title("What experiment is this?")
+        # The two dataset columns sat at x=-1.55 and x=+2.65, so the grid was
+        # visibly off-centre inside a frame whose left third held only two
+        # short row labels.  Symmetric columns, and the whole grid uses the
+        # height the title card used to occupy.
+        COL_X = 2.80
+        ROW_Y = (1.15, -0.95)
         column_titles = VGroup(
             ty.words("PTB-XL", size=ty.STATEMENT, color=INK),
             ty.words("Diag", size=ty.STATEMENT, color=INK),
         )
-        column_titles[0].move_to(1.55 * LEFT + 2.15 * UP)
-        column_titles[1].move_to(2.65 * RIGHT + 2.15 * UP)
+        column_titles[0].move_to(COL_X * LEFT + 2.85 * UP)
+        column_titles[1].move_to(COL_X * RIGHT + 2.85 * UP)
         row_labels = VGroup(
             ty.words("LeNEPA", size=ty.CAPTION, color=PREDICTION),
             ty.words("ECG-tuned JEPA", size=ty.CAPTION, color=NEXT_TARGET),
         )
-        row_labels[0].move_to(5.0 * LEFT + 0.70 * UP)
-        row_labels[1].move_to(5.0 * LEFT + 0.85 * DOWN)
+        for label, y in zip(row_labels, ROW_Y):
+            label.move_to(np.array([-6.55, y, 0.0]), aligned_edge=LEFT)
 
-        lenepa_recipe = caption_pill("same LeNEPA recipe", color=PREDICTION, width=3.05)
-        jepa_recipe = caption_pill("same JEPA recipe", color=NEXT_TARGET, width=3.05)
-        recipe_cards = VGroup(lenepa_recipe, jepa_recipe).arrange(DOWN, buff=0.72)
-        recipe_cards.move_to(0.35 * LEFT + 0.10 * DOWN)
+        lenepa_recipe = caption_pill("same LeNEPA recipe", color=PREDICTION,
+                                     size=ty.CAPTION)
+        jepa_recipe = caption_pill("same JEPA recipe", color=NEXT_TARGET,
+                                   size=ty.CAPTION)
+        recipe_cards = VGroup(lenepa_recipe, jepa_recipe).arrange(DOWN, buff=0.85)
+        recipe_cards.move_to(0.10 * UP)
         targets = []
         for row, recipe in enumerate(recipe_cards):
-            for x in (-1.55, 2.65):
-                target = recipe.copy().scale(0.82)
-                target.move_to(np.array([x, 0.70 - 1.55 * row, 0.0]))
+            for x in (-COL_X, COL_X):
+                target = recipe.copy().scale(0.86)
+                target.move_to(np.array([x, ROW_Y[row], 0.0]))
                 targets.append(target)
         target_group = VGroup(*targets)
         train_labels = VGroup(*(
@@ -1820,8 +2090,8 @@ class LeNEPA06Protocol(LenepaScene):
             for target in target_group
         ))
         no_transfer = caption_pill("recipe reuse — no checkpoint transfer",
-                                   color=INK, width=6.25)
-        no_transfer.to_edge(DOWN, buff=0.43)
+                                   color=INK, size=ty.CAPTION)
+        no_transfer.move_to(2.95 * DOWN)
 
         with self.voiceover(
             text="The experiment holds each method's recipe fixed, then "
@@ -1829,7 +2099,7 @@ class LeNEPA06Protocol(LenepaScene):
                  "PTB-XL and separately on Diag; ECG-tuned JEPA is too. What "
                  "transfers is the configuration, not a checkpoint."
         ) as tracker:
-            self.play(FadeIn(title), FadeIn(column_titles), FadeIn(row_labels),
+            self.play(FadeIn(column_titles), FadeIn(row_labels),
                       FadeIn(recipe_cards), run_time=0.9)
             self.play(
                 LaggedStart(*(
@@ -1844,10 +2114,10 @@ class LeNEPA06Protocol(LenepaScene):
             self.across(tracker, FadeIn(no_transfer, shift=0.08 * UP), floor=1.2)
 
         facts = VGroup(
-            caption_pill("20,000 updates", color=MUTED),
-            caption_pill("5 seeds", color=MUTED),
-            caption_pill("frozen probes", color=MUTED),
-        ).arrange(RIGHT, buff=0.42).move_to(2.55 * DOWN)
+            caption_pill("20,000 updates", color=MUTED, size=ty.CAPTION),
+            caption_pill("5 seeds", color=MUTED, size=ty.CAPTION),
+            caption_pill("frozen probes", color=MUTED, size=ty.CAPTION),
+        ).arrange(RIGHT, buff=0.55).move_to(2.95 * DOWN)
 
         with self.voiceover(
             text="Both recipes were chosen using PTB-XL work; neither was "
@@ -1856,8 +2126,9 @@ class LeNEPA06Protocol(LenepaScene):
                  "five seeds, and frozen probes—not for the best Diag-tuned "
                  "version of either method."
         ) as tracker:
-            self.play(FadeOut(no_transfer), target_group.animate.shift(0.35 * UP),
-                      train_labels.animate.shift(0.35 * UP), run_time=0.65)
+            # The grid no longer needs to shift up to make room: the facts row
+            # sits in space the title card used to take.
+            self.play(FadeOut(no_transfer), run_time=0.45)
             self.across(tracker,
                         LaggedStart(*[FadeIn(fact) for fact in facts], lag_ratio=0.22),
                         floor=1.3)
@@ -1871,46 +2142,45 @@ class LeNEPA07Results(LenepaScene):
 
     def _result_panel(self, dataset: str, rows: list[tuple[str, str, str]],
                       *, accent: str) -> VGroup:
-        box = RoundedRectangle(width=5.65, height=3.0, corner_radius=0.15)
+        box = RoundedRectangle(width=6.55, height=4.05, corner_radius=0.16)
         box.set_stroke(accent, 1.7, opacity=0.65).set_fill(GRID, 0.08)
         title = ty.words(dataset, size=ty.STATEMENT, color=INK)
-        title.next_to(box.get_top(), DOWN, buff=0.25)
+        title.next_to(box.get_top(), DOWN, buff=0.32)
         headers = VGroup(
-            ty.words("model", size=ty.LABEL, color=MUTED),
-            ty.words("AUROC", size=ty.LABEL, color=MUTED),
-            ty.words("AUPRC", size=ty.LABEL, color=MUTED),
-        ).arrange(RIGHT, buff=0.70)
-        headers.move_to(box.get_center() + 0.55 * UP)
+            ty.words("model", size=ty.CAPTION, color=MUTED),
+            ty.words("AUROC", size=ty.CAPTION, color=MUTED),
+            ty.words("AUPRC", size=ty.CAPTION, color=MUTED),
+        ).arrange(RIGHT, buff=0.86)
+        headers.move_to(box.get_center() + 0.62 * UP)
         data_rows = VGroup()
         for name, auroc, auprc in rows:
             row_color = PREDICTION if name == "LeNEPA" else NEXT_TARGET
             row = VGroup(
                 ty.words(name, size=ty.CAPTION, color=row_color),
-                ty.maths(auroc, size=ty.EQ, color=row_color),
-                ty.maths(auprc, size=ty.EQ, color=row_color),
+                ty.maths(auroc, size=ty.EQ_DISPLAY, color=row_color),
+                ty.maths(auprc, size=ty.EQ_DISPLAY, color=row_color),
             )
-            row[0].set_width(1.55)
-            row.arrange(RIGHT, buff=0.66)
+            row[0].set_width(1.85)
+            row.arrange(RIGHT, buff=0.80)
             data_rows.add(row)
-        data_rows.arrange(DOWN, buff=0.34)
-        data_rows.next_to(headers, DOWN, buff=0.32)
+        data_rows.arrange(DOWN, buff=0.44)
+        data_rows.next_to(headers, DOWN, buff=0.40)
         return VGroup(box, title, headers, data_rows)
 
     def construct(self):
-        title = scene_title("What happened?")
         ptb = self._result_panel(
             "PTB-XL",
             [("JEPA best", ".892", ".298"), ("LeNEPA", ".880", ".285")],
             accent=NEXT_TARGET,
-        ).move_to(3.0 * LEFT + 0.25 * UP)
+        ).move_to(3.45 * LEFT + 0.35 * UP)
         diag = self._result_panel(
             "Diag",
             [("JEPA CLS", ".880", ".597"), ("LeNEPA", ".920", ".650")],
             accent=PREDICTION,
-        ).move_to(3.0 * RIGHT + 0.25 * UP)
+        ).move_to(3.45 * RIGHT + 0.35 * UP)
         fixed_recipe = ty.words("same fixed-recipe rule",
                                 size=ty.CAPTION, color=MUTED)
-        fixed_recipe.to_edge(DOWN, buff=0.45)
+        fixed_recipe.move_to(2.75 * DOWN)
 
         with self.voiceover(
             text="On PTB-XL, the ECG-tuned JEPA recipe is slightly stronger: "
@@ -1919,7 +2189,7 @@ class LeNEPA07Results(LenepaScene):
                  "Diag, LeNEPA reaches point nine two zero and point six five "
                  "zero, clearly ahead on classification."
         ) as tracker:
-            self.play(FadeIn(title), FadeIn(ptb[0]), FadeIn(ptb[1]), run_time=0.65)
+            self.play(FadeIn(ptb[0]), FadeIn(ptb[1]), run_time=0.65)
             self.play(FadeIn(ptb[2]),
                       LaggedStart(*[FadeIn(row) for row in ptb[3]], lag_ratio=0.22),
                       run_time=1.25)
@@ -1929,11 +2199,14 @@ class LeNEPA07Results(LenepaScene):
             self.across(tracker, FadeIn(fixed_recipe), floor=1.1)
 
         speed_title = ty.words("80% of final gain", size=ty.STATEMENT, color=INK)
-        speed_title.move_to(2.05 * UP)
-        lenepa_line = NumberLine(x_range=(0, 10, 1), length=5.6,
+        speed_title.move_to(2.40 * UP)
+        # 5.6 long, the pair spanned barely a third of the frame and sat in
+        # its upper-left quadrant.
+        lenepa_line = NumberLine(x_range=(0, 10, 1), length=8.6,
                                  include_numbers=False, include_tip=False)
         jepa_line = lenepa_line.copy()
-        lines = VGroup(lenepa_line, jepa_line).arrange(DOWN, buff=0.88).move_to(0.15 * DOWN)
+        lines = VGroup(lenepa_line, jepa_line).arrange(DOWN, buff=1.45)
+        lines.move_to(0.45 * DOWN + 0.55 * RIGHT)
         lines.set_stroke(AXIS, 2)
         labels = VGroup(
             ty.words("LeNEPA", size=ty.CAPTION, color=PREDICTION),
@@ -1942,14 +2215,14 @@ class LeNEPA07Results(LenepaScene):
         for label, line in zip(labels, lines):
             label.next_to(line, LEFT, buff=0.32)
         lenepa_band = Line(lenepa_line.n2p(2), lenepa_line.n2p(5))
-        lenepa_band.set_stroke(PREDICTION, 10)
+        lenepa_band.set_stroke(PREDICTION, 13)
         jepa_band = Line(jepa_line.n2p(5), jepa_line.n2p(10))
-        jepa_band.set_stroke(NEXT_TARGET, 10)
+        jepa_band.set_stroke(NEXT_TARGET, 13)
         band_labels = VGroup(
-            ty.words("2–5k updates", size=ty.LABEL, color=PREDICTION)
-            .next_to(lenepa_band, UP, buff=0.15),
-            ty.words("5–10k updates", size=ty.LABEL, color=NEXT_TARGET)
-            .next_to(jepa_band, UP, buff=0.15),
+            ty.words("2–5k updates", size=ty.CAPTION, color=PREDICTION)
+            .next_to(lenepa_band, UP, buff=0.22),
+            ty.words("5–10k updates", size=ty.CAPTION, color=NEXT_TARGET)
+            .next_to(jepa_band, UP, buff=0.22),
         )
 
         with self.voiceover(
@@ -1964,19 +2237,20 @@ class LeNEPA07Results(LenepaScene):
             self.play(Create(lenepa_band), FadeIn(band_labels[0]), run_time=1.0)
             self.across(tracker, Create(jepa_band), FadeIn(band_labels[1]), floor=1.15)
 
-        mixed = caption_pill("dense Diag regression: mixed", color=ERROR, width=5.0)
+        mixed = caption_pill("dense Diag regression: mixed", color=ERROR,
+                             size=ty.CAPTION)
         ucr = ty.maths(R"77.65\%", size=ty.EQ_HERO, color=PREDICTION)
         ucr_label = ty.words("UCR-128 mean accuracy", size=ty.CAPTION, color=INK)
         ucr_note = ty.words("single seed • best checkpoint",
-                            size=ty.LABEL, color=MUTED)
-        ucr_group = VGroup(ucr, ucr_label, ucr_note).arrange(DOWN, buff=0.22)
-        ucr_group.move_to(2.85 * RIGHT + 0.20 * DOWN)
+                            size=ty.CAPTION, color=MUTED)
+        ucr_group = VGroup(ucr, ucr_label, ucr_note).arrange(DOWN, buff=0.30)
+        ucr_group.move_to(3.35 * RIGHT + 0.65 * DOWN)
         baselines = VGroup(
-            ty.words("Mantis  78.81", size=ty.LABEL, color=MUTED),
-            ty.words("MOMENT  77.89", size=ty.LABEL, color=MUTED),
-            ty.words("NuTime  77.32", size=ty.LABEL, color=MUTED),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
-        baselines.move_to(3.15 * LEFT + 0.15 * DOWN)
+            ty.words("Mantis  78.81", size=ty.CAPTION, color=MUTED),
+            ty.words("MOMENT  77.89", size=ty.CAPTION, color=MUTED),
+            ty.words("NuTime  77.32", size=ty.CAPTION, color=MUTED),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.34)
+        baselines.move_to(3.55 * LEFT + 0.65 * DOWN)
 
         with self.voiceover(
             text="The win is not universal. NEPA with a projector beats "
@@ -1988,7 +2262,7 @@ class LeNEPA07Results(LenepaScene):
             self.play(FadeOut(VGroup(speed_title, lines, labels, lenepa_band,
                                      jepa_band, band_labels)),
                       FadeIn(mixed), run_time=0.8)
-            self.play(mixed.animate.move_to(2.35 * UP),
+            self.play(mixed.animate.move_to(1.95 * UP),
                       FadeIn(baselines, shift=0.08 * RIGHT), run_time=1.0)
             self.across(tracker, FadeIn(ucr_group, shift=0.08 * UP), floor=1.4)
 
@@ -2000,7 +2274,6 @@ class LeNEPA08Landing(LenepaScene):
     """Return to the signal and leave the method's conceptual identity."""
 
     def construct(self):
-        title = scene_title("LeNEPA in one pass")
         signal = ParametricFunction(
             lambda t: np.array([
                 -5.55 + 1.75 * t,
@@ -2009,19 +2282,31 @@ class LeNEPA08Landing(LenepaScene):
             ]),
             t_range=(0, 1, 0.02),
         ).set_stroke(INPUT, 3.0)
-        signal_label = ty.words("signal", size=ty.LABEL, color=INPUT)
-        signal_label.next_to(signal, DOWN, buff=0.20)
+        signal_label = ty.words("signal", size=ty.CAPTION, color=INPUT)
+        signal_label.next_to(signal, DOWN, buff=0.24)
 
         tokens = latent_row([R"z_1", R"z_2", R"z_3"], color=INPUT,
-                            height=0.90, buff=0.38, seed=82)
-        tokens.scale(0.90).move_to(2.65 * LEFT)
-        transformer = caption_pill("causal Transformer", color=BACKBONE, width=3.15)
-        transformer.move_to(0.20 * RIGHT)
-        prediction = caption_pill("next-latent prediction", color=PREDICTION, width=3.65)
-        prediction.move_to(3.75 * RIGHT + 0.72 * UP)
-        sigreg = caption_pill("temporal SIGReg", color=SIGREG, width=3.20)
-        sigreg.move_to(3.75 * RIGHT + 0.78 * DOWN)
-        flow_objects = [VGroup(signal, signal_label), tokens, transformer]
+                            height=1.30, buff=0.42, seed=82)
+        transformer = caption_pill("causal Transformer", color=BACKBONE,
+                                   size=ty.CAPTION)
+        prediction = caption_pill("next-latent prediction", color=PREDICTION,
+                                  size=ty.CAPTION)
+        sigreg = caption_pill("temporal SIGReg", color=SIGREG, size=ty.CAPTION)
+
+        # Chained, not placed at hand-picked x coordinates.  The transformer
+        # pill was pinned at x=+0.20 while the token row's true width put
+        # ``z_3``'s column at x=-0.87, so the pill was drawn straight through
+        # the last token for the whole beat.  ``next_to`` cannot overlap.
+        source = VGroup(signal, signal_label)
+        tokens.next_to(source, RIGHT, buff=0.85)
+        transformer.next_to(tokens, RIGHT, buff=0.85)
+        branch = VGroup(prediction, sigreg).arrange(DOWN, buff=1.05)
+        branch.next_to(transformer, RIGHT, buff=0.85)
+
+        flow = VGroup(source, tokens, transformer, branch)
+        if flow.width > 13.4:
+            flow.scale_to_fit_width(13.4)
+        flow.move_to(0.05 * DOWN)
         arrows = VGroup(
             Arrow(signal.get_right(), tokens.get_left(), buff=0.10,
                   stroke_width=2.3).set_color(INPUT),
@@ -2040,7 +2325,7 @@ class LeNEPA08Landing(LenepaScene):
                  "sequence from collapsing. After training, only the encoder "
                  "remains."
         ) as tracker:
-            self.play(FadeIn(title), Create(signal), FadeIn(signal_label), run_time=0.75)
+            self.play(Create(signal), FadeIn(signal_label), run_time=0.75)
             self.play(GrowArrow(arrows[0]), TransformFromCopy(signal, tokens), run_time=1.0)
             self.play(GrowArrow(arrows[1]), FadeIn(transformer), run_time=0.8)
             self.across(
@@ -2051,21 +2336,26 @@ class LeNEPA08Landing(LenepaScene):
             )
 
         phrases = VGroup(
-            ty.words("No augmentations", size=ty.STATEMENT, color=INPUT),
-            ty.words("No EMA teacher", size=ty.STATEMENT, color=NEXT_TARGET),
-            ty.words("Predict the next latent", size=ty.STATEMENT, color=PREDICTION),
-        ).arrange(DOWN, buff=0.42)
+            ty.words("No augmentations", size=ty.EQ_DISPLAY, color=INPUT),
+            ty.words("No EMA teacher", size=ty.EQ_DISPLAY, color=NEXT_TARGET),
+            ty.words("Predict the next latent", size=ty.EQ_DISPLAY,
+                     color=PREDICTION),
+        ).arrange(DOWN, buff=0.80)
         subline = ty.words("SIGReg preserves temporal spread.",
-                           size=ty.CAPTION, color=SIGREG)
-        subline.next_to(phrases, DOWN, buff=0.62)
+                           size=ty.STATEMENT, color=SIGREG)
+        subline.next_to(phrases, DOWN, buff=0.95)
 
         with self.voiceover(
             text="So LeNEPA's identity is compact: no augmentations, no EMA "
                  "teacher, and a direct prediction of the next latent. SIGReg "
                  "supplies the temporal spread that stabilizes training."
         ) as tracker:
-            self.play(FadeOut(VGroup(*flow_objects, arrows, prediction, sigreg)),
-                      FadeIn(phrases.move_to(0.30 * UP)), run_time=0.9)
+            # Clear first, then build.  The outgoing pipeline and the incoming
+            # statements share the middle band, and crossfading them stacks
+            # two unreadable layers for the length of the play.
+            self.play(FadeOut(VGroup(flow, arrows)), run_time=0.5)
+            block = VGroup(phrases, subline).move_to(0.15 * UP)
+            self.play(FadeIn(phrases), run_time=0.7)
             self.across(tracker, FadeIn(subline, shift=0.08 * UP), floor=1.2)
 
         self.inspect(1.4)

@@ -1,5 +1,261 @@
 # LeNEPA segment — render review
 
+## Scene 4: self-review pass — a runaway anchor, and five stalls — 2026-08-24
+
+| | |
+|---|---|
+| Artifacts | `media/videos/jepa_explainer/lenepa/scenes/1080p60/LeNEPA04TemporalSIGReg.mp4`, `LeNEPA_segment_eleven_qh.mp4` |
+| Mechanical checks | preflight, `facts.py`, `narration_audit` pass; drift asserted to 0.0 in a 400-call unit check |
+| Visual review | three dense `video_detail` passes over the full 1080p60 render, ~1 fps |
+| Verdict | **READY FOR OWNER REVIEW** |
+
+**The digits crawled out of their own brackets.** `set_values` re-placed each
+entry against `self.entries.get_center()` and `self.entries.height` — a frame
+that the re-placement itself moves. Every call compounded the last one: over a
+two-second updater the entries drifted 0.4 world units and the group's bounding
+box inflated from 1.28 to 3.37. Columns 2 and 6 of the opening row visibly sat
+outside their brackets for the whole of beats 1, 2 and 7.
+
+It was invisible in the unit check that shipped it, because that check made
+*one* `set_values` call and measured zero drift. A feedback loop needs
+iterations to show. Anchors now measure against the **brackets**, which
+`set_values` never writes to, and the check runs 400 calls, a mid-stream
+resize, and both value trajectories the scene actually uses: drift is exactly
+0.0 in all cases. The general rule, worth stating once: *a reference frame must
+not be something the thing being placed is part of.*
+
+**Five stalls, all the same shape.** An animation given a fixed `run_time` next
+to a clause that runs longer, leaving the difference on a finished frame:
+
+- beat 1 collapsed entirely during the first clause, then held **four seconds**
+  while "until every position is carrying essentially the same embedding" was
+  spoken over a frame that had stopped changing. The collapse is now split
+  across the sentence and arrives on the word.
+- beat 5's dim ran 0.5 s of a ~2 s clause.
+- beat 9's `L_T` assembled in 0.9 s of a ~3 s clause.
+- beat 9's closing equation assembled in 1.75 s of a ~5 s clause; its three
+  terms are now paced off what is left.
+
+**Two crossfades put a dot on top of every ellipsis.** Revealing the carriers
+and fading the vectors in one `play` — even though it is one call — still gives
+half a second where both are at half opacity. Both the outbound and the return
+trip are now sequential, which is the only ordering with no frame showing both.
+`Create(connector)` became `FadeIn`: a diagonal leader drawn from one end spends
+its first frames as a stub beside the axis and reads as a stray mark.
+
+Closing equation width cap 12.2 → 13.0; it was the only thing on screen and was
+using two thirds of it.
+
+## Scene 4: vectors show their coordinates again — 2026-08-24
+
+| | |
+|---|---|
+| Artifacts | `media/videos/jepa_explainer/lenepa/scenes/1080p60/LeNEPA04TemporalSIGReg.mp4`, `LeNEPA_segment_eleven_qh.mp4` |
+| Delivery | scene 4 is 66.0 s; segment master 344.6 s (5:45), 1920×1080 at 60 fps |
+| Mechanical checks | preflight, `facts.py`, `narration_audit` all pass; no silence interval ≥ 3 s in the master |
+| Visual review | four `video_detail` passes over the whole scene at `-ql`, plus targeted passes on each fix |
+| Verdict | **READY FOR OWNER REVIEW** |
+
+**The columns were not vectors.** `TokenColumn` drew each coordinate as a
+shaded cell with no number on it, so the one scene whose entire argument is
+"six *values* become one value" was the one scene that did not show its
+values — and it broke continuity with scenes 1 to 3, which have been showing
+signed decimals between brackets for two minutes. Rejected on sight, correctly.
+
+`TokenColumn` is now `numeric_embedding`'s picture, rewritable every frame:
+five shown coordinates as `DecimalNumber`s with `\vdots`, re-anchored after
+every `set_value` so nothing shifts, and brightness kept as a *second* channel
+for magnitude on top of the digits (3b1b's `value_to_color`), never instead of
+them. The glyph count is constant because `include_sign=True` with one decimal
+place renders every value in (−10, 10) as exactly four glyphs, and token
+coordinates are unit normals — measured zero entry drift across a sign flip.
+Every height in the scene is now set by digit legibility rather than by
+margins: ~0.13 h world units per digit, so 1.7 is the floor for a readable
+number and the batch grid is built down to exactly that.
+
+**Seven pulse cascades became one.** `LaggedStart(Indicate(...))` was carrying
+beats 1, 5, 6 (twice), 7 and 8 (twice). Each is now a state that persists or a
+quantity that is drawn: the collapsed row turns coral and *stays* coral into
+the latent plane, so beat 5 has one less thing to announce; each sequence's
+spread along the direction gets a ruled extent, so three sequences are compared
+by one measurement repeated rather than three light shows; the check itself
+gets the span rule it already had. One `Indicate` survives in the scene.
+
+**Two composition defects found by watching the render, not by reading it.**
+
+The zero-spread rule came out as a small box. `span_bracket` measures a
+mobject's bounding box, and the shadow dots' box is one dot diameter wider than
+the quantity — the difference between "no spread" and "a little spread" for
+exactly the row the beat is about. Extents are now measured off
+`PlaneProjectionRig.foot_points()` and the collapsed row renders as a single
+tick.
+
+The depth row straddled three layers at once. Nine layers across 5.2 units are
+0.65 apart; a row of readable vectors is three times that tall, so a row
+"resting on layer 0" visibly covered layers 0, 1 and 2 — and shrinking it to
+fit would have destroyed the beat's whole point. Depth is now an axis beside a
+row that does not move: a marker slides 0 → 8, a thin leader points from the
+marker at the vectors so the row's own height cannot be misread as a level, and
+every coordinate on screen rewrites itself continuously underneath it.
+
+**Smaller fixes from the same passes.** The `b=` labels were clipped off the
+left edge (pitch 2.32 → 2.22). The carriers were revealed *before* the vectors
+faded, parking a solid dot on top of every column's ellipsis; they now appear as
+the vector leaves. Beat 4's opening clause — "Across the whole batch there's
+plenty of variation" — asserted what the cloud already showed and bought three
+seconds with nothing to animate under it; cut, and beat 3's traversal was given
+the rest of its own clause instead of finishing early and holding for four
+seconds. Script is 787 words.
+
+## Title cards removed segment-wide; scenes 05–08 relaid out — 2026-08-24
+
+| | |
+|---|---|
+| Artifacts | `media/videos/jepa_explainer/lenepa/scenes/1080p60/LeNEPA0{4,5,6,7,8}*.mp4` |
+| Delivery | 68.9 / 30.2 / 37.8 / 67.7 / 31.3 s; all 1920×1080 at 60 fps |
+| Mechanical checks | preflight, `narration_audit`, `facts.py` all pass; no silence interval ≥ 3 s in any scene |
+| Visual review | `video_detail` passes over every changed scene at `-ql` and 1080p60 |
+| Verdict | **READY FOR OWNER REVIEW** |
+
+**The no-title rule now holds for the whole segment.** Scenes 5, 6, 7 and 8
+still opened with `scene_title(...)`. All four are gone, and so is the
+`scene_title` helper itself — deleted rather than left unused, so the rule
+cannot be re-broken by autocomplete. Nothing was positioned relative to a
+title, so each removal was clean; what it exposed was that all four scenes had
+been using the remaining frame badly, with the title masking it.
+
+**A real defect surfaced underneath scene 5's title.** The objective equation
+`L = λ_pred·L_pred + λ_T·L_SIG^time` **never appeared in the finished render**.
+The beat played `TransformFromCopy(terms, equation)` *and* `FadeIn(equation)`
+on the same mobject in one `self.play`; the two animations fought each frame
+and the equation ended up absent. It is now one `FadeIn` with an `Indicate` on
+the source pills — which is also the honest version of the link, since two
+rounded pills and a `MathTex` are structurally unrelated and should never have
+been bridged by a `Transform`.
+
+**Scene 8 had a hard overlap.** The `causal Transformer` pill was pinned at
+x = +0.20 while the token row's true width put `z_3`'s column at x = −0.87, so
+the pill was drawn straight through the last token for the entire beat. The
+pipeline is now chained with `next_to` and scaled to fit, which cannot
+overlap by construction. Its closing statements also crossfaded with the
+outgoing pipeline in the same screen band; that is now clear-then-build.
+
+**Layout repairs, all measured against the frame.** Scene 6's two dataset
+columns sat at x = −1.55 and x = +2.65 — visibly off-centre, with the left
+third holding only two short row labels; they are now symmetric at ±2.80.
+Scene 7's speed chart spanned barely a third of the width in the upper-left
+quadrant (`length=5.6`, now 8.6) and its result panels grew from 5.65×3.0 to
+6.55×4.05. Scene 5's `Indicate(scale_factor=1.025)` was below the threshold of
+visibility — two frames either side of it were identical — and is now 1.07.
+`caption_pill` gained a `size` argument and now grows its box from the text,
+so asking for larger type cannot silently clip it; every scene-5-to-8 pill was
+a `LABEL`-sized word floating inside a box sized to the frame.
+
+**Scene 4's latent slice was re-chosen.** The previous seed left the cloud's
+lower-left quadrant conspicuously empty and put its closest pair of healthy
+points almost on top of each other. The seed search now also requires the
+twelve healthy points to cover every cell of a 4×2 partition of the bounding
+box and maximises the minimum pair separation; seed 2818 satisfies both and
+roughly doubles the closest-pair distance. Beat 6's two trial pulses were
+lengthened so each clause carries motion rather than settling early.
+
+**Remaining concerns.** None outstanding from the previous entry. Scenes 1–3
+were not touched and were not re-rendered: neither `caption_pill` nor
+`latent_row` is used before scene 5, so nothing in this pass reaches them.
+
+## Scene 04 storyboard-level rebuild — 2026-08-24
+
+| | |
+|---|---|
+| Artifact | `media/videos/jepa_explainer/lenepa/scenes/1080p60/LeNEPA04TemporalSIGReg.mp4` |
+| Delivery | 68.90 s; 1920×1080 at 60 fps |
+| Scope | `LeNEPA04TemporalSIGReg` rewritten from the storyboard up; new `TokenColumn` primitive; `PlaneProjectionRig.line_offset`; `LenepaScene.settle`; latent basis, sweep direction and per-sample layer-8 rows in `common/data.py`; `SCRIPT_ELEVENLABS.md` §4, `STORYBOARD.md` §4 resynced |
+| Blocking tests | `blocking04.py` — `BlockA` (collapse), `BlockB` (row→plane→row), `BlockC` (depth) rendered and watched at `-ql` before the scene was written |
+| Mechanical checks | `narration_audit`, preflight, `facts.py` all pass; no silence interval ≥ 3 s |
+| Visual review | Dense `video_detail` passes at 1–2 fps over the whole scene at both `-ql` and 1080p60, plus 0.5 s drills at every transition |
+| Verdict | **READY FOR OWNER REVIEW** |
+
+The previous version was rejected at the storyboard level, not for defects:
+mechanically clean, but still an animated paper figure — diagram, clear,
+diagram, clear, equation slide. This is a rebuild, not a pass over it.
+
+**What the scene is now.** Eighteen `TokenColumn` objects are built once in
+beat 1 and are still the objects on screen in beat 9: drawn as vectors, then
+as points in a latent plane, then as shadows on one direction, then as
+vectors again, then carried down a transformer's depth. Object identity is
+structural rather than asserted — each column owns a carrier dot from
+construction, and it is that same `Dot` that travels into the plane and back,
+so no `Transform` is ever attempted between a bracketed column and a point.
+
+**Cut, not revised:** the scene-3 prediction-loss recap; the stretched
+token-by-token entrance; the `LaggedStart` collapse (temporal collapse has no
+left-to-right propagation, and staging one asserted a mechanism that does not
+exist); the coral surrounding rectangle; the shuffled eighteen-dot entrance;
+the artificial jitter on coincident points; every `spread_ring`; the empty
+transformer chamber; and the closing reprise of `L_pred`.
+
+**Reused rather than reinvented:** the SIGReg chapter's projection grammar,
+through the shared `PlaneProjectionRig` — direction arrow, projection line,
+dashed `MUTED` guides, and `stack_levels` shadow stacking at its own stroke
+weights. `stack_levels` is what makes the collapsed sequence legible without
+lying about it: six coincident projections pile into a countable column of
+six on the readout line, so the geometry stays exact and the count is still
+visible. No score is printed anywhere.
+
+**Three bugs the blocking tests and the frame-by-frame passes caught.**
+
+1. *`set_opacity` destroys the data.* `Mobject.set_opacity` overwrites every
+   cell's fill opacity with one number — and those opacities *are* the
+   vector. Fading a row out and back in that way silently replaced eighteen
+   distinct vectors with eighteen identical solid blocks. `TokenColumn` now
+   keeps opacity as a separate multiplier that `_paint` re-applies, so value
+   and visibility cannot overwrite one another in either order.
+2. *Resizing a column shrinks its carrier.* Correct while the carrier is a
+   hidden anchor; wrong once it is a point in a plane, where its size is the
+   plane's business. The carriers reached the plane as specks a third the
+   size of their own shadows. `set_carrier_radius` restores an absolute
+   world radius at the handoff.
+3. *An updater bound to a group stops firing when the group is dissolved.*
+   The load-bearing one. `AnimationGroup` and `LaggedStart` wrap their
+   members' mobjects in a fresh `Group`; `Scene.play` adds that group, and
+   `restructure_mobjects` then dissolves every *ancestor* of those members
+   out of `scene.mobjects`. Animating each column's carrier therefore
+   replaced every `TokenColumn` — and every row — with loose bodies and
+   carriers, after which a `ValueTracker` read by an updater on the column
+   advanced happily while nothing repainted. Symptom: the rows returned from
+   the latent plane completely invisible, and the depth row sat at layer zero
+   for its entire descent. No error anywhere. Both are now driven by
+   `UpdateFromAlphaFunc` on the object being animated, which no restructuring
+   can detach, and beat 7 re-adds the rows explicitly before restoring them.
+
+Two smaller ones: the `b=1` label was anchored to the un-shrunk hero row and
+printed on top of `b=2`; and the span rules were measured while that row's
+six points were still scattered across the latent plane, producing rules the
+width of the whole frame at the height of the cloud. Both are now built
+against settled geometry.
+
+**Deliberate divergence from the SIGReg chapter.** That chapter draws the
+projection apparatus in `DIRECTION` green. Here it is `SIGREG` violet: in
+this segment green already means *prediction*, and rebinding it mid-chapter
+would contradict the palette this segment has been teaching for three scenes.
+Everything else about the grammar is unchanged, and the shadow dots keep
+their source point's colour so the geometry, not the hue, carries the claim.
+
+**Scene 4 → scene 5 seam.** Scene 4 now ends on the temporal term alone.
+Scene 5 opens with a `prediction loss` and a `temporal SIGReg` pill and
+combines them, which still works — the prediction loss was established in
+scene 3 — but scene 5 no longer inherits both terms already on screen, and it
+still opens with `scene_title("The complete training step")`, a title card
+this chapter's rule forbids. Flagged, not touched: scene 5 is a separate
+review and was not in scope.
+
+**Remaining concerns.** The latent cloud leaves its lower-left quadrant
+fairly empty; that is the data, and moving points to fill it would be
+decoration. Beat 6's two trials each settle for roughly 1.5–2 s, which is at
+the long end of the playbook's hold but is the trial→settle rhythm working as
+intended. `blocking04.py` is scaffolding and can be deleted once the scene is
+signed off.
+
 ## Scene 04 layout and projection-beat repair — 2026-08-24
 
 | | |

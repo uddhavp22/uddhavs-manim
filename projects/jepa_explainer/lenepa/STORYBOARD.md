@@ -9,7 +9,7 @@ this segment may be rearranged inside the larger JEPA-variants edit.
 | 1. Tokens | 0:52–1:00 | quick mask/crop callbacks lead into one visible encoder dimension change | NEPA's objective and the input-to-token shape change are concrete |
 | 2. Prediction | 0:33–0:35 | a braced causal prefix descends into an open chamber, mixes, and exits as the same objects one slot onto the next token | “next embedding prediction” is self-explanatory |
 | 3. Loss | 0:45–0:52 | the comparison arrow moves into projected space and becomes a scalar | the equation transcribes a watched operation |
-| 4. Temporal SIGReg | 0:40–0:48 | a globally spread batch hides one collapsed sequence | the regularization axis is understood |
+| 4. Temporal SIGReg | 1:05–1:10 | one batch, followed through vectors, a latent plane, a 1-D shadow, and network depth | the regularization axis is understood |
 | 5. Objective | 0:25–0:30 | objective assembles, blade discards the head | training space and kept encoder are distinct |
 | 6. Protocol | 0:28–0:34 | recipe cards copy to both datasets, weights retrain | recipe reuse is not checkpoint transfer |
 | 7. Results | 0:45–0:55 | PTB-XL/Diag panels, speed band, qualified UCR check | result scope and limitations are retained |
@@ -123,71 +123,111 @@ this segment may be rearranged inside the larger JEPA-variants edit.
 
 ### 4 — SIGReg acts across time
 
-Built as four clean compositions. Each is fully cleared (a hard `FadeOut` of
-everything on screen) before the next begins -- no object survives a
-composition boundary unless it is deliberately rebuilt there. This replaced
-an earlier version that let objects accumulate across the whole scene; see
-`RENDER_REVIEW.md`'s two 2026-08-24 entries for what that looked like and why
-it was rejected.
+**One continuous visual argument, not a sequence of compositions.** Eighteen
+`TokenColumn` objects are built once in beat 1 and are still the objects on
+screen in beat 9. They are drawn as vectors, then as points in a latent plane,
+then as shadows on one direction, then as vectors again, then rewritten depth
+by depth. Nothing is faded out and respawned as a look-alike, so
+"this token became that point" is a fact about the scene graph rather than a
+claim the narration has to make. The four-composition build this replaced --
+clear, rebuild, clear, rebuild -- is recorded in `RENDER_REVIEW.md`'s
+2026-08-24 entries along with why it was rejected at the storyboard level.
 
-- No title card, anywhere in this scene -- a chapter-wide rule now, not a
-  one-off fix.
-- **A.** A brief silent recap of scene 3's exit frame, fully cleared, then a
-  large `(B, T)` grid of real layer-0 token glyphs: row `b=1` is scene 1's
-  own token sequence; rows `b=2`, `b=3` are drawn the same way from a new
-  seed. The row arrives token by token under the opening clause rather than
-  landing whole and then holding still for it. The slot pitch is solved so
-  the row spans a fixed target width, and the three rows sit at `+dy/0/-dy`
-  about the frame centre -- placing them relative to row 1's *pre-shift*
-  position pushed row 3's bottom bracket off the frame edge and left the
-  first gap twice the second. Row `b=1`'s entries then genuinely converge in place
-  (`ChangeDecimalToValue`, never a color change mid-morph) onto one shared
-  value; only once every value has actually landed does a coral outline mark
-  the row as collapsed.
-- **B.** All eighteen tokens in the batch -- not three separate per-sample
-  clouds -- pool onto one large shared latent plane, built fresh (dots
-  arriving via `GrowFromCenter`, never a `Transform` from a complex vector
-  glyph into a dot, which produces mangled interpolation garbage). The
-  plane's two axes are fitted independently so the cloud fills the frame.
-  Row `b=1`'s six points land in one tight knot -- jittered in plane units
-  so six dots stay countable, since collapse is "essentially the same
-  place," not bit-identical -- while `b=2`/`b=3` keep real spread. Each row
-  is then ringed in turn by a *containing* circle around its own points:
-  `b=1`'s is a dot, `b=2`/`b=3`'s are large.
-- This beat proves exactly one thing -- the batch still looks healthy while
-  one sequence has collapsed -- so it is drawn with exactly one geometry.
-  An earlier version imported the SIGReg chapter's whole projection
-  apparatus for it (direction arrow, projection line, Epps-Pulley reference
-  density, numeric score): four unexplained objects and a score on a scale
-  the viewer was never given, to deliver one bit. None of it survives. The
-  ring is a containing radius rather than a mean one, because a circle
-  reads as a boundary and leaving points outside it looks like a mistake.
-- **C.** Layer 0 and layer 8 are pulled out of an actual, large transformer
-  chamber -- `u^(0)` is scene 1's token row, `u^(8)` reuses scene 2's
-  post-mixing carriers -- as real spatial extraction points (glyphs emerging
-  from the chamber's top/bottom edge with their `ell=0`/`ell=8` tap attached
-  at the same moment, not added later). `depth_plates()` gives the chamber
-  visible interior structure. `L_T={0,8}` forms from the two taps.
-- **D.** The temporal equation and legend land on an empty frame; only after
-  a hold does the prediction loss fade back in above it, freshly built (not
-  restored from a dimmed parked copy), so the scene ends on both training
-  terms side by side.
+- No title card anywhere in this scene, and no header, caption, or floating
+  sentence standing in for one -- a chapter-wide rule.
+- **The vectors show their coordinates**, in the same bracketed
+  signed-decimal form scenes 1 to 3 use. `TokenColumn` is `numeric_embedding`
+  that can be rewritten every frame: `DecimalNumber.set_value` per shown
+  coordinate, re-anchored so nothing shifts, with brightness as a second
+  channel for magnitude on top of the digits. An earlier build drew each
+  coordinate as a shaded cell with no number on it -- that is what the whole
+  scene is *about*, so it is what the frame has to show.
+- **Almost no pulsing.** An earlier build ran seven `LaggedStart(Indicate(...))`
+  cascades: one per beat and two in beat 8. Each has been replaced by a state
+  that persists or a quantity that is drawn -- the collapsed row turns coral
+  and stays coral, the spread of each sequence gets a ruled extent, the check
+  gets one span rule. One `Indicate` survives in the whole scene.
+- **1. One sequence collapses.** Opens directly on six large `TokenColumn`
+  vectors filling the frame -- no recap of scene 3, which was a flashback
+  slide rather than continuity. A single `ValueTracker` alpha drives all six
+  simultaneously from their own values onto one shared vector; there is no
+  left-to-right lag, because there is no left-to-right propagation in
+  temporal collapse and staging one would assert a mechanism that does not
+  exist. The endpoint is six *pixel-identical* columns, which is what makes
+  the claim -- six columns of identical digits, before any colour is applied.
+  Colour then records it: the row turns coral and stays coral for the rest of
+  the scene, so `b=1` reaches the latent plane already marked. No pulse, and
+  no surrounding rectangle.
+- **2. The batch widens.** The same row is resized and moved, not cleared and
+  rebuilt smaller. Rows `b=2`, `b=3` arrive in one gesture -- revealing them
+  token by token over several seconds would be filling time.
+- **3. Into a shared latent plane.** Every column already contains a carrier
+  dot at its centre. The bodies fade where they stand and the carriers, which
+  have been there all along, travel. Nothing is created at the destination,
+  and no `Transform` is attempted between a bracketed column and a `Dot`.
+  Arrival is sample by sample, never shuffled: a randomised order destroys
+  the one thing the move exists to preserve.
+- **4. The SIGReg grammar, reused.** Direction arrow, projection line, dashed
+  guides and stacked shadow dots, through the shared `PlaneProjectionRig` --
+  the same objects, stroke weights and rhythm the SIGReg chapter spent
+  minutes teaching. No new metaphor for spread, and no score printed: the
+  viewer was never given that scale.
+- **5. The collapsed sequence alone.** Its six points are genuinely
+  coincident, so they are drawn coincident -- no jitter is added to make them
+  countable, because falsifying the geometry to make a count legible trades
+  away the exact fact the beat proves. A `\times 6` states the multiplicity
+  in the cloud; in the shadow it needs no stating, because `stack_levels`
+  piles six equal projections into a visible column of six. One kept guide
+  line runs from the knot to that spike, and a ruled extent under the stack
+  measures the spread: for this row it has zero length and renders as a single
+  tick. It is measured off the projected feet, not off the shadow dots, whose
+  bounding box is one dot diameter wider than the quantity and would turn no
+  spread into a small box.
+- **6. The other two, trial by trial.** Chapter B's repeated-example rhythm
+  with readable endpoint states, not one continuous morph through all three.
+  Each trial ends on the same rule in the same place at a different length,
+  labelled `b=`, so the comparison is one measurement repeated rather than
+  three light shows.
+- **7. Back to the rows.** The carriers return to the columns they came out
+  of, so the plane reads as a detour taken and come back from. One span rule
+  per row, each measuring that row's own six positions, then the notation
+  `SIGReg({u_{b,t}}_{t=1}^T)` -- after the operation has been watched.
+- **8. Layer 0 to layer 8.** Depth is an axis beside the row, not a stack of
+  plates the row travels through: nine layers across five units are 0.65
+  apart, a row of *readable* vectors is three times that tall, and a row
+  "resting on layer 0" visibly covered layers 0, 1 and 2. So the row stays
+  still and large and a marker slides down the axis, with a thin leader from
+  the marker to the row -- and every coordinate on screen rewrites itself
+  continuously underneath it. This is the beat the digits exist for. It is
+  `b=2`, the healthy sequence, on purpose -- watching a sequence just
+  supposed into collapse evolve with depth would contradict the supposition
+  still standing. `L_T={0,8}` is read off the two lit markers
+  with a digit-to-digit `TransformFromCopy`, the one transform here that is
+  structurally safe.
+- **9. The equation.** Built right to left: the operation the viewer has now
+  seen twice appears first, and the two averages are prepended onto it.
 - False inference prevented: temporal SIGReg does not pool all batch tokens
   into one plane for scoring -- it scores each sequence separately, along its
   own time axis; the shared-plane beat is only there to falsify the
   "batch-level check would have caught this" intuition.
-- No comparative ablation claim closes the scene; ends on the two loss terms,
-  not the weighted objective (that belongs to scene 5).
+- The scene ends on the temporal term alone. Scene 5 owns combining it with
+  the prediction loss, and showing both here made that beat redundant.
 
 ### 5 — The complete training step
 
-- Prediction loss and temporal SIGReg become the weighted objective.
+- No title card -- as everywhere in this segment.
+- Prediction loss and temporal SIGReg become the weighted objective. The
+  equation is the hero of the beat and is sized like one; it previously
+  played `TransformFromCopy` *and* `FadeIn` on the same mobject in one call
+  and so never appeared on screen at all.
 - The architecture replaces the equation.
 - A vertical blade falls after the causal Transformer; projector and losses
   desaturate and leave while patch embedding plus encoder center themselves.
 
 ### 6 — What experiment is this?
 
+- No title card. The two dataset columns are symmetric about the frame
+  centre; they used to sit at x=-1.55 and x=+2.65.
 - LeNEPA and JEPA recipe cards each copy into PTB-XL and Diag columns.
 - Every destination receives the caption “retrain weights.”
 - The distinction “recipe reuse — no checkpoint transfer” holds alone.
@@ -195,6 +235,8 @@ it was rejected.
 
 ### 7 — What happened?
 
+- No title card. Panels and the speed chart are sized to the frame rather
+  than to the band left over beneath a header.
 - PTB-XL and Diag result panels reveal sequentially.
 - The panels clear into two time bands for reaching 80% of final gain.
 - A red qualification card appears before the UCR value.
@@ -204,6 +246,10 @@ it was rejected.
 ### 8 — LeNEPA in one pass
 
 - The original signal rapidly becomes three tokens, passes through the causal
-  Transformer, then branches to prediction and temporal SIGReg.
+  Transformer, then branches to prediction and temporal SIGReg. The pipeline
+  is chained with `next_to` rather than placed at hand-picked x coordinates,
+  which is what previously drew the transformer pill straight through `z_3`.
+- The closing statements clear the pipeline first and build on empty space;
+  the two occupy the same screen band and crossfading them stacked layers.
 - The pipeline clears to three method facts, followed by the smaller temporal
   spread statement.

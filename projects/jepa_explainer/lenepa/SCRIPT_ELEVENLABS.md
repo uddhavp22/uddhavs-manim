@@ -6,7 +6,7 @@ truth when replacing the audio; its voiceover blocks drive the animations.
 
 Preview voice: Archer (`eleven_multilingual_v2`) at 90% tempo, stability 0.65,
 similarity 0.75, style 0, speaker boost on. Approximate script length:
-**870 words**.
+**787 words**.
 `common/scene.py` automatically sends the phonetic forms below to ElevenLabs
 while retaining the conventional spellings in subtitles.
 
@@ -68,30 +68,31 @@ prediction loss becomes this:
 
 ## 4 — SIGReg acts across time
 
-The prediction loss compares projected vectors, but temporal SIGReg works on
-the raw tokens themselves, one sequence at a time. Now suppose a batch holds
-several such sequences, each with its own tokens across time.
+Suppose the representations along one sequence start drifting together, until
+every position is carrying essentially the same embedding.
 
-Nothing stops the tokens in one sequence from drifting together, until every
-position ends up carrying the same embedding.
+Now suppose there are a couple more sequences in the batch, each with its own
+tokens across time.
 
-Now suppose we take every representation in the batch and put it into the
-same projected plane. Across the whole batch, there's still plenty of spread.
+Take every representation in the batch into one shared latent space.
 
-But now follow just the first sequence across time. All six of its
-representations have landed in essentially the same place.
+SIGReg picks a direction, and looks at how the batch spreads out along it.
 
-The second sequence hasn't collapsed, so it still covers real ground — and
-the third looks the same way. So the check has to run inside each sequence,
-across its own tokens over time.
+Now follow just the first sequence. Its six tokens sit at one point, so they
+all land together in the shadow.
 
-Tokens exist at every depth of the network, not just one. LeNEPA does this at
-two places: the patch embeddings at layer zero, and again after layer eight.
+The second sequence hasn't collapsed, so its tokens spread out. And so do the
+third's.
 
-Those two layers are the layer set L T.
+So SIGReg runs separately inside each sequence, across that sample's own
+tokens over time. That's the quantity LeNEPA regularizes.
 
-Averaging those scores over the batch and over both layers gives the temporal
-SIGReg term. Together with the prediction loss, that's what LeNEPA trains on.
+Representations like these exist at every depth of the network. LeNEPA runs
+that check on the patch embeddings, at layer zero, and again after layer
+eight.
+
+Those two depths are the layer set L T. Averaging the score over every sample
+and both layers gives the temporal SIGReg term.
 
 ## 5 — The complete training step
 

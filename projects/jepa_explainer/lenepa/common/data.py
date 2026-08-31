@@ -127,21 +127,62 @@ BATCH_TOKENS: tuple[tuple[np.ndarray, ...], ...] = _batch_tokens()
 COLLAPSED_TOKEN: np.ndarray = TOKEN_VALUES[2]
 
 
-def _latent_basis(seed: int = 1) -> np.ndarray:
-    """A fixed 9x2 orthonormal subspace every latent-plane visual projects into."""
+def _latent_basis(seed: int = 2818) -> np.ndarray:
+    """A fixed 9x2 orthonormal subspace every latent-plane visual projects into.
+
+    Five constraints pick the seed, and all five are about legibility rather
+    than about the mathematics -- every orthonormal 9->2 slice is an equally
+    valid view of the same tokens, so choosing among them costs nothing:
+
+    1. the pooled batch's bounding box comes out near 16:9, so the cloud fills
+       a wide frame instead of sitting square in the middle of one;
+    2. the twelve healthy points cover every cell of a 4x2 partition of that
+       box, so the cloud has no conspicuously empty quadrant;
+    3. the closest pair of healthy points is far enough apart to read as two
+       points rather than as a smudge -- this seed's minimum pair separation
+       is roughly double the next candidate's;
+    4. the collapsed row's point is at least a third of the plane's height
+       away from every other point, so its knot reads as its own object;
+    5. the collapsed row's coordinate along the sweep direction is well inside
+       the pooled range and well separated from every other shadow, so the
+       spike it makes is not confused with a neighbour's.
+
+    A rotation into the pooled cloud's principal axes is folded in, and the
+    result is recentred on its bounding box.  Both are orthogonal/rigid moves
+    that leave every distance and every projection intact; they only decide
+    which way up the slice is drawn and where its middle is.  Rescaling the
+    axes *independently* would not be harmless -- it would break the identity
+    between a projection of the cloud and the cloud of projections, which is
+    the whole content of the shadow beat -- so the scene applies one isotropic
+    world scale and no more.
+    """
     rng = np.random.default_rng(seed)
     raw = rng.normal(size=(9, 2))
     basis, _ = np.linalg.qr(raw)
-    return basis
+
+    pooled = np.array(
+        [COLLAPSED_TOKEN @ basis]
+        + [u @ basis for row in BATCH_TOKENS[1:] for u in row]
+    )
+    _, _, principal = np.linalg.svd(pooled - pooled.mean(axis=0))
+    rotated = (pooled - pooled.mean(axis=0)) @ principal.T
+    centre = 0.5 * (rotated.min(axis=0) + rotated.max(axis=0))
+    return basis @ principal.T, pooled.mean(axis=0) @ principal.T + centre
 
 
-LATENT_BASIS: np.ndarray = _latent_basis()
-LATENT_SCALE = 0.62
+LATENT_BASIS, _LATENT_ORIGIN = _latent_basis()
+
+# The one direction the shadow beat projects along: the plane's own wide axis,
+# which ``_latent_basis`` has already rotated onto x.  Nothing is cherry-picked
+# by choosing it -- a collapsed sequence spikes under *every* direction, since
+# its points are identical -- and it is the direction under which a healthy
+# batch's spread is most visible, which is exactly the claim the beat makes.
+SWEEP_DIR: np.ndarray = np.array([1.0, 0.0])
 
 
 def latent(u: np.ndarray) -> np.ndarray:
     """Project a 9-vector (or an (N, 9) batch) into the shared 2-D plane."""
-    return np.asarray(u, dtype=float) @ LATENT_BASIS
+    return np.asarray(u, dtype=float) @ LATENT_BASIS - _LATENT_ORIGIN
 
 
 def _layer8_row() -> tuple[np.ndarray, ...]:
@@ -161,16 +202,51 @@ def _layer8_row() -> tuple[np.ndarray, ...]:
 
 LAYER8_ROW: tuple[np.ndarray, ...] = _layer8_row()
 
-# The fixed projection direction beats 4-6 sweep along.  Chosen together with
-# LATENT_BASIS's seed so that the collapsed row's projected coordinate,
-# |latent(COLLAPSED_TOKEN) . TIME_DIR|, lands in [0.9, 1.6]: below ~0.6 the
-# collapsed row's score sinks toward its floor (~2.45 for six coincident
-# points) and stops reading as clearly different from a healthy row's score
-# (~0.1-0.8 for six genuine draws through this basis).
-def _time_dir(seed: int = 1) -> np.ndarray:
-    rng = np.random.default_rng(seed)
-    d = rng.normal(size=2)
-    return d / np.linalg.norm(d)
+
+def _layer8_rows() -> tuple[tuple[np.ndarray, ...], ...]:
+    """u^(8)_{b,t} for all three samples.
+
+    Sample b=1 IS ``LAYER8_ROW`` -- scene 2's post-mixing carriers, unchanged.
+    Samples b=2 and b=3 are statistical siblings from their own seed.
+
+    Scene 4's depth beat needs a *healthy* row to carry through the layer
+    stack: b=1 is the sequence the scene has just supposed into collapse, and
+    watching a collapsed row's cells evolve with depth would contradict the
+    supposition it is still standing under.  b=2 is used instead, which is
+    why a per-sample layer-8 row has to exist at all.
+    """
+    rng = np.random.default_rng(305)
+    others = tuple(
+        tuple(rng.normal(scale=0.62, size=9) for _ in range(BATCH_T))
+        for _ in range(BATCH_B - 1)
+    )
+    return (LAYER8_ROW,) + others
 
 
-TIME_DIR: np.ndarray = _time_dir()
+LAYER8_ROWS: tuple[tuple[np.ndarray, ...], ...] = _layer8_rows()
+
+# The transformer depth scene 4's beat 6 walks: layer 0 (patch embeddings)
+# through layer 8, inclusive, so nine plates and nine states.
+DEPTH_LAYERS = 9
+
+
+def depth_values(b: int, t: int, ell: float) -> np.ndarray:
+    """Sample ``b``'s token ``t`` at (possibly fractional) depth ``ell``.
+
+    One scalar drives the whole row: every cell pattern in the depth beat is a
+    function of ``ell`` alone, so the same ``ValueTracker`` that moves the row
+    down the stack also evolves what the row contains.  Linear between the
+    layer-0 and layer-8 endpoints, which is not a claim about how transformers
+    actually transport representations -- it is the minimum that makes "the
+    representation changes with depth" legible without inventing structure.
+    """
+    frac = float(ell) / (DEPTH_LAYERS - 1)
+    u0 = np.asarray(BATCH_TOKENS[b][t], dtype=float)
+    u8 = np.asarray(LAYER8_ROWS[b][t], dtype=float)
+    return (1.0 - frac) * u0 + frac * u8
+
+# ``TIME_DIR`` lived here.  It was chosen to put a *numeric* Epps-Pulley score
+# in a readable band, and the scene no longer prints a score: a bare number on
+# a scale the viewer was never taught is not evidence.  The direction the
+# shadow beat uses is ``SWEEP_DIR``, chosen for legibility of the picture
+# instead.

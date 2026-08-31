@@ -40,6 +40,7 @@ class PlaneProjectionRig:
     """
 
     def __init__(self, values, *, origin, scale: float, direction,
+                 line_offset: float = 0.0,
                  lam: float = EP_LAMBDA, grid=EP_GRID):
         self.values = np.asarray(values, dtype=float)
         self.origin = np.asarray(origin, dtype=float)
@@ -51,6 +52,14 @@ class PlaneProjectionRig:
         self.direction = direction / norm
         self._direction3 = np.array([self.direction[0], self.direction[1], 0.0])
         self._normal3 = np.array([-self.direction[1], self.direction[0], 0.0])
+        # Slide the readout axis along its own normal.  A projection is
+        # constant along that normal, so every foot keeps the coordinate it
+        # had -- this moves where the line is *drawn*, not what it measures,
+        # and the guide lines stay exactly perpendicular to it.  Without it
+        # the line has to run through the middle of the cloud, where a stack
+        # of coincident shadows collides with the points casting them.
+        self.line_offset = float(line_offset)
+        self._offset3 = self.line_offset * self._normal3
 
         self._projected = self.values @ self.direction
         self._score = epps_pulley(self._projected, lam, grid)
@@ -63,12 +72,26 @@ class PlaneProjectionRig:
     def projected_values(self) -> np.ndarray:
         return self._projected
 
+    def _line_origin(self) -> np.ndarray:
+        return self.origin + self._offset3
+
     def _feet(self) -> np.ndarray:
         """Unstacked feet, exactly on the projection line."""
         return (
-            self.origin[None, :]
+            self._line_origin()[None, :]
             + (self._projected * self.scale)[:, None] * self._direction3[None, :]
         )
+
+    def foot_points(self) -> np.ndarray:
+        """Where each value lands on the line, before dot-plot stacking.
+
+        The honest source for "how far does this subset spread along the
+        direction": the bounding box of the drawn shadow *dots* is inflated by
+        one dot diameter, which turns a genuinely zero spread into a visible
+        box and makes a degenerate case look like a small measurement instead
+        of no measurement at all.
+        """
+        return self._feet()
 
     def shadow_points(self, *, stack_min_dx: float = 0.13,
                        stack_step: float = 0.11) -> np.ndarray:
@@ -78,22 +101,34 @@ class PlaneProjectionRig:
         )
         return self._feet() + levels[:, None] * stack_step * self._normal3[None, :]
 
-    def direction_arrow(self, *, color: str = SIGREG, length: float = 1.0) -> Arrow:
+    def direction_arrow(self, *, color: str = SIGREG, length: float = 1.0,
+                        at: float | None = None) -> Arrow:
+        """The unit direction, by default drawn from the line's own origin.
+
+        ``at`` places its tail at a given projected coordinate along the line
+        instead, so the arrow can start clear of the shadows rather than in
+        the middle of them.
+        """
+        tail = self._line_origin()
+        if at is not None:
+            tail = tail + at * self.scale * self._direction3
         return Arrow(
-            self.origin,
-            self.origin + length * self._direction3,
+            tail,
+            tail + length * self._direction3,
             buff=0.0,
             stroke_width=4.5,
             max_tip_length_to_length_ratio=0.22,
         ).set_color(color)
 
-    def projection_line(self, *, color: str = SIGREG) -> Line:
+    def projection_line(self, *, color: str = SIGREG,
+                        pad: float = 0.30) -> Line:
         half_length = max(
-            1.3, float(np.max(np.abs(self._projected))) * self.scale + 0.30,
+            1.3, float(np.max(np.abs(self._projected))) * self.scale + pad,
         )
+        origin = self._line_origin()
         return Line(
-            self.origin - half_length * self._direction3,
-            self.origin + half_length * self._direction3,
+            origin - half_length * self._direction3,
+            origin + half_length * self._direction3,
         ).set_stroke(color, 1.8, opacity=0.40)
 
     def guide_lines(self, *, color: str = MUTED) -> VGroup:
@@ -120,7 +155,7 @@ class PlaneProjectionRig:
         def point(x: float) -> np.ndarray:
             density = np.exp(-x * x / 2.0)
             return (
-                self.origin
+                self._line_origin()
                 + x * self.scale * self._direction3
                 + (gap + height * density) * self._normal3
             )
