@@ -4,9 +4,9 @@ This is a Manim Community educational-animation project.
 
 ## Before editing
 
-Read the closest relevant doc in `docs/` (VISUAL_SYSTEM.md, NARRATION_SPEC.md,
-EXPLAINER_PROCESS.md, RENDER_REVIEW_SPEC.md) and inspect existing components
-before creating new abstractions.
+Read the closest relevant doc in `docs/` (VISUAL_SYSTEM.md, SCENE_CRAFT.md,
+NARRATION_SPEC.md, EXPLAINER_PROCESS.md, RENDER_REVIEW_SPEC.md) and inspect
+existing components before creating new abstractions.
 
 ## Architecture
 

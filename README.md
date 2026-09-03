@@ -80,10 +80,13 @@ Output: `media/masters/sigreg_explainer/<target>_master.mp4`.
 
 Read the relevant doc in `docs/` before adding a new visual pattern:
 
-- `VISUAL_SYSTEM.md` — typography, color, layout rules
-- [`MANIM_CE_VS_MANIMGL.md`](docs/MANIM_CE_VS_MANIMGL.md) — engine differences and how to refactor ManimGL/3b1b code into this ManimCE project
-- `NARRATION_SPEC.md` — voiceover conventions
-- `EXPLAINER_PROCESS.md` — how a chapter gets made, beat by beat
-- `RENDER_REVIEW_SPEC.md` — what a finished render is checked against
+- `EXPLAINER_PROCESS.md` — how a chapter gets made, deliverable by deliverable
+- `NARRATION_SPEC.md` — the spoken script (binding)
+- `RENDER_REVIEW_SPEC.md` — what a finished render is checked against (binding)
+- `VISUAL_SYSTEM.md` — typography, colour, layout, motion rules
+- `SCENE_CRAFT.md` — how a beat is choreographed and synced, and the silent Manim traps
+- `MANIM_GUIDE.md` — environment, render commands, CE API, voiceover
+- [`MANIM_CE_VS_MANIMGL.md`](docs/MANIM_CE_VS_MANIMGL.md) — translating ManimGL/3b1b code into this ManimCE project
+- `PLUGINS.md` — third-party packages evaluated, and the `SIGREG_VISION=1` collision check
 
 `media/` is fully gitignored — everything under it (renders, caches, the TTS cache) is reproducible from source.

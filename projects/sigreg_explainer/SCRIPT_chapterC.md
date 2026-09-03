@@ -9,7 +9,7 @@ python3 tools/script_dump.py projects/sigreg_explainer/chapterC \
 
 Extracted from `self.voiceover(text=…)` in the scene files, which is what
 the render actually speaks. On-screen text is included as a second
-channel — [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) §7.2 treats it as
+channel — [`NARRATION_SPEC.md`](../../docs/NARRATION_SPEC.md) §7.2 treats it as
 one, and a line cut from the voice and left on screen is not cut.
 
 Scenes follow the chapter's playback order. Ordering within a scene is
@@ -17,7 +17,7 @@ source order, which tracks playback order but
 is not guaranteed to equal it: on-screen text is often constructed a few
 lines before the passage that reveals it.
 
-**6 scenes · 2,119 spoken words · 0:00**
+**6 scenes · 2,302 spoken words · 0:00**
 
 | Scene | Words | Duration | Words/min |
 |---|---:|---:|---:|
@@ -26,7 +26,7 @@ lines before the passage that reveals it.
 | [`c03_one_shadow`](#c03-one-shadow) | 413 | — | — |
 | [`c04_one_shadow_is_not_enough`](#c04-one-shadow-is-not-enough) | 192 | — | — |
 | [`c05_gaussian_marginals`](#c05-gaussian-marginals) | 177 | — | — |
-| [`c06_every_direction`](#c06-every-direction) | 630 | — | — |
+| [`c06_every_direction`](#c06-every-direction) | 813 | — | — |
 
 ---
 
@@ -281,90 +281,117 @@ directions that mix the coordinates.
 
 *Chapter C.06 — every direction produces a batch, and all batches identify the cloud.*
 
-Keep turning the direction u. Each new angle draws another shadow of the same
-cloud, and by the time u has swept all the way around, every direction has had
-its turn.
+Keep turning the direction u. Every new angle gives us another shadow of the
+same cloud, and every shadow has its own characteristic function. So if we let
+u go all the way around, we get one characteristic function for every
+direction there is. One direction was enough to catch this cloud lying on a
+line. Does the whole family pin the cloud down completely?
 
-<sub>cues: turn, fill</sub>
+<sub>cues: turn, fill, ask</sub>
 
 > **ON SCREEN** — u^\top Z\sim\mathcal N(0,\,u^\top I u)=\mathcal N(0,1)
 
 > **ON SCREEN** — \mathrm{Var}[u^\top Z]\approx
 
-Suppose the cloud itself is standard Gaussian. Its spread is the identity in
-every direction, so projecting onto any unit direction leaves the variance
-exactly one. The direction can swing anywhere it likes and that number stays
-where it is — every unit direction produces the same standard Gaussian shadow.
-The finite batch still wiggles a little around that shape; the target itself
-does not.
+Suppose the cloud itself is standard Gaussian. Then its covariance is the
+identity, so if we project onto any unit direction, the variance is exactly
+one. We can turn u wherever we like, and that number does not move. So every
+direction gives the same standard Gaussian shadow, and that one bell is the
+target every shadow has to match.
 
-<sub>cues: gaussian, spread, hold, reason, turn</sub>
+<sub>cues: gaussian, spread, hold, turn</sub>
 
 > **ON SCREEN** — \varphi_{u^\top Z}(t)
 
-> **ON SCREEN** — \varphi_{u^\top Z}(t)=\mathbb E\!\left[e^{it(u^\top Z)}\right]
+> **ON SCREEN** — \varphi_{u^\top Z}(t)=\mathbb E\!\left[e^{it(u^\top Z)}\right]=\varphi_Z(tu)
 
-> **ON SCREEN** — =\mathbb E\!\left[e^{i(tu)^\top Z}\right]
+> **ON SCREEN** — frequency space
 
-Take one of those shadows on its own, and ask what its characteristic function
-is. For a projection, that means averaging a unit arrow whose angle is t times
-the projected value. But the projection is already a dot product, so the t can
-move inside it: the angle is the point z, dotted with t u. Which makes it the
-whole cloud's characteristic function, read off at the single point t u. So as
-t runs from zero outward, that point traces a ray across frequency space, and
-the curve's height travels with it as brightness. Pick a few heights off the
-curve at random, and each one lands at exactly the brightness it predicts.
-Turn u through a full circle and the ray turns with it, one direction at a
-time. Once every direction has had its turn, the cloud's characteristic
-function is filled in everywhere, because every point of frequency space lies
-on somebody's ray.
+Now take one shadow on its own. Its characteristic function averages a unit
+arrow whose angle is t times u transpose z. But that angle is also z dotted
+with t u. That is the whole cloud's characteristic function, evaluated at the
+single point t u. That means u picks out a ray from the origin of frequency
+space, and t says how far out along that ray we are. So as t grows, the
+shadow's curve reads off the cloud's characteristic function along that one
+ray.
 
-<sub>cues: one, define, regroup, identity, trace, points, rotate, together</sub>
+<sub>cues: one, meaning, trace</sub>
+
+So far that is one ray, and the rest of the plane is still blank. The curve
+gives us each value as a height, but we can just as well draw it as
+brightness, right at the point t u. Then the whole curve becomes one line of
+light along the ray, bright at the origin and fading as the curve falls. Now,
+if we turn u, the ray turns with it, and since every point of frequency space
+sits at some distance along some direction, the sweep fills in the whole
+plane. This is the cloud's characteristic function, drawn everywhere at once.
+
+<sub>cues: encode, lit, sweep, fill</sub>
+
+> **ON SCREEN** — \varphi_{u^\top X}(t)
 
 > **ON SCREEN** — Gaussian cloud
 
 > **ON SCREEN** — ring cloud
 
-> **ON SCREEN** — same distribution
+> **ON SCREEN** — Gaussian cloud
+
+> **ON SCREEN** — \varphi_{u^\top Y}(t)
+
+> **ON SCREEN** — \mathbb E[X]=\mathbb E[Y]=0
+
+Now suppose we take a second cloud. We start from the same points, and push
+them outward until they sit on a ring instead of piling up in the middle. Its
+mean is still zero, and its covariance is still the identity. So any test
+built on those two numbers gives the same answer for both clouds, even though
+the ring and the Gaussian are two different distributions.
+
+<sub>cues: second, moments, differ</sub>
+
+Project both clouds onto the same direction. The Gaussian's shadow is one
+hump. The ring's shadow is two piles, pushed out to either side, and those two
+batches still share the same mean and variance. But their characteristic
+functions do not agree. The ring's curve dips below zero, where the Gaussian's
+is still falling smoothly. So one direction is already enough to separate two
+clouds that the moments could not. And if we sweep u around the ring as well,
+the difference shows up across the whole plane: the Gaussian's field fades out
+smoothly, while the ring's has a bright core and a dark band where its curve
+goes negative.
+
+<sub>cues: project, shadows, curves, gap, fields</sub>
+
+Now, if we move the ring's points back, a few at a time, into the positions
+the Gaussian's points occupy, then its shadow closes into a single hump, its
+curve climbs toward the Gaussian's, and the dark band in its field fills in.
+The two fields only agree once the two clouds do.
+
+<sub>cues: push, follow, meet</sub>
 
 > **ON SCREEN** — \varphi_X=\varphi_Y\ \Longrightarrow\ X\overset{d}{=}Y
 
-Now a second cloud, shaped nothing like the first — its points sit out around
-a ring instead of piling up in the middle. It has the same mean and the same
-covariance as the Gaussian, so no test built on those two could tell them
-apart. Run the same construction on it, every direction and every distance,
-and its field fills in too — but it fills in with bright rings and dark gaps,
-where the Gaussian has one smooth peak. Push its points until they sit the way
-the Gaussian's do, and the field follows them the whole way: the gaps close,
-the rings wash out, and the two only agree once the clouds themselves agree.
-That is the uniqueness theorem — distributions that share a characteristic
-function at every point are the same distribution.
-
-<sub>cues: rival, rivalfield, push, match, unique</sub>
-
 > **ON SCREEN** — \varphi_{u^\top X}(t)=\varphi_{u^\top Y}(t)\ \ \forall u,t\quad\Longrightarrow\quad X\overset{d}{=}Y
 
-But that field was never measured directly. Every value in it arrived from a
-shadow: one direction, one distance along it. So if two clouds cast the same
-shadow in every single direction, they fill in the same field — and uniqueness
-finishes the argument for us. They are the same cloud. That step, from every
-one-dimensional projection up to the joint distribution, is the Cramér–Wold
-theorem. For the target we're matching, each shadow's fingerprint is the
-standard Gaussian's own, e to the minus t squared over two. And any single
-point of the field is fixed the same way: its distance from the origin gives
-t, its direction gives u. So that fingerprint belongs to exactly one cloud — Z
-itself, standard Gaussian in every dimension. Which is what the theorem buys
-us: pinning down a distribution in D dimensions never requires looking at it
-in D dimensions — a family of one-dimensional shadows is enough.
+So if two clouds cast the same shadow in every direction, then every ray
+carries the same brightness for both, and their characteristic functions agree
+at every point of the plane. And two distributions with the same
+characteristic function everywhere are the same distribution. That means
+matching every one-dimensional shadow, for every direction u and every
+frequency t, forces the two clouds to have the same joint distribution. This
+is the Cramer Wold theorem.
 
-<sub>cues: never, cw, name, specialize, pick, resolve, conclude, payoff</sub>
+<sub>cues: if, unique, statement, name</sub>
 
 > **ON SCREEN** — \varphi_{u^\top Z}(t)=e^{-t^2/2}
 
-> **ON SCREEN** — t=\|\xi\|,\ \ u=\xi/\|\xi\|
-
-> **ON SCREEN** — frequency space
-
 > **ON SCREEN** — Z\sim\mathcal N(0,I_D)
+
+For our target, every shadow has the same characteristic function, e to the
+minus t squared over two. Read along every ray, that one curve fills the plane
+with e to the minus the squared distance from the origin, over two. And only
+one cloud has that characteristic function: Z itself, standard Gaussian in
+every dimension. That is what the theorem buys us. We never have to look at
+the cloud in D dimensions. If every one-dimensional shadow matches the
+standard bell, then the whole cloud matches the target.
+
+<sub>cues: specialize, field, resolve, conclude, payoff</sub>
 
 ---

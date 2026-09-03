@@ -22,6 +22,21 @@ def _rng(seed: int) -> np.random.Generator:
     return np.random.default_rng(seed)
 
 
+def whiten(points: np.ndarray) -> np.ndarray:
+    """Centre a sample and make its population covariance exactly identity."""
+    centred = np.asarray(points, dtype=float) - np.mean(points, axis=0)
+    covariance = centred.T @ centred / len(centred)
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+    if np.any(eigenvalues <= 0.0):
+        raise ValueError("whitening requires a positive-definite covariance")
+    inverse_sqrt = (
+        eigenvectors
+        @ np.diag(eigenvalues ** -0.5)
+        @ eigenvectors.T
+    )
+    return centred @ inverse_sqrt
+
+
 def gaussian_1d(n: int = N_ARROWS, seed: int = 34094) -> np.ndarray:
     """The standard-normal sample used across Acts 4, 5, 6 and 10.
 
@@ -75,12 +90,17 @@ def aliased_1d(t: float = ALIAS_T, k: int = 3) -> np.ndarray:
 
 def ring_2d(n: int = 240, radius: float = 1.0, jitter: float = 0.06,
             seed: int = 31) -> np.ndarray:
-    """A ring with the same mean and (isotropic) covariance as a Gaussian.
-    Act 10's counterexample to matching only the first two moments."""
+    """A centred isotropic ring with covariance ``radius**2 / 2 * I``.
+
+    Whitening removes the finite sample's accidental directional bias while
+    preserving its radial ordering. At radius sqrt(2), this is the exact
+    same-moments counterexample used by C06.
+    """
     rng = _rng(seed)
     ang = rng.uniform(0, 2 * np.pi, n)
     r = radius + rng.standard_normal(n) * jitter
-    return np.stack([r * np.cos(ang), r * np.sin(ang)], axis=1)
+    points = np.stack([r * np.cos(ang), r * np.sin(ang)], axis=1)
+    return whiten(points) * (radius / np.sqrt(2.0))
 
 
 def gaussian_3d(n: int = 220, seed: int = 5) -> np.ndarray:
@@ -91,8 +111,8 @@ def gaussian_3d(n: int = 220, seed: int = 5) -> np.ndarray:
 def gaussian_2d(n: int = 200, seed: int = 76) -> np.ndarray:
     """Representative isotropic sample for C06's full direction sweep.
 
-    Seed 76 was selected before animation from a fixed search: after centring
-    and scaling each coordinate, all 37 evenly spaced half-turn projections
+    Seed 76 was selected before animation from a fixed search: after whitening,
+    all 37 evenly spaced half-turn projections
     have Epps--Pulley score below 0.19.  This prevents an unlucky finite batch
     from visibly contradicting C06's population-level Gaussian claim while
     preserving ordinary sampling variation in every shadow.

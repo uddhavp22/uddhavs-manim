@@ -1,6 +1,6 @@
-# SIGReg explainer — build plan (rev 7)
+# SIGReg explainer — build plan
 
-Governed by [`EXPLAINER_PROCESS.md`](../../EXPLAINER_PROCESS.md) (repo root).
+Governed by [`EXPLAINER_PROCESS.md`](../../docs/EXPLAINER_PROCESS.md) (repo root).
 This file is the **per-project instance** of that process's deliverables.
 
 | Deliverable | Lives in | Governed by |
@@ -10,54 +10,25 @@ This file is the **per-project instance** of that process's deliverables.
 | 3 — learner journey | §3 below | |
 | 4 — concept graph | `concepts.yaml` | |
 | 5 — explanation path | §5 below | |
-| 6 — scene graph | §6 below | [`VISUAL_SYSTEM.md`](../../VISUAL_SYSTEM.md) |
-| 7–9 — narration, diagnostics, revision | §7, [`SCRIPT_chapterB.md`](SCRIPT_chapterB.md), `tools/narration_audit.py`, `facts.py` | [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) |
-| 10 — production | §8 below, [`RENDER_REVIEW.md`](RENDER_REVIEW.md) | [`RENDER_REVIEW_SPEC.md`](../../RENDER_REVIEW_SPEC.md) |
+| 6 — scene graph | §6 below | [`VISUAL_SYSTEM.md`](../../docs/VISUAL_SYSTEM.md) |
+| 7–9 — narration, diagnostics, revision | §7, [`SCRIPT_chapterB.md`](SCRIPT_chapterB.md), `tools/narration_audit.py`, `facts.py` | [`NARRATION_SPEC.md`](../../docs/NARRATION_SPEC.md) |
+| 10 — production | §8 below, [`RENDER_REVIEW.md`](RENDER_REVIEW.md) | [`RENDER_REVIEW_SPEC.md`](../../docs/RENDER_REVIEW_SPEC.md) |
 
-Rendering mechanics go to [`MANIM_GUIDE.md`](../../MANIM_GUIDE.md).
+Rendering mechanics go to [`MANIM_GUIDE.md`](../../docs/MANIM_GUIDE.md).
 
-**Rev 7 (2026-08-07, Part 2 / Chapter C bridge).** Part 2 is not a second
-introduction to characteristic functions. Its job is to turn the three-panel
-construction from Part 1 into a **one-dimensional, sample-only,
-differentiable Gaussianity score**. Chapter C then lifts that already-built
-tool to an embedding cloud through projections. This follows the source
-tutorial's construction: characteristic function → Epps–Pulley statistic →
-random one-dimensional projections → SIGReg.
+**Status (2026-09-03).** Chapter B: twelve scenes, `b00`–`b11`, all
+narrated, draft masters built; the `chapterB1`/`chapterB2` part order in
+`build.sh` is the approved playback order. Chapter B ends with `𝒯` for a batch
+of **scalars**; projections `u`, their count `M`, and the SIGReg average belong
+to Chapter C, where each has a visible reason to exist. Chapter C is planned in
+[`CHAPTER_C_STORYBOARD.md`](CHAPTER_C_STORYBOARD.md); C01–C06 are built.
 
-- The current `b09`–`b11` are rev-2 implementation, not the approved playback
-  order below. Their source, claims ledger, and useful visual assets remain
-  inputs; their scene boundaries and narration require a Part 2 revision.
-- **Playback order is conceptual, not filename order:** establish completeness,
-  then its finite-frequency limitation, then the Gaussian target,
-  differentiability, and the scalar score. `build.sh` must carry that explicit
-  order when the revision is implemented: `b08 → b09 → b10 → b01 → b11`.
-- Chapter B ends with `𝒯` for a batch of **scalars**. It does not introduce
-  projections `u`, their count `M`, or the finished SIGReg average. Those
-  belong to Chapter C, where each has a visible reason to exist.
-
-**Rev 6 (2026-08-06, session 3).** Two binding specifications arrived from the
-project owner — [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) and
-[`RENDER_REVIEW_SPEC.md`](../../RENDER_REVIEW_SPEC.md) — and Chapter B was
-re-cut against both.
-
-- **Every one of the 92 spoken passages was rewritten.** Rev 5's script passed
-  the narration audit and still read as machine-written, because the loudest
-  patterns in it had no budget describing their shape. Four now do; the
-  findings and before/after are in [`RENDER_REVIEW.md`](RENDER_REVIEW.md) F7–F9.
-  Headline: **12/12 scenes closed on a slogan; 0/12 now.**
-- **The visual system was written down and implemented.** The prose had never
-  had a typeface chosen for it — ManimGL's `text.font` default is `Consolas`,
-  absent on macOS, so every `Text` fell back to an unspecified Pango family.
-  See [`VISUAL_SYSTEM.md`](../../VISUAL_SYSTEM.md) and `RENDER_REVIEW.md` F1–F6.
-- **`fingerprint` is no longer spoken before `b08` earns it** with the
-  uniqueness theorem: 24 uses across 8 scenes → 5 across 3. This closes the
-  rev-5 open question about metaphor count.
-
-**Rev 5 (2026-08-06)** restructured rev 4 onto the Explanation Compiler process.
-Rev 4 organised the plan around *changes in the viewer's mental model*, which
-survives intact — it is now §3 and §5. Rev 5 added the audience contract, the
-typed graph, the executable claims ledger, and three source-fidelity fixes that
-re-reading the actual source turned up.
+Revision history — what each pass changed and why — lives in
+[`RENDER_REVIEW.md`](RENDER_REVIEW.md). Two facts from it worth keeping in view:
+rev 6 rewrote every spoken passage after a script that passed the audit still
+read as machine-written (12/12 scenes closed on a slogan; 0/12 after), and the
+same pass gave the project its written visual system after discovering no
+typeface had ever been chosen.
 
 ---
 
@@ -285,7 +256,7 @@ lines of a vector cloud must look Gaussian for the whole cloud to be Gaussian?*
 ### The persistent visual language
 
 Typography, colour, and layout are **not decided here** — they live in
-[`VISUAL_SYSTEM.md`](../../VISUAL_SYSTEM.md) and are implemented in
+[`VISUAL_SYSTEM.md`](../../docs/VISUAL_SYSTEM.md) and are implemented in
 `common/type.py` and `common/palette.py`. A scene that names a font, a hex
 colour, or a font size directly is a defect. This section covers only the
 objects specific to this explainer.

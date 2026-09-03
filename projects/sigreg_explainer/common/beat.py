@@ -46,6 +46,16 @@ ARCHER_SETTINGS = {
     "style": 0.0,
     "use_speaker_boost": True,
 }
+# Pinned explicitly rather than trusting the service default, because the
+# model is part of the voice. Every Chapter B passage (800+ cached clips) was
+# cut on eleven_multilingual_v2, and a C06 pass on eleven_v3 came back not
+# sounding like Archer at all: v3 is a different architecture that renders the
+# same voice_id with a different timbre and delivery, paces ~35% slower, and
+# quantises `stability` to 0.0/0.5/1.0 so the 0.65 above no longer means what
+# it means on v2. The one thing v3 bought was a cleaner "Gaussian" and
+# "covariance" -- not worth a voice that changes between chapters. Changing
+# this changes the cache key, so a switch re-synthesises everything.
+ARCHER_MODEL = "eleven_multilingual_v2"
 
 class ActScene(VoiceoverScene):
     """Common beat plumbing.
@@ -71,6 +81,7 @@ class ActScene(VoiceoverScene):
                                  transcription_model="base")
         elif VOICE == "eleven":
             service = ElevenLabsService(voice_id=ARCHER,
+                                        model=ARCHER_MODEL,
                                         voice_settings=ARCHER_SETTINGS,
                                         transcription_model="base")
         else:

@@ -920,8 +920,9 @@ remains the same Manim object throughout. The custom crossed-out mask,
 second-view, and teacher-network glyphs enter only after this computation has
 settled.
 
-The revised 100-word narration is audited manually in
-`NARRATION_REVIEW_02.md`; bookmarks align the focus, causal-history flow,
+The revised 100-word narration was audited manually against
+`NARRATION_SPEC.md` §31 (function, cadence, metaphor, proof-language and
+visual-grounding passes); bookmarks align the focus, causal-history flow,
 future boundary, prediction, target, repeated shift, and exclusions to the
 temporary ElevenLabs read. The source narration remains the handoff for the
 author's future recording.
@@ -974,8 +975,8 @@ The semantic palette now distinguishes input blue, mask coral, prediction
 amber, crop orange, and retained/predictive green. No settled overlap or
 collision was observed.
 
-`NARRATION_REVIEW_01.md` contains the required manual function, cadence,
-metaphor, proof-language, and visual-grounding audit. The 143-word scene text is
+The 143-word scene text passed the manual function, cadence, metaphor,
+proof-language, and visual-grounding audit of `NARRATION_SPEC.md` §31. It is
 the reviewed source for both ElevenLabs and the future human recording. The
 temporary ElevenLabs preview is played at 90% tempo. Its service substitutes
 “the previous method” and “this version” for the two invented names, avoiding

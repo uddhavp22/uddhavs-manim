@@ -174,7 +174,7 @@ def main() -> int:
     w("")
     w("Extracted from `self.voiceover(text=…)` in the scene files, which is what")
     w("the render actually speaks. On-screen text is included as a second")
-    w("channel — [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) §7.2 treats it as")
+    w("channel — [`NARRATION_SPEC.md`](../../docs/NARRATION_SPEC.md) §7.2 treats it as")
     w("one, and a line cut from the voice and left on screen is not cut.")
     w("")
     w("Scenes follow the chapter's playback order. Ordering within a scene is")

@@ -22,6 +22,7 @@ import sys
 import traceback
 
 import numpy as np
+from scipy.special import j0
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
@@ -438,8 +439,7 @@ def isotropic_sweep_stays_representative():
     """
     from common.score import EP_GRID, EP_LAMBDA, epps_pulley
 
-    z = data.gaussian_2d()
-    z = (z - z.mean(axis=0)) / z.std(axis=0)
+    z = data.whiten(data.gaussian_2d())
     angles = np.linspace(0.0, np.pi, 37)
     scores = np.array([
         epps_pulley(
@@ -467,7 +467,7 @@ def projection_cf_equals_radial_slice():
     actual cloud c06 draws, at several directions and several t, because the
     animation claims to derive this, not merely illustrate it.
     """
-    z = data.gaussian_2d()
+    z = data.whiten(data.gaussian_2d())
     worst = 0.0
     for angle in (0.35, 1.1, 2.4):
         u = np.array([np.cos(angle), np.sin(angle)])
@@ -486,16 +486,15 @@ def swept_projections_match_the_gaussian_fingerprint():
 
     C06 draws phi_Z(xi) = e^{-|xi|^2/2} as the resolved field on the strength
     of "every one of our shadows was standard Gaussian." Checked against the
-    same standardized isotropic cloud c06_every_direction.py's
-    _standardized_isotropic_points builds (data.gaussian_2d, seed 76,
-    centred and rescaled), at the t values the drawn ring field actually
+    same whitened isotropic cloud c06_every_direction.py's
+    _standardized_isotropic_points builds (data.gaussian_2d, seed 76), at
+    the t values the drawn ring field actually
     spans: several projections' empirical characteristic functions should
     track the population target within ordinary finite-sample noise, and
     stay close to real-valued -- the field is this cloud's real target, not
     a generic complex phi_Z.
     """
-    points = data.gaussian_2d(n=200)
-    points = (points - points.mean(axis=0)) / points.std(axis=0)
+    points = data.whiten(data.gaussian_2d(n=200))
     angles = np.deg2rad([10, 95, 200, 300])
     ts = np.array([0.5, 1.5, 2.5, 3.5])
     target = gaussian_cf(ts)
@@ -509,6 +508,73 @@ def swept_projections_match_the_gaussian_fingerprint():
     assert worst_imag < 0.15, worst_imag
     return (f"4 directions x 4 t: empirical CF within {worst_real:.3f} of "
             f"e^-t^2/2, imaginary part within {worst_imag:.3f} of 0")
+
+
+@claim("c06", "the mixture keeps mean zero and covariance identity while "
+              "its characteristic functions blend")
+def mixture_keeps_moments_and_blends_cfs():
+    """The exact population path used to deform Ring into N(0, I).
+
+    Both endpoints are centred with identity covariance, and characteristic
+    functions are linear under mixtures. Check several mixture weights and
+    several two-dimensional frequencies so the scene's profile formula and
+    moment claim stay coupled in the executable ledger.
+    """
+    ring_sample = data.ring_2d(
+        n=220, radius=np.sqrt(2.0), jitter=0.0, seed=31,
+    )
+    ring_mean_error = float(np.max(np.abs(ring_sample.mean(axis=0))))
+    ring_covariance_error = float(np.max(np.abs(
+        ring_sample.T @ ring_sample / len(ring_sample) - np.eye(2)
+    )))
+    assert ring_mean_error < 1e-14, ring_mean_error
+    assert ring_covariance_error < 1e-14, ring_covariance_error
+
+    component_means = np.zeros((2, 2))
+    component_covariances = np.stack([np.eye(2), np.eye(2)])
+    frequencies = np.array([
+        [0.0, 0.0], [0.3, -0.8], [1.2, 0.4], [-2.1, 1.7],
+    ])
+    radii = np.linalg.norm(frequencies, axis=1)
+    component_cfs = np.stack([
+        j0(np.sqrt(2.0) * radii),
+        np.exp(-0.5 * radii ** 2),
+    ])
+
+    worst_mean = worst_covariance = worst_cf = 0.0
+    for s in np.linspace(0.0, 1.0, 7):
+        weights = np.array([1.0 - s, s])
+        mean = weights @ component_means
+        covariance = sum(
+            weight * (
+                component_covariance
+                + np.outer(component_mean - mean, component_mean - mean)
+            )
+            for weight, component_mean, component_covariance in zip(
+                weights, component_means, component_covariances,
+            )
+        )
+        mixture_cf = weights @ component_cfs
+        expected_cf = (
+            (1.0 - s) * j0(np.sqrt(2.0) * radii)
+            + s * np.exp(-0.5 * radii ** 2)
+        )
+        worst_mean = max(worst_mean, float(np.max(np.abs(mean))))
+        worst_covariance = max(
+            worst_covariance,
+            float(np.max(np.abs(covariance - np.eye(2)))),
+        )
+        worst_cf = max(
+            worst_cf, float(np.max(np.abs(mixture_cf - expected_cf))),
+        )
+
+    assert worst_mean < 1e-15, worst_mean
+    assert worst_covariance < 1e-15, worst_covariance
+    assert worst_cf < 1e-15, worst_cf
+    return (f"ring sample mean/covariance errors {ring_mean_error:.1e}/"
+            f"{ring_covariance_error:.1e}; 7 mixtures: mean error "
+            f"{worst_mean:.1e}, covariance error {worst_covariance:.1e}, "
+            f"CF blend error {worst_cf:.1e}")
 
 
 @claim("c03", "the arrows average to a pull toward the origin")

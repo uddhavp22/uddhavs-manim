@@ -9,7 +9,7 @@ python3 tools/script_dump.py projects/sigreg_explainer/chapterB \
 
 Extracted from `self.voiceover(text=…)` in the scene files, which is what
 the render actually speaks. On-screen text is included as a second
-channel — [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) §7.2 treats it as
+channel — [`NARRATION_SPEC.md`](../../docs/NARRATION_SPEC.md) §7.2 treats it as
 one, and a line cut from the voice and left on screen is not cut.
 
 Scenes follow the chapter's playback order. Ordering within a scene is
@@ -510,8 +510,6 @@ add up next.
 ## b11_fingerprint_to_loss
 
 *Chapter B.11 — turn the Gaussian fingerprint into one scalar score.*
-
-> **ON SCREEN** — \mathcal T\in\mathbb R
 
 At t equals one point six, the batch and the Gaussian each give one point in
 the complex plane.

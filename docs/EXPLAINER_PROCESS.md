@@ -14,6 +14,7 @@ supplied by the project owner. It does not replace any of them:
 | **this file** | what to build, in what order, and how it is judged |
 | [`MANIM_GUIDE.md`](MANIM_GUIDE.md) | how to render it — environment, Manim CE API, gotchas, voiceover |
 | [`VISUAL_SYSTEM.md`](VISUAL_SYSTEM.md) | the typographic and colour rules every scene obeys |
+| [`SCENE_CRAFT.md`](SCENE_CRAFT.md) | how a beat is choreographed and synced; the silent Manim traps |
 | `projects/<name>/PLAN.md` | the per-project instance of the artifacts below |
 | `projects/<name>/RENDER_REVIEW.md` | the written per-scene review required by `RENDER_REVIEW_SPEC.md` |
 

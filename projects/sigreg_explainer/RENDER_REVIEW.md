@@ -133,7 +133,7 @@ the score T of u” — while the screen keeps the mathematical `𝒯(u)` notati
 
 ## Chapter B review
 
-The written review required by [`RENDER_REVIEW_SPEC.md`](../../RENDER_REVIEW_SPEC.md).
+The written review required by [`RENDER_REVIEW_SPEC.md`](../../docs/RENDER_REVIEW_SPEC.md).
 One section per scene, in that document's §19 output order. **A scene with no
 entry here has not been reviewed**, whatever its render status.
 
@@ -180,7 +180,7 @@ times below.
 | Category | Technical integrity (§13), visual taste (§8.3) |
 | Evidence | ManimGL ships `text.font: Consolas`; `manimpango.list_fonts()` does not contain it on this machine. Every `Text` in the chapter rendered in an unspecified Pango fallback. |
 | Viewer consequence | The prose looked like an unstyled default because it *was* one. This is the whole of the "text looks ugly and out of place" report. |
-| Fix applied | `custom_config.yml` sets `text.font` explicitly; `common/type.py` passes `font=` on every mobject so a missing config cannot silently change the look. [`VISUAL_SYSTEM.md`](../../VISUAL_SYSTEM.md) §1–2. |
+| Fix applied | `custom_config.yml` sets `text.font` explicitly; `common/type.py` passes `font=` on every mobject so a missing config cannot silently change the look. [`VISUAL_SYSTEM.md`](../../docs/VISUAL_SYSTEM.md) §1–2. |
 | Since rev 2 | The face is now **Latin Modern Roman**, not Helvetica Neue — see the rev-3 note below. `common/type.py` also **raises at import** if the family is absent, which is the check whose absence caused this finding. |
 
 ### F2 — English typeset in Computer Modern · **HIGH** · closed
@@ -199,7 +199,7 @@ times below.
 | Category | Accessibility (§12), taste (§8.1) |
 | Evidence | 00:05:00 — the `\|φ(t)\|` curve rendered muddy olive while its own label rendered bright yellow, both nominally `#FFFF00`. Thin yellow strokes smear under chroma subsampling. |
 | Viewer consequence | The target curve, the most important reference object in the chapter, was the hardest thing on screen to see. |
-| Fix applied | `TARGET` → `#F0B429`. Background `#000000` → `#0C0E12` so furniture reads. [`VISUAL_SYSTEM.md`](../../VISUAL_SYSTEM.md) §4. |
+| Fix applied | `TARGET` → `#F0B429`. Background `#000000` → `#0C0E12` so furniture reads. [`VISUAL_SYSTEM.md`](../../docs/VISUAL_SYSTEM.md) §4. |
 
 ### F4 — Two blues, one step apart, two meanings · **MEDIUM** · closed
 
@@ -224,7 +224,7 @@ further, pinned above every scene, carrying nothing any scene needed. §7.3 and
 
 | | |
 |---|---|
-| Category | Narration ([`NARRATION_SPEC.md`](../../NARRATION_SPEC.md) §18) |
+| Category | Narration ([`NARRATION_SPEC.md`](../../docs/NARRATION_SPEC.md) §18) |
 | Evidence | 12/12 scenes ended on a short quotable line: *"Two numbers cannot see a shape." · "One frequency can be fooled. That is why we use all of them." · "No scale to ask about." · "They were chosen because gradients flow through them." · "We did not invent it, we rebuilt it."* |
 | Viewer consequence | One good closing line is a good line. Twelve is a template, and the template is the single loudest machine-written signal in the script — more than any individual phrase. |
 | Fix applied | Full rewrite of all 92 passages. Scenes now close by stating the result precisely or by creating the next scene's question (§18). Detector added to `tools/narration_audit.py`; **42% → 0%**. |
@@ -248,7 +248,7 @@ fragments were joined into reasoned sentences (§13); no scene has a choppy run.
 
 *fingerprint* appeared 24 times across 8 scenes, first asserted flat in `b03`
 ("That curve is the fingerprint of this batch") five scenes before the
-uniqueness theorem that licenses it. [`NARRATION_SPEC.md`](../../NARRATION_SPEC.md)
+uniqueness theorem that licenses it. [`NARRATION_SPEC.md`](../../docs/NARRATION_SPEC.md)
 §17 requires it be reserved for the theorem and qualified there. Now **5 uses
 across 3 scenes**, introduced in `b08` at the moment the theorem is stated:
 
