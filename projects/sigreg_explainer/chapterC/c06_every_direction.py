@@ -25,6 +25,16 @@ It closed C06 until this revision; it belongs at the top of C07 because this
 scene now ends on what Cramér--Wold buys, and that is the claim C07 pushes
 back on.
 
+2026-09-03 review pass (frame sweep of the Archer render, no spoken word
+changed, bookmarks only): the cloud keeps its name Z through the comparison
+instead of becoming X; the converse equation reveals its regrouping step on
+the clause that says it; the ray is drawn with the field's own gamma while
+the graph rider traces the height it encodes; the two comparison shadows are
+sized to be read; the five static holds (the opening question, the parked
+tracer, the moments, the two fields, the ending) each got a cue-bound visual;
+and the black frame between the field and the returning wheel is gone -- the
+field now dissolves into the cloud it belongs to.
+
 Render:
     SIGREG_VOICE=eleven ./render.sh \
         projects/sigreg_explainer/chapterC/c06_every_direction.py C06 -qh
@@ -43,23 +53,18 @@ from common import data, layout
 from common.beat import ActScene
 from common.cloud import CloudRig
 from common.palette import (
-    AXIS, CLOUD, COLLAPSE, DIRECTION, GRID, INK, MAGNITUDE, MUTED,
+    ACCENT, AXIS, CLOUD, COLLAPSE, DIRECTION, GRID, INK, MAGNITUDE, MUTED,
     RIVAL, TARGET,
 )
 from common import type as ty
 from common.wrap import gaussian_cf
+from common.wheel import (
+    ACTIVE_ARROW_LENGTH, ACTIVE_LINE_HALF_LENGTH, COLLAPSED_DIRECTION,
+    DOT_RADIUS, MINI_DOT_RADIUS, MINI_HALF_WIDTH, MINI_SAMPLE_COUNT,
+    MINI_STACK_MAX, MINI_STACK_STEP, MINI_X_SCALE, N_SHADOWS, N_SPOKES,
+    SCALE, SPOKE_RADIUS, WHEEL_RADIUS,
+)
 
-
-SCALE = 0.78
-DOT_RADIUS = 0.033
-COLLAPSED_DIRECTION = 3 * np.pi / 4
-
-WHEEL_RADIUS = 2.86
-SPOKE_RADIUS = 2.58
-ACTIVE_ARROW_LENGTH = 1.55
-ACTIVE_LINE_HALF_LENGTH = 2.56
-N_SPOKES = 16
-N_SHADOWS = 8
 
 # The converse beat re-reads the wheel as frequency space: angle is u, radius
 # is t. CF_T_MAX sets how far out that reading runs (gaussian_cf(4) ~ 3e-4, so
@@ -71,12 +76,6 @@ FIELD_GRID = 384
 FIELD_PROFILE_SAMPLES = 4096
 FIELD_EDGE = 0.06
 FIELD_GAMMA = 0.7
-MINI_HALF_WIDTH = 0.72
-MINI_X_SCALE = 0.18
-MINI_STACK_STEP = 0.035
-MINI_STACK_MAX = 7
-MINI_DOT_RADIUS = 0.018
-MINI_SAMPLE_COUNT = 36
 COMPARISON_SCALE = 0.62
 COMPARISON_LEFT = np.array([-4.85, 0.35, 0.0])
 COMPARISON_RIGHT = np.array([4.85, 0.35, 0.0])
@@ -123,17 +122,33 @@ GAUSSIAN_PROFILE = np.exp(-0.5 * FIELD_RADII ** 2)
 RING_PROFILE = j0(np.sqrt(2.0) * FIELD_RADII)
 
 
-def _field_alpha(signed_profile: np.ndarray) -> np.ndarray:
-    values = np.clip(signed_profile[FIELD_INDICES], 0.0, 1.0)
-    alpha = np.clip(values, 0.0, 1.0) ** FIELD_GAMMA * FIELD_MASK
-    return np.rint(255.0 * alpha).astype(np.uint8)
+# Brightness is |height| and colour is sign. The Gaussian's characteristic
+# function never goes negative, so for Z the legend "height = brightness" is
+# exact. The ring's dips below zero between its first two Bessel zeros, and
+# clipping that lobe to black hid it completely: against the dark background
+# the ring's field read as a slightly tighter copy of the Gaussian's, and the
+# one difference the comparison exists to show was invisible. Drawing the
+# negative lobe in COLLAPSE keeps the encoding honest (no negative value is
+# ever shown as positive light) and makes it legible at panel scale.
+NEGATIVE_FIELD_COLOUR = COLLAPSE
+
+
+def _field_rgba(signed_profile: np.ndarray, colour: str) -> np.ndarray:
+    values = signed_profile[FIELD_INDICES]
+    magnitude = np.clip(np.abs(values), 0.0, 1.0)
+    alpha = magnitude ** FIELD_GAMMA * FIELD_MASK
+    rgba = np.zeros((FIELD_GRID, FIELD_GRID, 4), dtype=np.uint8)
+    rgba[..., :3] = np.where(
+        (values < 0.0)[..., None],
+        hexrgb(NEGATIVE_FIELD_COLOUR),
+        hexrgb(colour),
+    )
+    rgba[..., 3] = np.rint(255.0 * alpha).astype(np.uint8)
+    return rgba
 
 
 def _field_image(signed_profile: np.ndarray, colour: str) -> ImageMobject:
-    rgba = np.zeros((FIELD_GRID, FIELD_GRID, 4), dtype=np.uint8)
-    rgba[..., :3] = hexrgb(colour)
-    rgba[..., 3] = _field_alpha(signed_profile)
-    image = ImageMobject(rgba)
+    image = ImageMobject(_field_rgba(signed_profile, colour))
     image.set_resampling_algorithm(RESAMPLING_ALGORITHMS["cubic"])
     image.height = 2 * SPOKE_RADIUS
     image.set_z_index(-1)
@@ -141,7 +156,16 @@ def _field_image(signed_profile: np.ndarray, colour: str) -> ImageMobject:
 
 
 class C06(ActScene, ThreeDScene):
-    """Make the collection of all shadows the scene's single visual idea."""
+    """Make the collection of all shadows the scene's single visual idea.
+
+    2026-09-04 owner review: the converse beat now clears and builds in one
+    staggered motion on its own clauses; u leads the sweep and leaves before
+    the field forms; the Cramer-Wold stretch is composed as field-left,
+    statement-chain-right instead of a lone blob with edge-pinned text; the
+    specialisation reuses the chain and reads the field with a sweeping ray;
+    "Gaussian" and "covariance" are respelled for the voice only, so Archer
+    says them the same way in every passage.
+    """
 
     def construct(self):
         self.set_camera_orientation(
@@ -331,7 +355,8 @@ class C06(ActScene, ThreeDScene):
                  "characteristic function. So if we let u go all the way "
                  "around, we get one characteristic function for every "
                  "direction there is. <bookmark mark='ask'/>One direction "
-                 "was enough to catch this cloud lying on a line. Does the "
+                 "was enough to catch this cloud <bookmark mark='line'/>"
+                 "lying on a line. <bookmark mark='family'/>Does the "
                  "whole family pin the cloud down completely?"
         ) as tracker:
             self.play(
@@ -364,8 +389,28 @@ class C06(ActScene, ThreeDScene):
                 run_time=max(3.4, tracker.time_until_bookmark("ask")),
                 rate_func=smooth,
             )
-            self.wait_until_bookmark("ask")
-            self.wait(tracker.get_remaining_duration())
+            # The question is asked over a finished wheel, so give its two
+            # halves something to point at: the 135-degree plot is the point
+            # mass that caught the line cloud, and "the whole family" is all
+            # eight plots in turn.
+            # ACCENT, not DIRECTION: the plots are already green, so a green
+            # Indicate changes nothing visible at delivery size.
+            self.wait_until_bookmark("line")
+            self.play(
+                Indicate(
+                    shadow_plots[3], color=ACCENT, scale_factor=1.35,
+                ),
+                run_time=max(0.7, tracker.time_until_bookmark("family")),
+            )
+            self.wait_until_bookmark("family")
+            self.across(
+                tracker,
+                LaggedStart(*(
+                    Indicate(plot, color=ACCENT, scale_factor=1.2)
+                    for plot in shadow_plots
+                ), lag_ratio=0.12),
+                floor=1.2,
+            )
 
         # Let the eased turn settle before the cloud changes underneath it.
         self.inspect(0.25)
@@ -417,12 +462,12 @@ class C06(ActScene, ThreeDScene):
 
         with self.voiceover(
             text="<bookmark mark='gaussian'/>Suppose the cloud itself is "
-                 "standard Gaussian. <bookmark mark='spread'/>Then its "
-                 "covariance is the identity, so if we project onto any unit "
+                 "standard Gauss-ian. <bookmark mark='spread'/>Then its "
+                 "co-variance is the identity, so if we project onto any unit "
                  "direction, the variance is exactly one. <bookmark "
                  "mark='hold'/>We can turn u wherever we like, and that "
                  "number does not move. <bookmark mark='turn'/>So every "
-                 "direction gives the same standard Gaussian shadow, and "
+                 "direction gives the same standard Gauss-ian shadow, and "
                  "that one bell is the target every shadow has to match."
         ) as tracker:
             self.wait_until_bookmark("gaussian")
@@ -435,10 +480,12 @@ class C06(ActScene, ThreeDScene):
             # Let the Gaussian shape register before the equation that
             # explains it appears on top of it.
             self.inspect(0.4)
+            # Land the equation before the sentence that reads it, not
+            # across it: the words describe what is already on screen.
             self.play(
                 FadeIn(forward_eq, shift=0.06 * UP),
                 variance_readout.animate.set_opacity(1.0),
-                run_time=max(0.5, tracker.time_until_bookmark("hold")),
+                run_time=min(0.7, max(0.4, tracker.time_until_bookmark("hold"))),
             )
             self.wait_until_bookmark("hold")
             # Three readable direction samples share the whole spoken window:
@@ -475,7 +522,10 @@ class C06(ActScene, ThreeDScene):
             )
             self.across(
                 tracker,
-                angle.animate.set_value(shadow_angles[0] + 1.5 * TAU),
+                # End the sweep on the 135-degree shadow: the next beat picks
+                # that plot up, and the arrow must already be pointing at it
+                # rather than snapping there when the beat starts.
+                angle.animate.set_value(shadow_angles[3] + TAU),
                 LaggedStart(*(
                     Indicate(dots, color=DIRECTION, scale_factor=1.035)
                     for dots in shadow_dot_groups
@@ -504,18 +554,25 @@ class C06(ActScene, ThreeDScene):
             for t, v in zip(converse_curve_ts, gaussian_cf(converse_curve_ts))
         ])
 
+        # Three pieces, revealed on the three clauses that say them: the
+        # definition, the regrouping of the exponent, and the reading of
+        # that regrouped average as the cloud's own function at the point tu.
+        # The regrouping is the whole derivation, so it has to be on screen
+        # when the voice says "that angle is also z dotted with t u".
         converse_eq = VGroup(
             ty.maths(
                 R"\varphi_{u^\top Z}(t)"
-                R"=\mathbb E\!\left[e^{it(u^\top Z)}\right]"
-                R"=\varphi_Z(tu)",
-                size=ty.EQ,
-                color=INK,
-                isolate=[R"\varphi_Z(tu)"],
+                R"=\mathbb E\!\left[e^{it(u^\top Z)}\right]",
+                size=ty.EQ, color=INK,
             ),
-        ).arrange(DOWN, buff=0.16, aligned_edge=LEFT)
-        converse_eq[0].set_color_by_tex(R"\varphi_Z(tu)", MAGNITUDE)
+            ty.maths(
+                R"=\mathbb E\!\left[e^{i(tu)^\top Z}\right]",
+                size=ty.EQ, color=INK,
+            ),
+            ty.maths(R"=\varphi_Z(tu)", size=ty.EQ, color=MAGNITUDE),
+        ).arrange(RIGHT, buff=0.14)
         converse_eq.to_corner(UL, buff=0.55)
+        layout.fit_in_frame(converse_eq)
 
         frequency_frame = VGroup(
             Line(SPOKE_RADIUS * LEFT, SPOKE_RADIUS * RIGHT),
@@ -547,8 +604,12 @@ class C06(ActScene, ThreeDScene):
         t_scale_wheel = SPOKE_RADIUS / CF_T_MAX
         t_samples = np.linspace(0, CF_T_MAX, N_RAY_SEGMENTS + 1)
         h_samples = gaussian_cf(t_samples)
+        # Same gamma as the field texture, so the ray the viewer watches being
+        # drawn is the same encoding as the field it accumulates into. Linear
+        # opacity left everything past t = 1.5 invisible and the "line of
+        # light" read as a stub under the arrow.
         ray_opacities = [
-            float(np.clip(h, 0.0, 1.0)) for h in h_samples[:-1]
+            float(np.clip(h, 0.0, 1.0)) ** FIELD_GAMMA for h in h_samples[:-1]
         ]
         t_val = ValueTracker(0.0)
         freq_tracer = Dot(radius=0.055).set_fill(INK, 1.0).set_stroke(width=0)
@@ -575,74 +636,95 @@ class C06(ActScene, ThreeDScene):
         ))
 
         with self.voiceover(
-            text="<bookmark mark='one'/>Now take one shadow on its own. Its "
-                 "characteristic function averages a unit arrow whose angle "
-                 "is t times u transpose z. But that angle is also z dotted "
-                 "with t u. That is the whole cloud's characteristic "
-                 "function, evaluated at the single point t u. <bookmark "
-                 "mark='meaning'/>That means u picks out a ray from the "
-                 "origin of frequency space, and t says how far out along "
-                 "that ray we are. <bookmark mark='trace'/>So as t grows, "
-                 "the shadow's curve reads off the cloud's characteristic "
-                 "function along that one ray."
+            text="<bookmark mark='one'/>Now take one shadow on its own. "
+                 "<bookmark mark='cf'/>Its characteristic function wraps each "
+                 "shadow value, u transpose z, at frequency t. <bookmark "
+                 "mark='regroup'/>But t and u only ever reach the cloud "
+                 "together, so we can gather them into one vector, t u. "
+                 "<bookmark mark='point'/>That turns the average into the "
+                 "cloud's own characteristic function, at that single vector. "
+                 "<bookmark mark='meaning'/>So u chooses a ray out of the "
+                 "origin, and t is how far along it we are. <bookmark "
+                 "mark='trace'/>Run t up, and the shadow's curve is reading the "
+                 "cloud along that one ray."
         ) as tracker:
             self.wait_until_bookmark("one")
-            # Snap to the already-drawn upper-left shadow. Animating from the
-            # accumulated multi-turn tracker value would visibly spin backward.
-            angle.set_value(float(shadow_angles[active_shadow_index]))
-            self.update_mobjects(0)
-            one_budget = max(0.7, tracker.time_until_bookmark("meaning"))
-            spoke_pulse_time = min(0.8, one_budget)
+            # The family sweep above ends on this shadow's axis, so u is
+            # already there and nothing snaps.
+            assert np.isclose(
+                np.cos(angle.get_value()),
+                np.cos(shadow_angles[active_shadow_index]),
+            )
+            one_budget = max(1.0, tracker.time_until_bookmark("cf"))
+            # "One shadow on its own": the cloud and the other seven plots
+            # recede while the chosen batch is pointed at, in one motion.
             self.play(
                 cloud.dots.animate.set_opacity(0.0),
                 inactive_shadow_plots.animate.set_opacity(0.0),
-                Create(converse_axes),
-                Create(converse_curve),
-                FadeIn(converse_panel_label),
-                FadeIn(converse_eq[0], shift=0.05 * UP),
                 active_line.animate.set_stroke(opacity=0.85),
-                Succession(
-                    Indicate(
-                        active_spoke, color=DIRECTION, scale_factor=1.015,
-                        run_time=spoke_pulse_time,
-                    ),
-                    Wait(run_time=max(0.0, one_budget - spoke_pulse_time)),
+                Indicate(
+                    shadow_plots[active_shadow_index],
+                    color=ACCENT, scale_factor=1.12,
                 ),
-                run_time=one_budget,
+                run_time=min(1.6, one_budget),
+            )
+            self.wait_until_bookmark("cf")
+            # "Its characteristic function": the panel grows in pieces, axes
+            # first, then the curve, then the definition, so nothing pops in
+            # over a bare wheel.
+            cf_budget = max(1.4, tracker.time_until_bookmark("regroup"))
+            self.play(
+                LaggedStart(
+                    AnimationGroup(
+                        Create(converse_axes), FadeIn(converse_panel_label),
+                    ),
+                    Create(converse_curve),
+                    FadeIn(converse_eq[0], shift=0.05 * UP),
+                    lag_ratio=0.4,
+                ),
+                Indicate(
+                    active_spoke, color=DIRECTION, scale_factor=1.015,
+                ),
+                run_time=min(2.4, cf_budget * 0.75),
+            )
+            self.wait_until_bookmark("regroup")
+            self.play(
+                FadeIn(converse_eq[1], shift=0.05 * UP),
+                run_time=min(0.5, max(0.3, tracker.time_until_bookmark("point"))),
+            )
+            self.wait_until_bookmark("point")
+            self.play(
+                FadeIn(converse_eq[2], shift=0.05 * UP),
+                run_time=min(0.5, max(0.3, tracker.time_until_bookmark("meaning"))),
             )
             self.wait_until_bookmark("meaning")
+            # "u picks out a ray": the frame and the dashed guide arrive.
+            # "t says how far out": a short excursion of t, tracer on the
+            # graph and tracer on the ray in lock-step, so the pairing is
+            # seen before the full sweep reads the whole curve at 'trace'.
             meaning_budget = max(2.4, tracker.time_until_bookmark("trace"))
-            frame_budget = meaning_budget * 0.35
-            ring_pulse_time = min(0.8, frame_budget)
+            frame_budget = meaning_budget * 0.45
             self.play(
                 FadeOut(plane), FadeOut(active_line),
                 FadeIn(frequency_frame), FadeIn(frequency_labels),
                 FadeIn(freq_tag, shift=0.04 * UP),
                 Create(frequency_guide),
-                Succession(
-                    Indicate(
-                        wheel_ring, color=DIRECTION, scale_factor=1.01,
-                        run_time=ring_pulse_time,
-                    ),
-                    Wait(run_time=max(0.0, frame_budget - ring_pulse_time)),
+                Indicate(
+                    wheel_ring, color=DIRECTION, scale_factor=1.01,
                 ),
                 run_time=frame_budget,
             )
             self.play(
-                t_val.animate.set_value(CF_T_MAX),
+                t_val.animate.set_value(1.4),
                 FadeIn(freq_tracer), FadeIn(graph_tracer),
-                run_time=meaning_budget * 0.65,
-                rate_func=linear,
+                run_time=meaning_budget * 0.55,
+                rate_func=smooth,
             )
             self.wait_until_bookmark("trace")
             self.play(
-                Indicate(
-                    shadow_plots[active_shadow_index],
-                    color=DIRECTION,
-                    scale_factor=1.025,
-                ),
-                Indicate(converse_curve, color=MAGNITUDE, scale_factor=1.025),
-                run_time=max(0.8, tracker.get_remaining_duration()),
+                t_val.animate.set_value(CF_T_MAX),
+                run_time=max(1.5, tracker.get_remaining_duration()),
+                rate_func=linear,
             )
 
         # Retire the derivation furniture while preserving the curve itself.
@@ -652,10 +734,16 @@ class C06(ActScene, ThreeDScene):
             FadeOut(shadow_plots[active_shadow_index]),
             run_time=0.45,
         )
+        # FadeOut removes the plot and then restores its pre-fade opacity in
+        # memory. Its baseline, dots and bell are still members of the three
+        # wheel-wide groups the closing beat animates, so without this it
+        # re-entered the frame at full brightness a beat before the other
+        # seven plots faded up. Match the hidden state the others are in.
+        shadow_plots[active_shadow_index].set_opacity(0.0)
 
         # --- every direction: encode the slice on its ray and fill the plane
-        # Brightness is the signed curve height clipped at zero: positive
-        # values emit light, while negative values are deliberately dark.
+        # Brightness is |curve height|; sign is colour (see _field_rgba). For
+        # Z the height is never negative, so the legend below is exact.
         height_label = ty.caption("height").set_color(MUTED)
         first_equals = ty.maths("=", size=ty.LABEL, color=MUTED)
         height_value = ty.maths(
@@ -693,7 +781,7 @@ class C06(ActScene, ThreeDScene):
                         / (t_samples[i + 1] - t_samples[i])
                     )
                 seg.set_stroke(
-                    MAGNITUDE, 4,
+                    MAGNITUDE, 9,
                     opacity=ray_opacities[i] * segment_reveal,
                 )
 
@@ -702,33 +790,56 @@ class C06(ActScene, ThreeDScene):
         self.add(ray)
 
         with self.voiceover(
-            text="<bookmark mark='encode'/>So far that is one ray, and the "
-                 "rest of the plane is still blank. The curve gives us each "
-                 "value as a height, but we can just as well draw it as "
-                 "brightness, right at the point t u. <bookmark "
-                 "mark='lit'/>Then the whole curve becomes one line of light "
-                 "along the ray, bright at the origin and fading as the "
-                 "curve falls. <bookmark mark='sweep'/>Now, if we turn u, "
-                 "the ray turns with it, <bookmark mark='fill'/>and since "
-                 "every point of frequency space sits at some distance along "
-                 "some direction, the sweep fills in the whole plane. This "
-                 "is the cloud's characteristic function, drawn everywhere "
-                 "at once."
+            text="<bookmark mark='encode'/>That curve gives us each value as a "
+                 "height. But we can lay the same value down as brightness "
+                 "instead, <bookmark mark='at'/>right at the point t u. "
+                 "<bookmark mark='lit'/>Then "
+                 "the whole curve becomes one line of light along the ray, "
+                 "bright at the origin and fading as the curve falls. <bookmark "
+                 "mark='sweep'/>So turn u. <bookmark mark='fill'/>Every point of "
+                 "frequency space lies along some direction, at some distance, "
+                 "so the sweep leaves nothing out. <bookmark mark='plane'/>And "
+                 "that is the cloud's characteristic function, everywhere at "
+                 "once."
         ) as tracker:
             self.wait_until_bookmark("encode")
+            # "Each value as a height": the rider on the curve. "Right at the
+            # point t u": the rider on the ray. Two cues, so the sentence is
+            # not spoken over a still frame.
             self.play(
                 FadeIn(encoding_legend, shift=0.04 * UP),
-                run_time=max(0.7, tracker.time_until_bookmark("lit")),
+                Indicate(graph_tracer, color=MAGNITUDE, scale_factor=2.0),
+                run_time=min(1.0, max(0.5, tracker.time_until_bookmark("at"))),
+            )
+            self.wait_until_bookmark("at")
+            self.play(
+                Indicate(freq_tracer, color=MAGNITUDE, scale_factor=2.0),
+                run_time=min(1.0, max(0.5, tracker.time_until_bookmark("lit"))),
             )
             self.wait_until_bookmark("lit")
+            # The riders and the guide retire; then the line of light grows
+            # out from the origin along the same ray. Sending the rider back
+            # to t = 0 first was a jarring backwards jump.
             self.play(
-                reveal.animate.set_value(1.0),
                 FadeOut(frequency_guide), FadeOut(freq_tracer),
                 FadeOut(graph_tracer),
-                run_time=max(1.2, tracker.time_until_bookmark("sweep")),
+                active_arrow.animate.set_opacity(0.35),
+                active_label.animate.set_opacity(0.35),
+                run_time=0.5,
+            )
+            self.play(
+                reveal.animate.set_value(1.0),
+                run_time=max(1.6, tracker.time_until_bookmark("sweep") - 0.3),
                 rate_func=linear,
             )
             self.wait_until_bookmark("sweep")
+            # "If we turn u": u leads the sweep, so it comes back up to a
+            # readable weight before it starts turning.
+            self.play(
+                active_arrow.animate.set_opacity(0.7),
+                active_label.animate.set_opacity(0.7),
+                run_time=0.3,
+            )
 
             # Static rays reveal behind the live ray as u turns. Each receives
             # a brief width pop at the reveal edge, so the fan reads as a
@@ -760,7 +871,7 @@ class C06(ActScene, ThreeDScene):
                         )
                     for seg, base in zip(trail_ray, ray_opacities):
                         seg.set_stroke(
-                            MAGNITUDE, 3 * pop,
+                            MAGNITUDE, 4 * pop,
                             opacity=base * trail_reveal,
                         )
 
@@ -769,20 +880,32 @@ class C06(ActScene, ThreeDScene):
             self.play(
                 angle.animate.set_value(sweep_start_angle + TAU),
                 FadeOut(encoding_legend),
-                run_time=max(3.2, tracker.time_until_bookmark("fill")),
+                run_time=max(3.2, tracker.time_until_bookmark("plane")),
                 rate_func=linear,
             )
-            self.wait_until_bookmark("fill")
+            self.wait_until_bookmark("plane")
             self.freeze(
                 ray, trail_rays, active_arrow, active_label,
                 *shadow_dot_groups,
             )
             gaussian_field = _field_image(GAUSSIAN_PROFILE, MAGNITUDE)
+            # u has done its job once the fan is closed. It leaves first and
+            # quickly, so it is not seen hanging over the field while the
+            # rays dissolve into it over the rest of the sentence.
+            fill_budget = max(1.5, tracker.get_remaining_duration())
+            self.play(
+                FadeOut(active_arrow), FadeOut(active_label),
+                run_time=min(0.4, fill_budget * 0.2),
+            )
+            # FadeOut restores the pre-fade opacity in memory, and any later
+            # `.animate` on these would re-add them at that opacity for a
+            # frame. They are done for the scene: pin them dark.
+            active_arrow.set_opacity(0.0)
+            active_label.set_opacity(0.0)
             self.play(
                 FadeOut(ray), FadeOut(trail_rays),
-                FadeOut(active_arrow), FadeOut(active_label),
                 FadeIn(gaussian_field),
-                run_time=max(0.8, tracker.get_remaining_duration()),
+                run_time=min(2.4, fill_budget * 0.6),
             )
 
         # --- a second cloud: same first two moments, different slice -------
@@ -840,17 +963,22 @@ class C06(ActScene, ThreeDScene):
         comparison_axes_shift = (
             COMPARISON_AXES_CENTRE - converse_axes.get_center()
         )
+        # The cloud keeps its name. It has been Z since C01, the closing
+        # frame calls it Z, and renaming it X for two beats because the
+        # theorem is usually printed with X and Y would break the one object
+        # identity the chapter runs on. The rival is Y; the theorem is
+        # written for Z and Y.
         comparison_panel_label = ty.maths(
-            R"\varphi_{u^\top X}(t)", size=ty.EQ, color=MAGNITUDE,
+            R"\varphi_{u^\top Z}(t)", size=ty.EQ, color=MAGNITUDE,
         ).next_to(converse_axes, UP, buff=0.18).shift(comparison_axes_shift)
 
-        x_caption = ty.caption("Gaussian cloud").set_color(MAGNITUDE)
+        x_caption = ty.caption("Gaussian cloud").set_color(CLOUD)
         x_caption.move_to(np.array([COMPARISON_LEFT[0], 3.35, 0.0]))
         y_caption = ty.caption("ring cloud").set_color(RIVAL)
         y_caption.move_to(np.array([COMPARISON_RIGHT[0], 3.35, 0.0]))
         matched_y_caption = ty.caption("Gaussian cloud").set_color(RIVAL)
         matched_y_caption.move_to(y_caption)
-        x_label = ty.maths("X", size=ty.EQ_DISPLAY, color=MAGNITUDE)
+        x_label = ty.maths("Z", size=ty.EQ_DISPLAY, color=CLOUD)
         x_label.move_to(COMPARISON_LEFT + 1.42 * LEFT)
         y_label = ty.maths("Y", size=ty.EQ_DISPLAY, color=RIVAL)
         y_label.move_to(COMPARISON_RIGHT + 1.42 * RIGHT)
@@ -891,11 +1019,11 @@ class C06(ActScene, ThreeDScene):
 
         moments_block = VGroup(
             ty.maths(
-                R"\mathbb E[X]=\mathbb E[Y]=0",
+                R"\mathbb E[Z]=\mathbb E[Y]=0",
                 size=ty.BODY, color=MUTED,
             ),
             ty.maths(
-                R"\operatorname{Cov}(X)=\operatorname{Cov}(Y)=I",
+                R"\operatorname{Cov}(Z)=\operatorname{Cov}(Y)=I",
                 size=ty.BODY, color=MUTED,
             ),
         ).arrange(DOWN, buff=0.14)
@@ -911,24 +1039,28 @@ class C06(ActScene, ThreeDScene):
         layout.fit_in_frame(moments_block)
 
         with self.voiceover(
-            text="<bookmark mark='second'/>Now suppose we take a second "
-                 "cloud. We start from the same points, and push them outward "
-                 "until they sit on a ring instead of piling up in the "
-                 "middle. <bookmark mark='moments'/>Its mean is still zero, "
-                 "and its covariance is still the identity. So any test built "
-                 "on those two numbers gives the same answer for both clouds, "
-                 "<bookmark mark='differ'/>even though the ring and the "
-                 "Gaussian are two different distributions."
+            text="<bookmark mark='second'/>Now a second cloud. We take the same "
+                 "points and push them out onto a ring, so the middle empties. "
+                 "<bookmark mark='moments'/>Its mean is still zero, <bookmark "
+                 "mark='cov'/>and its co-variance is still the identity. "
+                 "<bookmark mark='differ'/>So we are right back where the last "
+                 "chapter started, now with clouds instead of numbers: the "
+                 "summary numbers agree, and the shapes plainly do not."
         ) as tracker:
             self.wait_until_bookmark("second")
             second_budget = max(4.8, tracker.time_until_bookmark("moments"))
+            # Clear the frequency-space furniture first, then slide the
+            # apparatus into the comparison layout on an emptier frame. One
+            # play did both and the eye had a fade-out, a shrink, a shift
+            # and a fade-in to follow at once.
             self.play(
                 FadeOut(frequency_frame),
                 FadeOut(frequency_labels), FadeOut(freq_tag),
                 wheel_ring.animate.set_stroke(opacity=0.0),
                 spokes.animate.set_stroke(opacity=0.0),
-                active_arrow.animate.set_opacity(0.0),
-                active_label.animate.set_opacity(0.0),
+                run_time=second_budget * 0.12,
+            )
+            self.play(
                 gaussian_field.animate.scale(
                     COMPARISON_FIELD_SCALE,
                 ).move_to(np.array([
@@ -941,7 +1073,7 @@ class C06(ActScene, ThreeDScene):
                 converse_curve.animate.shift(comparison_axes_shift),
                 FadeIn(comparison_panel_label, shift=0.04 * UP),
                 FadeIn(x_caption), FadeIn(x_label),
-                run_time=second_budget * 0.25,
+                run_time=second_budget * 0.23,
                 rate_func=smooth,
             )
             self.play(
@@ -950,7 +1082,7 @@ class C06(ActScene, ThreeDScene):
                     for source, target in zip(cloud.dots, rival_dots)
                 ), lag_ratio=0.004),
                 FadeIn(y_caption), FadeIn(y_label),
-                run_time=second_budget * 0.30,
+                run_time=second_budget * 0.27,
                 rate_func=smooth,
             )
             # TransformFromCopy registers the individual targets. Re-add the
@@ -958,13 +1090,18 @@ class C06(ActScene, ThreeDScene):
             self.add(rival_dots)
             self.play(
                 comparison_mix.animate.set_value(0.0),
-                run_time=second_budget * 0.45,
+                run_time=second_budget * 0.38,
                 rate_func=linear,
             )
             self.wait_until_bookmark("moments")
             self.play(
-                FadeIn(moments_block, shift=0.04 * UP),
-                run_time=max(0.8, tracker.time_until_bookmark("differ")),
+                FadeIn(moments_block[0], shift=0.04 * UP),
+                run_time=min(0.6, max(0.3, tracker.time_until_bookmark("cov"))),
+            )
+            self.wait_until_bookmark("cov")
+            self.play(
+                FadeIn(moments_block[1], shift=0.04 * UP),
+                run_time=min(0.6, max(0.3, tracker.time_until_bookmark("differ"))),
             )
             self.wait_until_bookmark("differ")
             self.play(
@@ -1000,13 +1137,17 @@ class C06(ActScene, ThreeDScene):
         # Gaussian (6), which flattened both to the same height and destroyed
         # the one contrast this beat exists to show. 16 is a guard against a
         # pathological input, not a shaping parameter.
+        # Dot radius and width were 0.023 / 1.40 and the two shadows -- the
+        # objects this beat is about -- were the smallest things on screen.
+        # 0.028 / 1.55 with a 14-level ceiling keeps the tallest ring pile
+        # (12) under the caption band at y = 3.35: 2.28 + 14 * 0.063 = 3.16.
         COMPARISON_SAMPLE_COUNT = 80
-        COMPARISON_STACK_MAX = 16
-        comparison_dot_radius = 0.023
-        comparison_half_width = 1.40
+        COMPARISON_STACK_MAX = 14
+        comparison_dot_radius = 0.028
+        comparison_half_width = 1.55
         comparison_span_sd = 3.1
         comparison_stack_step = 2 * comparison_dot_radius * 1.12
-        comparison_baseline_y = 2.32
+        comparison_baseline_y = 2.28
         comparison_indices = np.linspace(
             0, len(cloud.dots) - 1, COMPARISON_SAMPLE_COUNT, dtype=int,
         )
@@ -1079,7 +1220,11 @@ class C06(ActScene, ThreeDScene):
         rival_field.move_to(np.array([
             COMPARISON_RIGHT[0], -2.25, 0.0,
         ]))
-        rival_field_mix = [None]
+        # The image was built from RING_PROFILE, i.e. mix = 0. Start the
+        # cache there: with None, the updater's first pass rewrites the
+        # whole pixel array on top of FadeIn's interpolated frame and the
+        # field flashes at full brightness for one frame before fading in.
+        rival_field_mix = [0.0]
 
         def update_rival_field(mob):
             mix = comparison_mix.get_value()
@@ -1089,26 +1234,26 @@ class C06(ActScene, ThreeDScene):
                 (1.0 - mix) * RING_PROFILE
                 + mix * GAUSSIAN_PROFILE
             )
-            mob.pixel_array[..., 3] = _field_alpha(blend)
+            mob.pixel_array[...] = _field_rgba(blend, RIVAL)
             rival_field_mix[0] = mix
 
         rival_field.add_updater(update_rival_field)
 
         with self.voiceover(
-            text="<bookmark mark='project'/>Project both clouds onto the same "
-                 "direction. <bookmark mark='shadows'/>The Gaussian's shadow "
-                 "is one hump. The ring's shadow is two piles, pushed out to "
-                 "either side, and those two batches still share the same "
-                 "mean and variance. <bookmark mark='curves'/>But their "
-                 "characteristic functions do not agree. The ring's curve "
-                 "dips below zero, where the Gaussian's is still falling "
-                 "smoothly. <bookmark mark='gap'/>So one direction is "
-                 "already enough to separate two clouds that the moments "
-                 "could not. <bookmark mark='fields'/>And if we sweep u "
-                 "around the ring as well, the difference shows up across "
-                 "the whole plane: the Gaussian's field fades out smoothly, "
-                 "while the ring's has a bright core and a dark band where "
-                 "its curve goes negative."
+            text="<bookmark mark='project'/>So project both clouds onto the same "
+                 "direction. <bookmark mark='shadows'/>The Gauss-ian's shadow is "
+                 "one hump. The ring's is two piles pushed to the sides. "
+                 "<bookmark mark='curves'/>But their characteristic functions do "
+                 "tell them apart. The ring's curve dips below zero, where the "
+                 "Gauss-ian's is still falling smoothly. <bookmark "
+                 "mark='gap'/>That gap is exactly what the Epps-Pulley score was "
+                 "built to measure, so one direction already separates two "
+                 "clouds the moments could not. <bookmark mark='fields'/>Sweep u "
+                 "on the ring too, and the difference covers the whole plane: "
+                 "<bookmark mark='smooth'/>the Gauss-ian's field fades out "
+                 "smoothly, <bookmark mark='core'/>the ring's has a bright core, "
+                 "<bookmark mark='band'/>and then a red band where its curve "
+                 "went below zero."
         ) as tracker:
             self.wait_until_bookmark("project")
             self.play(
@@ -1209,8 +1354,8 @@ class C06(ActScene, ThreeDScene):
                 field_centre,
                 field_centre + 0.5 * COMPARISON_FIELD_DIAMETER * RIGHT,
             ).set_stroke(DIRECTION, 3.0, opacity=0.95)
-            fields_budget = max(1.2, tracker.get_remaining_duration())
-            fields_sweep_time = min(1.2, fields_budget)
+            fields_budget = max(1.2, tracker.time_until_bookmark("smooth"))
+            fields_sweep_time = min(1.4, fields_budget)
             self.play(
                 FadeIn(rival_field),
                 Rotate(
@@ -1219,17 +1364,40 @@ class C06(ActScene, ThreeDScene):
                 run_time=fields_sweep_time,
                 rate_func=linear,
             )
-            remaining_fields_time = max(
-                0.0, tracker.get_remaining_duration(),
-            )
             self.play(
                 FadeOut(field_sweep),
                 run_time=max(
                     1 / config.frame_rate,
-                    min(0.35, remaining_fields_time),
+                    min(0.35, tracker.time_until_bookmark("smooth")),
                 ),
             )
-            self.wait(tracker.get_remaining_duration())
+            # The sentence names three features of two static pictures.
+            # Point at each on its clause: the Gaussian field as a whole,
+            # the ring field's core, and the radius band where J_0 < 0
+            # (sqrt(2) r between the first two Bessel zeros, 2.405 and
+            # 5.520, i.e. r in (1.70, 3.90); the band's centre is r ~ 2.8).
+            self.wait_until_bookmark("smooth")
+            self.play(
+                Indicate(gaussian_field, color=MAGNITUDE, scale_factor=1.03),
+                run_time=max(0.6, tracker.time_until_bookmark("core")),
+            )
+            self.wait_until_bookmark("core")
+            core_radius = 0.9 / CF_T_MAX * 0.5 * COMPARISON_FIELD_DIAMETER
+            core_ring = Circle(radius=core_radius).move_to(field_centre)
+            core_ring.set_stroke(RIVAL, 2.2, opacity=0.95).set_fill(opacity=0)
+            core_budget = max(0.6, tracker.time_until_bookmark("band"))
+            self.play(Create(core_ring), run_time=core_budget * 0.55)
+            self.play(FadeOut(core_ring), run_time=core_budget * 0.45)
+            self.wait_until_bookmark("band")
+            band_radius = 2.8 / CF_T_MAX * 0.5 * COMPARISON_FIELD_DIAMETER
+            band_ring = DashedVMobject(
+                Circle(radius=band_radius).move_to(field_centre),
+                num_dashes=28,
+            ).set_stroke(COLLAPSE, 2.2, opacity=0.95)
+            band_budget = max(0.8, tracker.get_remaining_duration())
+            self.play(Create(band_ring), run_time=min(0.8, band_budget * 0.5))
+            self.wait(max(0.0, band_budget - min(0.8, band_budget * 0.5) - 0.4))
+            self.play(FadeOut(band_ring), run_time=0.4)
 
         # --- one mixture tracker moves Y, its shadow, and its population CF
         def update_rival_curve(mob):
@@ -1247,10 +1415,10 @@ class C06(ActScene, ThreeDScene):
 
         with self.voiceover(
             text="<bookmark mark='push'/>Now, if we move the ring's points "
-                 "back, a few at a time, into the positions the Gaussian's "
+                 "back, a few at a time, into the positions the Gauss-ian's "
                  "points occupy, <bookmark mark='follow'/>then its shadow "
                  "closes into a single hump, its curve climbs toward the "
-                 "Gaussian's, and the dark band in its field fills in. "
+                 "Gauss-ian's, and the red band in its field fades away. "
                  "<bookmark mark='meet'/>The two fields only agree once the "
                  "two clouds do."
         ) as tracker:
@@ -1295,42 +1463,49 @@ class C06(ActScene, ThreeDScene):
                 run_time=max(0.8, tracker.get_remaining_duration()),
             )
 
-        uniqueness_recall = ty.maths(
-            R"\varphi_X=\varphi_Y\ \Longrightarrow\ X\overset{d}{=}Y",
-            size=ty.EQ, color=INK,
-        ).to_edge(DOWN, buff=0.48)
-        layout.fit_in_frame(uniqueness_recall)
-
-        cw_statement = ty.maths(
-            R"\varphi_{u^\top X}(t)=\varphi_{u^\top Y}(t)\ \ \forall u,t"
-            R"\quad\Longrightarrow\quad X\overset{d}{=}Y",
-            size=ty.EQ,
-            color=INK,
-            isolate=[R"\forall u,t"],
-        ).to_edge(UP, buff=0.5)
-        cw_statement.set_color_by_tex(R"\forall u,t", DIRECTION)
-        layout.fit_in_frame(cw_statement)
-        quantifier = cw_statement.get_part_by_tex(R"\forall u,t")
+        # --- the theorem: field on the left, its statement as a chain ------
+        # The merged field is what "their characteristic functions agree"
+        # looks like; the chain is the same sentence in symbols, one line per
+        # clause, built beside the field rather than pinned to the frame
+        # edges around a lone blob.
+        theorem_field_centre = np.array([-3.35, 0.15, 0.0])
+        theorem_column_centre = np.array([2.95, 0.55, 0.0])
+        chain_shadows = ty.maths(
+            R"\varphi_{u^\top Z}(t)=\varphi_{u^\top Y}(t)\quad\forall u,t",
+            size=ty.EQ, color=INK, isolate=[R"\forall u,t"],
+        )
+        chain_shadows.set_color_by_tex(R"\forall u,t", DIRECTION)
+        chain_fields = ty.maths(
+            R"\Longrightarrow\ \varphi_Z(\xi)=\varphi_Y(\xi)\quad\forall\xi",
+            size=ty.EQ, color=INK, isolate=[R"\forall\xi"],
+        )
+        chain_fields.set_color_by_tex(R"\forall\xi", MAGNITUDE)
+        chain_law = ty.maths(
+            R"\Longrightarrow\ Z\overset{d}{=}Y", size=ty.EQ, color=INK,
+        )
+        theorem_chain = VGroup(chain_shadows, chain_fields, chain_law)
+        theorem_chain.arrange(DOWN, aligned_edge=LEFT, buff=0.36)
+        theorem_chain.move_to(theorem_column_centre)
+        layout.fit_in_frame(theorem_chain)
+        quantifier = chain_shadows.get_part_by_tex(R"\forall u,t")
         quantifier_box = SurroundingRectangle(
             quantifier, color=DIRECTION, buff=0.08, corner_radius=0.05,
         ).set_stroke(width=1.5)
         cw_label = ty.maths(
             R"\text{Cram\'er--Wold}", size=ty.STATEMENT, color=INK,
-        ).next_to(cw_statement, DOWN, buff=0.38)
+        ).next_to(theorem_chain, DOWN, buff=0.48)
         layout.fit_in_frame(cw_label)
 
         with self.voiceover(
-            text="<bookmark mark='if'/>So if two clouds cast the same shadow "
-                 "in every direction, then every ray carries the same "
-                 "brightness for both, and their characteristic functions "
-                 "agree at every point of the plane. <bookmark "
-                 "mark='unique'/>And two distributions with the same "
-                 "characteristic function everywhere are the same "
-                 "distribution. <bookmark mark='statement'/>That means "
-                 "matching every one-dimensional shadow, for every direction "
-                 "u and every frequency t, forces the two clouds to have the "
-                 "same joint distribution. <bookmark mark='name'/>This is "
-                 "the Cramer Wold theorem."
+            text="<bookmark mark='if'/>So suppose two clouds cast the same "
+                 "shadow in every direction. <bookmark mark='agree'/>Then every "
+                 "ray carries the same brightness for both, and their "
+                 "characteristic functions agree at every point of the plane. "
+                 "<bookmark mark='unique'/>And two distributions with the same "
+                 "characteristic function everywhere are the same distribution. "
+                 "<bookmark mark='statement'/>Every direction, every frequency, "
+                 "and the two clouds have to be the same. <bookmark "
+                 "mark='name'/>That implication is the Cramer Wold theorem."
         ) as tracker:
             self.wait_until_bookmark("if")
             self.freeze(
@@ -1338,7 +1513,7 @@ class C06(ActScene, ThreeDScene):
                 x_shadow[0], x_shadow[1], y_shadow[0], y_shadow[1],
             )
             if_budget = max(2 / config.frame_rate,
-                            tracker.time_until_bookmark("unique"))
+                            tracker.time_until_bookmark("agree"))
             self.play(
                 FadeOut(cloud.dots), FadeOut(rival_dots),
                 FadeOut(x_caption), FadeOut(matched_y_caption),
@@ -1350,7 +1525,7 @@ class C06(ActScene, ThreeDScene):
                 FadeOut(rival_curve), FadeOut(rival_curve_label),
                 FadeOut(comparison_panel_label),
                 FadeOut(converse_axes), FadeOut(converse_curve),
-                run_time=if_budget * 0.45,
+                run_time=if_budget * 0.4,
             )
             # Transform animations promote their dots out of their VGroups;
             # remove the saved child references as well as the empty shells.
@@ -1362,57 +1537,68 @@ class C06(ActScene, ThreeDScene):
             comparison_to_theorem_scale = (
                 2 * SPOKE_RADIUS * 0.82 / COMPARISON_FIELD_DIAMETER
             )
+            # The two fields meet on the left while the hypothesis, the same
+            # shadow in every direction, lands on the right.
             self.play(
                 gaussian_field.animate.scale(
                     comparison_to_theorem_scale,
-                ).move_to(ORIGIN),
+                ).move_to(theorem_field_centre),
                 rival_field.animate.scale(
                     comparison_to_theorem_scale,
-                ).move_to(ORIGIN).set_opacity(0.0),
-                run_time=if_budget * 0.55,
+                ).move_to(theorem_field_centre).set_opacity(0.0),
+                FadeIn(chain_shadows, shift=0.05 * UP),
+                run_time=if_budget * 0.6,
                 rate_func=smooth,
             )
             self.remove(rival_field)
+            self.wait_until_bookmark("agree")
+            self.play(
+                FadeIn(chain_fields, shift=0.05 * UP),
+                Indicate(gaussian_field, color=MAGNITUDE, scale_factor=1.03),
+                run_time=max(0.8, tracker.time_until_bookmark("unique")),
+            )
             self.wait_until_bookmark("unique")
             self.play(
-                FadeIn(uniqueness_recall, shift=0.04 * UP),
+                FadeIn(chain_law, shift=0.05 * UP),
                 run_time=max(0.8, tracker.time_until_bookmark("statement")),
             )
             self.wait_until_bookmark("statement")
+            # "For every direction u and every frequency t" is the boxed
+            # quantifier; "forces the same joint distribution" is the last
+            # line of the chain.
             statement_budget = max(
                 1.0, tracker.time_until_bookmark("name"),
             )
+            self.play(Create(quantifier_box), run_time=statement_budget * 0.35)
             self.play(
-                FadeIn(cw_statement, shift=0.05 * UP),
-                FadeIn(quantifier_box),
-                run_time=statement_budget * 0.55,
-            )
-            self.play(
-                Indicate(quantifier_box, color=DIRECTION, scale_factor=1.08),
-                run_time=statement_budget * 0.45,
+                Indicate(chain_law, color=TARGET, scale_factor=1.06),
+                run_time=statement_budget * 0.65,
             )
             self.wait_until_bookmark("name")
             name_budget = max(0.55, tracker.get_remaining_duration())
             self.play(
-                FadeOut(uniqueness_recall), FadeOut(quantifier_box),
+                FadeOut(quantifier_box),
                 FadeIn(cw_label, shift=0.05 * UP),
                 run_time=min(0.55, name_budget),
                 rate_func=smooth,
             )
             self.wait(max(0.0, name_budget - min(0.55, name_budget)))
 
+        # The specialisation reuses the column: the hypothesis line becomes
+        # the target's shadow curve and the field line becomes the target's
+        # field, each in the slot the general statement occupied.
         specialize_eq = ty.maths(
             R"\varphi_{u^\top Z}(t)=e^{-t^2/2}",
-            size=ty.EQ,
-            color=MAGNITUDE,
-        ).to_edge(UP, buff=0.70)
-        layout.fit_in_frame(specialize_eq)
+            size=ty.EQ, color=INK, isolate=[R"e^{-t^2/2}"],
+        )
+        specialize_eq.set_color_by_tex(R"e^{-t^2/2}", MAGNITUDE)
+        specialize_eq.move_to(chain_shadows, aligned_edge=LEFT)
         field_label = ty.maths(
-            R"\varphi_Z(\xi)=e^{-\|\xi\|^2/2}",
-            size=ty.EQ,
-            color=MAGNITUDE,
-        ).next_to(specialize_eq, DOWN, buff=0.42)
-        layout.fit_in_frame(field_label)
+            R"\Longrightarrow\ \varphi_Z(\xi)=e^{-\|\xi\|^2/2}",
+            size=ty.EQ, color=INK, isolate=[R"e^{-\|\xi\|^2/2}"],
+        )
+        field_label.set_color_by_tex(R"e^{-\|\xi\|^2/2}", MAGNITUDE)
+        field_label.move_to(chain_fields, aligned_edge=LEFT)
         conclusion = ty.maths(
             R"Z\sim\mathcal N(0,I_D)",
             size=ty.EQ_DISPLAY,
@@ -1422,11 +1608,24 @@ class C06(ActScene, ThreeDScene):
         conclusion.set_color_by_tex(R"\mathcal N(0,I_D)", TARGET)
         conclusion.to_corner(UL, buff=0.50)
 
-        # Two steps, not one crossfade. The theorem and specialisation share
-        # the top text band, so clear the named theorem before the next
-        # voiceover starts and then reveal the target equation on clean space.
+        # "Read along every ray": a reader ray sweeping the field once. It
+        # carries the same height-to-opacity encoding the field was built
+        # from, drawn in ink so it shows on top of the field.
+        theorem_ray_scale = 0.5 * gaussian_field.height / CF_T_MAX
+        read_ray = VGroup(*(
+            Line(
+                theorem_field_centre
+                + t_samples[i] * theorem_ray_scale * RIGHT,
+                theorem_field_centre
+                + t_samples[i + 1] * theorem_ray_scale * RIGHT,
+            ).set_stroke(INK, 2.6, opacity=0.9 * ray_opacities[i])
+            for i in range(N_RAY_SEGMENTS)
+        ))
+
+        # Clear the rest of the chain before the next voiceover starts; the
+        # first line stays and is replaced on its own clause.
         self.play(
-            FadeOut(cw_statement), FadeOut(cw_label),
+            FadeOut(chain_fields), FadeOut(chain_law), FadeOut(cw_label),
             run_time=0.45,
         )
 
@@ -1434,70 +1633,217 @@ class C06(ActScene, ThreeDScene):
             text="<bookmark mark='specialize'/>For our target, every shadow "
                  "has the same characteristic function, e to the minus t "
                  "squared over two. <bookmark mark='field'/>Read along every "
-                 "ray, that one curve fills the plane with e to the minus the "
-                 "squared distance from the origin, over two. <bookmark "
+                 "ray, and the plane fills with e to the minus the squared "
+                 "distance from the origin, over two. <bookmark "
                  "mark='resolve'/>And only one cloud has that characteristic "
                  "function: <bookmark mark='conclude'/>Z itself, standard "
-                 "Gaussian in every dimension. <bookmark mark='payoff'/>That "
-                 "is what the theorem buys us. We never have to look at the "
-                 "cloud in D dimensions. If every one-dimensional shadow "
-                 "matches the standard bell, then the whole cloud matches "
-                 "the target."
+                 "Gauss-ian in every dimension."
         ) as tracker:
             self.wait_until_bookmark("specialize")
+            # Out, then in: crossfading two equations in the same slot reads
+            # as a jumble of glyphs for the overlap.
+            swap_budget = max(0.9, tracker.time_until_bookmark("field"))
+            self.play(
+                FadeOut(chain_shadows, shift=0.06 * UP),
+                run_time=min(0.4, swap_budget * 0.4),
+            )
             self.play(
                 FadeIn(specialize_eq, shift=0.06 * UP),
-                run_time=max(0.7, tracker.time_until_bookmark("field")),
+                run_time=min(0.6, swap_budget * 0.5),
             )
             self.wait_until_bookmark("field")
+            field_budget = max(2.0, tracker.time_until_bookmark("resolve"))
             self.play(
                 FadeIn(field_label, shift=0.06 * UP),
-                Indicate(
-                    gaussian_field, color=MAGNITUDE, scale_factor=1.02,
-                ),
-                run_time=max(0.8, tracker.time_until_bookmark("resolve")),
+                FadeIn(read_ray),
+                run_time=min(0.6, field_budget * 0.2),
             )
+            self.play(
+                Rotate(read_ray, angle=TAU, about_point=theorem_field_centre),
+                run_time=field_budget * 0.65,
+                rate_func=linear,
+            )
+            self.play(FadeOut(read_ray), run_time=min(0.4, field_budget * 0.15))
             self.wait_until_bookmark("resolve")
 
-            # Two steps, not one crossfade. The closing wheel rises through
-            # the two field equations, so clear the frequency-space frame
-            # first, then restore the frozen cloud and its shadows on clean
-            # space. The conclusion is settled before the narration names Z.
+            # "Only one cloud has that characteristic function": the reading
+            # leaves and the field returns to the wheel's centre, where the
+            # cloud it belongs to is about to condense out of it.
             resolve_budget = max(
                 2 / config.frame_rate,
                 tracker.time_until_bookmark("conclude"),
             )
             self.play(
-                FadeOut(gaussian_field), FadeOut(specialize_eq),
-                FadeOut(field_label),
-                run_time=resolve_budget * 0.35,
-            )
-            self.play(
-                shadow_baselines.animate.set_stroke(opacity=0.52),
-                VGroup(*shadow_dot_groups).animate.set_fill(opacity=0.66),
-                target_curves.animate.set_stroke(opacity=0.78).set_fill(
-                    opacity=0.0,
-                ),
-                wheel_ring.animate.set_stroke(opacity=0.35),
-                spokes.animate.set_stroke(opacity=0.14),
-                cloud.dots.animate.shift(-COMPARISON_LEFT).scale(
-                    1.0 / COMPARISON_SCALE,
-                ).set_opacity(0.58),
-                FadeIn(conclusion, shift=0.08 * UP),
-                run_time=resolve_budget * 0.65,
+                FadeOut(specialize_eq), FadeOut(field_label),
+                gaussian_field.animate.move_to(ORIGIN),
+                run_time=resolve_budget,
                 rate_func=smooth,
             )
-            self.wait_until_bookmark("conclude")
-            self.play(
-                Indicate(conclusion, color=TARGET, scale_factor=1.035),
-                run_time=max(0.8, tracker.time_until_bookmark("payoff")),
+            # The dots are invisible and still parked in the left comparison
+            # panel. Put them back at the wheel's centre before they reappear.
+            cloud.dots.shift(-COMPARISON_LEFT).scale(
+                1.0 / COMPARISON_SCALE, about_point=ORIGIN,
             )
-            self.wait_until_bookmark("payoff")
-            self.wait(tracker.get_remaining_duration())
+            self.wait_until_bookmark("conclude")
+            # "Z itself": the cloud condenses out of the field, point by
+            # point, as the field dissolves and the wheel comes back. The
+            # rim plots stay hidden; the grounding beat rebuilds them one
+            # direction at a time.
+            cloud.dots.set_opacity(0.72)
+            self.across(
+                tracker,
+                FadeOut(gaussian_field, rate_func=rush_into),
+                LaggedStart(*(
+                    GrowFromCenter(dot) for dot in cloud.dots
+                ), lag_ratio=0.004),
+                wheel_ring.animate.set_stroke(opacity=0.35),
+                spokes.animate.set_stroke(opacity=0.10),
+                FadeIn(conclusion, shift=0.08 * UP),
+                floor=1.6,
+            )
+
+        # --- bring it back down to the problem we actually have ------------
+        # The theorem in symbols is not the payoff. The payoff is the method:
+        # pick a direction, project, score the batch against the bell, turn,
+        # repeat. Two directions are worked in full; the family closes the
+        # loop; the last clause hands "every direction" to C07.
+        for mob in (active_arrow, active_label, active_line):
+            mob.clear_updaters()
+        active_arrow.add_updater(turn_active_arrow)
+        active_label.add_updater(move_active_label)
+        active_line.add_updater(turn_active_line)
+        active_arrow.set_opacity(0.95)
+        active_label.set_opacity(0.95)
+        active_line.set_stroke(opacity=0.55)
+        for mob in (active_arrow, active_label, active_line):
+            mob.update(0)
+
+        def project_onto(index: int, budget: float):
+            """Fly the sample points onto the rim plot at `index`, then reveal
+            the real batch under them and draw the target bell over it."""
+            dots_group = shadow_dot_groups[index]
+            dots_group.update(0)
+            flight = VGroup(*(
+                cloud.dots[i].copy() for i in shadow_indices
+            ))
+            targets = [
+                dot.copy().set_fill(DIRECTION, 0.90).set_stroke(width=0)
+                for dot in dots_group
+            ]
+            self.add(flight)
+            self.play(
+                shadow_baselines[index].animate.set_stroke(
+                    AXIS, 1.1, opacity=0.60,
+                ),
+                LaggedStart(*(
+                    Transform(dot, target)
+                    for dot, target in zip(flight, targets)
+                ), lag_ratio=0.01),
+                run_time=budget,
+            )
+            dots_group.set_fill(opacity=0.90)
+            self.remove(flight, *flight)
+
+        with self.voiceover(
+            text="<bookmark mark='ground'/>That is a bit abstract, so let us "
+                 "bring it back to the problem we actually have. <bookmark "
+                 "mark='cloud'/>We have a cloud of embeddings in D "
+                 "dimensions, and we want it to be a standard Gauss-ian. We "
+                 "can never see the whole cloud. <bookmark mark='pick'/>But "
+                 "we can pick a direction, <bookmark mark='project'/>project "
+                 "every point onto it, <bookmark mark='batch'/>and look at "
+                 "the batch of numbers we get. <bookmark mark='test'/>That "
+                 "is a one-dimensional batch, and we already know how to "
+                 "score it against the standard bell. <bookmark "
+                 "mark='again'/>Turn u, and we can score another. <bookmark "
+                 "mark='family'/>The theorem says that if the score passes "
+                 "in every direction, the cloud is the standard Gauss-ian, "
+                 "and we never had to look at it in D dimensions."
+        ) as tracker:
+            self.wait_until_bookmark("ground")
+            self.play(
+                cloud.dots.animate.set_opacity(0.88),
+                run_time=max(0.8, tracker.time_until_bookmark("cloud")),
+            )
+            self.wait_until_bookmark("cloud")
+            self.play(
+                Indicate(
+                    cloud.dots,
+                    color=interpolate_color(
+                        ManimColor(CLOUD), ManimColor(WHITE), 0.45,
+                    ),
+                    scale_factor=1.03,
+                ),
+                run_time=min(1.4, max(0.8, tracker.time_until_bookmark("pick"))),
+            )
+            self.wait_until_bookmark("pick")
+            self.play(
+                FadeIn(active_line), FadeIn(active_arrow), FadeIn(active_label),
+                run_time=min(0.8, max(0.4, tracker.time_until_bookmark("project"))),
+            )
+            self.wait_until_bookmark("project")
+            # u sits on the 135-degree axis, which is rim plot 3.
+            project_onto(3, max(1.0, tracker.time_until_bookmark("batch")))
+            self.wait_until_bookmark("batch")
+            self.play(
+                Indicate(shadow_dot_groups[3], color=ACCENT, scale_factor=1.15),
+                run_time=min(1.2, max(0.6, tracker.time_until_bookmark("test"))),
+            )
+            self.wait_until_bookmark("test")
+            target_curves[3].set_stroke(opacity=0.85)
+            self.play(
+                Create(target_curves[3]),
+                run_time=min(1.4, max(0.8, tracker.time_until_bookmark("again"))),
+            )
+            self.wait_until_bookmark("again")
+            again_budget = max(2.4, tracker.time_until_bookmark("family"))
+            # Shortest turn from 135 to 45 degrees, staying on the wheel's
+            # own count of turns.
+            turn_target = angle.get_value() - np.deg2rad(90.0)
+            self.play(
+                angle.animate.set_value(turn_target),
+                run_time=again_budget * 0.3,
+                rate_func=smooth,
+            )
+            project_onto(1, again_budget * 0.4)
+            target_curves[1].set_stroke(opacity=0.85)
+            self.play(
+                Create(target_curves[1]),
+                run_time=again_budget * 0.3,
+            )
+            self.wait_until_bookmark("family")
+            # The rest of the family comes in as u goes once around, so
+            # "every direction" is watched rather than asserted.
+            for index in range(N_SHADOWS):
+                if index in (1, 3):
+                    continue
+                target_curves[index].set_stroke(opacity=0.85)
+            remaining = [i for i in range(N_SHADOWS) if i not in (1, 3)]
+            # Order the arrivals by the angle u will pass them, going
+            # counter-clockwise from 45 degrees.
+            start_deg = 45.0
+            remaining.sort(key=lambda i: (45.0 * i - start_deg) % 360.0)
+            self.across(
+                tracker,
+                angle.animate.set_value(turn_target + TAU),
+                LaggedStart(*(
+                    AnimationGroup(
+                        shadow_baselines[i].animate.set_stroke(
+                            AXIS, 1.1, opacity=0.60,
+                        ),
+                        shadow_dot_groups[i].animate.set_fill(opacity=0.90),
+                        Create(target_curves[i]),
+                    )
+                    for i in remaining
+                ), lag_ratio=0.12),
+                Indicate(conclusion, color=TARGET, scale_factor=1.035),
+                floor=3.0,
+                rate_func=linear,
+            )
 
         self.freeze(
             gaussian_field, wheel_ring, spokes, cloud.dots, conclusion,
-            *shadow_dot_groups,
+            active_arrow, active_label, active_line, *shadow_dot_groups,
         )
         cloud.freeze()
         self.settle_frame()

@@ -168,3 +168,31 @@ def diagonal_2d(n: int = 200, seed: int = 13) -> np.ndarray:
     x = _rng(seed).standard_normal(n)
     x = (x - x.mean()) / x.std()
     return np.stack([x, x], axis=1)
+
+
+# C07's direction stream. SOURCE_MAP.md section 8: u ~ N(0, I_D), then
+# u <- u / ||u||. The seed was chosen so the first draw lands upper-left and
+# the second lower-left (their readouts then sit clear of C07's score line),
+# both visible lengths are plainly not unit, and the second score is lower.
+DIRECTION_SEED = 2937
+DIRECTION_COUNT = 32
+
+
+def sampled_directions(m: int = DIRECTION_COUNT, d: int = 2,
+                       seed: int = DIRECTION_SEED):
+    """Return ``(g, u)``: the Gaussian draws and their unit normalisations."""
+    g = _rng(seed).standard_normal((m, d))
+    return g, g / np.linalg.norm(g, axis=1, keepdims=True)
+
+# C07's second draw of 32, spoken as "draw a different thirty-two": its
+# average lands within 0.003 of the first draw's and both sit within 0.008 of
+# the curve's mean over every direction.
+REDRAW_SEED = 28
+# C07's fairness evidence: fifty round draws pushed to the ring land with
+# every 45-degree sector holding 5 to 7 of them.
+SPRAY_SEED = 534
+
+
+def direction_spray(n: int = 50, seed: int = SPRAY_SEED) -> np.ndarray:
+    """Round Gaussian draws shown being pushed out to the ring."""
+    return _rng(seed).standard_normal((n, 2))

@@ -301,57 +301,67 @@ traceback.
    ghost-dot pattern. Store and remove the live object, not the obsolete seed.
 5. An `add_updater` that only moves points is safe with opacity animations,
    unlike `always_redraw`; that is why `TurningProjection` builds geometry once.
+6. `FadeOut` removes the mobject and then restores its pre-fade opacity in
+   memory. If its parts are still members of another group that is later
+   animated (`group.animate.set_stroke(...)`), `play` re-adds the group and
+   the hidden parts pop back at full brightness. After fading a member of a
+   shared group, set its opacity to zero explicitly.
 
 **3-D scenes**
 
-6. A frame-coordinate mobject added in a `ThreeDScene` without
+7. A frame-coordinate mobject added in a `ThreeDScene` without
    `add_fixed_in_frame_mobjects` is projected through the 3-D camera — a
    correct seed arrow draws as a skewed diagonal. Register seeds and their
    children the way the live rig is registered, or build them after the rig
    is flat. Fixed-orientation cloud objects and fixed-frame rig objects must
    be unregistered during ownership changes or they bleed through the next
    composition under Cairo.
-7. `DecimalNumber.set_value` discards its glyphs and builds new ones, which
+8. `DecimalNumber.set_value` discards its glyphs and builds new ones, which
    are unregistered; the 3-D camera then projects the digits away from their
    label. A live `DecimalNumber` in a `ThreeDScene` calls
    `self.camera.add_fixed_in_frame_mobjects(mob)` inside its own updater (the
    camera method, not the scene method, which would re-`add` every frame).
-8. The same glyph rebuild means a `DecimalNumber` whose updater changes the
+9. The same glyph rebuild means a `DecimalNumber` whose updater changes the
    digits must be settled with `update(0)` before it is the target of a
    Transform-family animation, or the point counts mismatch and the reveal
    dies with a numpy broadcast error.
-9. `set_camera_orientation(frame_center=c)` moves world content by `−2c` and
+10. `set_camera_orientation(frame_center=c)` moves world content by `−2c` and
    fixed-frame content by `−c`. Derive positions from the screen layout
    through a helper (`_framed` in C05) rather than copying another scene's
    constants as if they were screen positions.
-10. `ThreeDAxes` does not put its zero at the world origin; each axis is
+11. `ThreeDAxes` does not put its zero at the world origin; each axis is
     centred on its own bounding box, so `c2p(0,0,0)` sits about a sixth of a
     tick off. Fix with
     `for axis in axes.axes: axis.shift(-axis.number_to_point(0))`.
 
 **Drawing**
 
-11. `set_opacity` on a plotted curve raises its fill with its stroke and floods
+12. `set_opacity` on a plotted curve raises its fill with its stroke and floods
     the area under it. Reveal with `set_stroke(opacity=...)` and pin
     `set_fill(opacity=0)`.
-12. A bar or stack taller than the frame is simply not in the render, and
+13. A bar or stack taller than the frame is simply not in the render, and
     clipped text raises nothing (`fit_in_frame` guards horizontally only).
     Check the worst case of generated geometry, and cap dot-plot stacks
     (`TurningProjection.stack_max_level`) where a projection can send every
     sample to one value.
-13. An angle drawn from a raw `ValueTracker` wraps past 2π into a near-closed
+14. An angle drawn from a raw `ValueTracker` wraps past 2π into a near-closed
     ring.
-14. Labels at the far edge of an `Axes` land inside whatever is shaded there.
-15. Colour read off a 480p draft is unreliable; crop and zoom before judging.
+15. Labels at the far edge of an `Axes` land inside whatever is shaded there.
+16. Colour read off a 480p draft is unreliable; crop and zoom before judging.
 
 **Process**
 
-16. A crashed render can hang instead of exiting (a stuck transcription
+17. A crashed render can hang instead of exiting (a stuck transcription
     worker at interpreter shutdown), so `render.sh … | tail` shows nothing.
     Redirect to a file and read it.
-17. Rendering without errors is not verification. Extract frames, watch the
+18. Rendering without errors is not verification. Extract frames, watch the
     MP4 with audio, and view frame sequences rather than isolated stills —
     stills miss overlaps and pacing.
+19. The video-vision frame cache is keyed by file path. Reviewing a re-render
+    at the same output path can return frames from the previous render; copy
+    each new render to a fresh filename before sweeping it.
+20. An `Indicate` in the object's own colour changes nothing visible at
+    delivery size. Use `ACCENT` and a scale the viewer can see.
 
 ---
 

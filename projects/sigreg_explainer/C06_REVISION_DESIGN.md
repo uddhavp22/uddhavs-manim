@@ -1,4 +1,28 @@
-# C06 revision design — "one continuous proof"
+# C06 revision design
+
+> **2026-09-03 rework — supersedes §0 and §4.1 below.** The owner rejected
+> the 2026-08-24 order because it deferred the brightness field until after
+> the ring comparison. The brightness encoding is now introduced *before*
+> the two distributions are compared, and the comparison is made in three
+> registers at once — shadow, curve, field — so that the moment the two
+> fields agree is what feeds uniqueness. Current spine:
+>
+> ```
+> turn u → target N(0,1) → one shadow's CF is a radial slice φ_Z(tu)
+>        → height = brightness on that ray → sweep u → the field (built ONCE, for Z)
+>        → ring cloud, same moments; Gaussian field shrinks into its column
+>        → same u: shadows differ, curves differ, ring gets its own field
+>          (teal core, COLLAPSE-red band where J₀ < 0)
+>        → deform ring → Gaussian: shadow, curve and field move off one mix tracker
+>        → the two fields merge at the origin → uniqueness → Cramér–Wold → specialise
+> ```
+>
+> Field encoding is now brightness = |φ|, colour = sign (`_field_rgba`).
+> Clipping negatives to black was tried first and made the ring's field
+> indistinguishable from the Gaussian's at panel scale. The voice model is
+> `eleven_multilingual_v2` again; `eleven_v3` rendered Archer with a
+> different timbre from every Chapter B clip.
+
 
 Working document for the 2026-08-24 revision of
 `chapterC/c06_every_direction.py`, written against owner review of the

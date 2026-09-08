@@ -1320,3 +1320,612 @@ note was superseded by C03's authorized final pass recorded below.
   digit, target motion, replacement pop or dead-air interval remains.
 
 ### Verdict — `FINAL-QUALITY REVIEW RENDER — AWAITING OWNER REVIEW`
+
+## Chapter C C06 — review pass on the 2026-09-03 rework (2026-09-03, evening)
+
+### Method
+
+Dense frame sweep of the 480p Archer render at 0.5 fps over the whole clip,
+then 2–5 fps over every changed beat, repeated on three draft-voice renders
+and once more on the Archer render. No spoken word changed; every edit is a
+bookmark, a timing, or a visual. All nine Archer clips were cache hits, so
+the review render cost no ElevenLabs quota.
+
+### Findings on the incoming render, and what changed
+
+| Time | Category | Severity | Finding | Fix |
+|---|---|---|---|---|
+| 3:30 | technical | HIGH | A fully black frame between the field clearing and the wheel returning. | The equations leave the top band first; the field then dissolves as the cloud, wheel and conclusion fade in. The hidden dots are repositioned to the wheel's centre before they reappear, so they no longer slide in from the left panel. |
+| 1:40–3:16 | notation | HIGH | The cloud was silently renamed X for the comparison and back to Z at the end. | The cloud stays Z throughout; the rival is Y; the uniqueness recall and the Cramér–Wold statement are written for Z and Y; the Z label and caption take the cloud's own colour. |
+| 1:16–1:24 | clarity | HIGH | The "line of light" was a stub under the arrow with linear opacity, and the graph rider that would tie height to brightness had already been faded. | Ray opacity uses the field's gamma and width 9; the rider returns to t = 0 and rides the curve while the ray grows to meet it; the arrow dims to 0.12. |
+| 0:44 | narration–visual | MEDIUM | The regrouping step the voice describes was not on screen. | The converse equation is three pieces revealed on 'one', 'regroup' and 'point'. |
+| 0:12–0:20, 1:04–1:12, 1:52–2:02, 2:22–2:34, 3:32–3:46 | pacing | MEDIUM | Five static holds of 8–14 s under spoken clauses with visible referents. | Cue-bound visuals: the 135° point-mass plot and the family of eight on the opening question; the t excursion at 'meaning' and the full sweep at 'trace'; the two moment lines on their clauses; the Gaussian field, the ring's core and its negative band on theirs; the eight bells and the cloud on the closing sentence. |
+| 0:24, 0:44, 1:12 | sync | MEDIUM | Equations and the legend faded in across their whole sentence. | Each lands in at most 0.7 s before the words that read it. |
+| 2:02–2:10 | legibility | MEDIUM | The two comparison shadows were the smallest objects on screen. | Dot radius 0.028, half-width 1.55, 14-level ceiling, still clear of the caption band. |
+| 1:40 | clarity | LOW | Fade-out, shrink, shift and fade-in in one play. | Frequency-space furniture clears first, then the apparatus slides into the comparison layout. |
+
+Two defects were introduced and caught during the pass: the hidden 135° plot
+re-entered at full brightness ahead of the other seven at the closing beat,
+because `FadeOut` restores a removed mobject's opacity in memory and the
+wheel-wide groups still contain its parts (fixed by setting its opacity to
+zero after the fade); and the first version of the opening highlights used
+the plots' own green and was invisible (now `ACCENT`, larger scale).
+
+### Verification
+
+- `py_compile`, `preflight` (no undefined names), `narration_audit` (all
+  budgets), `facts.py` 31/31.
+- Draft renders: 218.3 s ×3, `dead_air.py --min 1.0` clean on each.
+- Archer render: `media/videos/sigreg_explainer/chapterC/c06_every_direction/480p15/C06.mp4`,
+  854×480 at 15 fps, 226.6 s, `dead_air.py` clean, `media/voiceovers/` untouched.
+- `SCRIPT_chapterC.md` regenerated.
+
+### Verdict — `REVIEW RENDER — AWAITING OWNER REVIEW`
+
+If approved, the 1080p60 master is
+`SIGREG_VOICE=eleven ./render.sh projects/sigreg_explainer/chapterC/c06_every_direction.py C06 -qh`
+and costs no quota.
+
+## Chapter C C06 — owner review of the 1080p60 master (2026-09-04)
+
+### Owner findings
+
+The owner watched the 2026-09-04 master and reported: a choppy transition at
+0:41, a stray arrow needing a cleaner animation near 1:31, inconsistent
+pronunciation of "Gaussian" and "covariance" across the scene, and, after
+Cramér–Wold is introduced, missing auxiliary animation and poor composition.
+
+### What changed
+
+| Time | Finding | Fix |
+|---|---|---|
+| 0:41 | The cloud and seven plots faded to a bare wheel, then the panel, curve and equation popped in. | New bookmark `cf`. On "one shadow on its own" the cloud and the other plots recede while the chosen batch is pointed at; on "its characteristic function" the axes, then the curve, then the definition grow in as a `LaggedStart`. |
+| 1:20–1:31 | The arrow `u` sat at opacity 0.12 under a label at full opacity, orbited the sweep as a stray, and lingered over the field for the whole closing clause. | Arrow and label dim together during the reveal, come back to 0.7 to lead the sweep, then leave in 0.4 s before the rays dissolve into the field. |
+| 1:34 | A green arrow flashed over the field at the start of the comparison beat. | The comparison beat was animating the already-removed arrow's opacity, which re-added it for a frame. That animation is gone and the arrow is pinned dark after its fade. |
+| all | Archer read "Gaussian" and "covariance" differently from passage to passage. | Respelled for the voice only as "Gauss-ian" and "co-variance" in every passage that says them. Whisper now transcribes every instance as the standard word. Five passages re-synthesised, about 2,400 characters. |
+| 2:45–3:30 | A lone blob mid-frame with one equation pinned to the top edge and another to the bottom, then the specialisation in the same tiny top band. | The merged field sits centre-left and the theorem builds as a three-line chain on the right, one line per clause: shadows agree for all u,t; fields agree for all ξ; same distribution. The quantifier is boxed and the last line pulsed on "forces"; the name lands under the chain. New bookmark `agree`. |
+| 3:32–3:45 | "Read along every ray" had no ray. | The specialisation reuses the chain's slots. On "read along every ray" an ink reader ray, carrying the field's own height-to-opacity encoding, sweeps the field once. The field then glides back to the wheel's centre and dissolves into the cloud on "Z itself". |
+| 3:47 | Static hold under "we never have to look at the cloud in D dimensions". | The cloud recedes on that clause, the bells light on "every shadow", the cloud returns on "the whole cloud". |
+
+### Verification
+
+- `py_compile`, `preflight` (no undefined names), `narration_audit` (all
+  budgets), `facts.py` 31/31.
+- Draft render 218.2 s, `dead_air.py` clean; frame sheets at 1–6 fps over
+  each changed stretch.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c06_every_direction/1080p60/C06.mp4`,
+  1920×1080 at 60 fps, 228.2 s, `dead_air.py` clean; frame
+  sheets over each changed stretch; the equation swap at "for our target"
+  made sequential after the first master showed the two equations overlapping.
+- `SCRIPT_chapterC.md` regenerated.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C06 — second owner pass: rhythm and script (2026-09-04, later)
+
+### Owner findings
+
+The arrow snapped into place at 0:41; the rider jumping back to t = 0 at
+1:21 was jarring; the turning-arrow beat felt off-rhythm and out of sync;
+the "tu" definition and the ring example read as weak points; the owner
+suggested opening the ring on "back where the last chapter started" and then
+letting the Epps–Pulley comparison do the work, and allowed cuts.
+
+### What changed
+
+- The family sweep now ends on the 135° shadow's axis, so the derivation
+  beat starts with u already pointing at its plot. The snap is gone.
+- At "one line of light" the riders and guide retire and the ray grows out
+  from the origin. t no longer runs backwards.
+- The sweep has its own three-word clause, "So turn u." The turn spans that
+  clause and the exhaustiveness sentence; the rays-to-field crossfade sits
+  alone under "that is the cloud's characteristic function, everywhere at
+  once" (new bookmark `plane`).
+- Script rewritten on the architect's plan: beats 1, 2 and 7 kept verbatim
+  (cached), six passages rewritten shorter. The `tu` step is now "t and u
+  only ever reach the cloud together, so we can gather them into one vector".
+  The ring beat opens on the object and lands on "right back where the last
+  chapter started, now with clouds instead of numbers"; the comparison beat
+  names the gap as what the Epps–Pulley score was built to measure. The
+  Cramér–Wold restatement and "that is what the theorem buys us" are cut.
+  Spoken words 862 → about 640.
+
+### Verification
+
+- `py_compile`, `preflight`, `narration_audit` (all budgets), 31/31 claims.
+- Draft render 202.0 s, `dead_air.py` clean, frame sheets over the whole
+  scene at 1–2 fps.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c06_every_direction/1080p60/C06.mp4`,
+  1920×1080 at 60 fps, 219.3 s, `dead_air.py` clean, frame sheets over the whole scene at 1–2 fps.
+- `SCRIPT_chapterC.md` and the storyboard's C06 spine, status row and
+  C06→C07 seam updated.
+
+### Open, for the owner
+
+The architect's one optional visual: small Epps–Pulley readouts under the
+two comparison shadows, so "what the score was built to measure" has a
+number on screen and the ring's score visibly falls to the Gaussian's during
+the mixture. Half a day of implementation plus one render; not done.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C06 — third owner pass: the landing after Cramér–Wold (2026-09-05)
+
+### Owner findings
+
+At "only one cloud has that characteristic function, Z itself" the points
+just spawned in; the closing sentence about one-dimensional projections
+showed nothing being projected; and the stretch after the theorem read as
+a slogan payoff rather than the grounded landing a 3Blue1Brown video does.
+
+### Reference
+
+The Central Limit Theorem video's pivot after its formal statement: "All of
+that is a bit theoretical, so it might be helpful to bring things back down
+to earth and turn back to the concrete example." The landing re-runs the
+method on the concrete object, in plain verbs, and hands off with the next
+question rather than a summary.
+
+### What changed
+
+- "Z itself": the cloud condenses out of the field, point by point
+  (`GrowFromCenter` lagged over the dots) as the field dissolves and the
+  wheel returns. The rim plots stay hidden.
+- New grounding passage after the specialisation, replacing the "that is
+  what the theorem buys us / if every shadow matches" clauses: "That is a bit
+  abstract, so let us bring it back to the problem we actually have." The
+  embedding cloud is named; u appears; the sample points fly onto the rim
+  plot on u's axis and the real batch is revealed under them; the target
+  bell draws over the batch; u turns to a second direction and the same
+  projection and bell repeat; on "if the score passes in every direction"
+  the remaining six plots arrive as u goes once around. The last clause,
+  "we never had to look at it in D dimensions", hands "every direction" to
+  C07, which opens on the sphere of directions.
+- Spoken words up by about 90 for the new passage; two passages
+  re-synthesised, about 1,100 characters.
+
+### Verification
+
+- `py_compile`, `preflight`, `narration_audit` (all budgets), 31/31 claims.
+- Draft render 224.8 s, `dead_air.py` clean, frame sheets over the ending
+  at 2 fps.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c06_every_direction/1080p60/C06.mp4`,
+  1920×1080 at 60 fps, 244.2 s, `dead_air.py` clean, frame sheets over the ending at 2 fps.
+- `SCRIPT_chapterC.md` and the storyboard's C06 spine, status row and
+  C06→C07 seam updated.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C07 — `M` sampled directions, first build (2026-09-05)
+
+### Brief
+
+Owner: "give me C07, use everything learned from the C06 rounds: well
+planned, professional, high quality, not over-complicated, not over-wordy,
+not LLM-like." Architect critique taken on: the scores go onto one vertical
+scale (scatter and convergence are the claim; a column only lists), the fan
+arrives in two waves so "moves less and less" is watched, `g` is described
+by what it is ("a vector with a Gauss-ian in every coordinate") rather than
+by likeness to the cloud, the finite-batch qualification names the batch
+size and nothing about a limit, and C08's opening line is not pre-empted.
+Not taken: translating the wheel left — the seam with C06 stays exact and
+the frame balances as wheel-centre, recipe-left, score-line-right.
+
+### Design
+
+- Opens on C06's last frame, rebuilt from `common/wheel.py` and the same
+  seeds; last/first-frame diff at 480p is scaling noise only.
+- P1: `Z ~ N(0, I_D)` leaves; the family fades while u sweeps once and the
+  ring brightens; u leaves. The ring is now the sphere of directions.
+- P2: `g` grows from the origin in `DIRECTION` with the cloud dimmed; the
+  recipe `u = g/‖g‖` writes at the left; the arrow rides out to the ring
+  (`Transform` to the ring-length arrow, so the tip does not scale); landing
+  dot and `u_1`; `g ~ N(0, I_D)` writes; the ring pulses once on "every
+  point on the sphere is equally likely".
+- P3: the 36 sample points fly onto a rim plot at `u_1`'s angle, bell drawn,
+  `score(u_1) = 0.101` beside it on the side that keeps it off the frame
+  edge. `u_2` the same at half the pace, `score(u_2) = 0.049`.
+- P4a: score line `0`–`0.2` at the right; each number leaves its label and
+  captions its tick; the purple marker and live `average =` readout appear.
+- P4b: one `progress` tracker walks the count; the marker eases to each
+  running mean as the tick that moved it lands; wave to 8, spent lines dim,
+  wave to 32; `M = 32` written after; marker pulse on "steady the average",
+  cloud pulse on "a batch of two hundred points".
+- Numbers: all computed from `common/data.py::sampled_directions` (seed
+  2937) through `common/score.py`; `facts.py` gained three C07 claims
+  (uniformity of the normalised draw, second score lower, average settles
+  by 32 while the scores keep spreading). 34/34 hold.
+
+### Verification
+
+- `preflight` clean; `narration_audit` all budgets within limits after two
+  wording passes (a "rather than / instead of" contrast template and a run
+  of short sentences).
+- Draft render 52.5 s at 480p15, `dead_air.py` clean; whole-scene sheet at
+  1 fps and two 2 fps sheets over P2–P4 read.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c07_sampling_directions/1080p60/C07.mp4`,
+  1920×1080 at 60 fps, 54.5 s, `dead_air.py` clean, whole-scene sheet at 1 fps read; Whisper transcribes every "Gauss-ian" as the standard word, five passages synthesised (about 1,000 characters).
+- `SCRIPT_chapterC.md` regenerated; storyboard C07 section, status row,
+  C06→C07 and C07→C08 seam rows, and C09's `(1/M) Σ` source updated.
+
+### Open, for the owner
+
+- The fan's 32 ticks pile into a band between `0.03` and `0.18`; only the
+  first two carry their number. If the pile should read as numbers, the
+  ticks could carry two-digit captions at `LABEL` size on the far side.
+- `M`'s typical range (32–1024) is not spoken; say it here or in C10.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C07 — rebuilt around what the viewer needs to see (2026-09-06)
+
+### Brief
+
+Owner, on the first build: "plan the animations for what would be useful
+for the user to see, extremely detailed and thoughtful, don't just spin an
+arrow around." The plan was written from the viewer's questions and
+approved ("go for it").
+
+### What changed against the first build
+
+- The decorative opening sweep is gone. "Every direction" is now a cost:
+  the spokes densify 16 → 32 → 64 → 256 until the disc is solid and the
+  eight plots are buried, then clear to the bare ring.
+- Fairness is evidence, not a sentence: fifty round draws pushed to the
+  ring land 5–7 per 45° sector; fifty from a 2.4 : 0.7 stretched Gaussian
+  crowd toward the long axis in `COLLAPSE`. The narration says "round"
+  only after both have been seen.
+- The score is revealed as a function of direction. The wheel slides left
+  (the one motivated move), C04's score-versus-angle panel enters, and u's
+  half-turn sweep produces the curve rather than decorating a hold. The two
+  readouts become marks on the curve; a dashed purple line is the curve's
+  mean, the average over every direction, which is what the loss wants.
+- The vertical score line is gone; sampled directions are marks on the
+  curve and the solid purple running-average line settles against the
+  dashed one. The objection "in two dimensions we could just sweep" is
+  spoken and answered (a sphere has no single sweep).
+- A second draw of thirty-two from `REDRAW_SEED` lands elsewhere and
+  averages almost the same; the cloud and the dashed line pulse: the curve
+  belongs to the batch.
+- Every number is a named seed in `common/data.py`; `facts.py` gained two
+  claims (draw averages against the curve's mean; the shown sprays' sector
+  counts and crowding). 36/36 hold.
+
+### Verification
+
+- `preflight` clean; `narration_audit` within all budgets after removing an
+  appositive (", and that is") and a slogan-shaped closing line.
+- Draft renders at 480p15: 88.5 s, `dead_air.py` clean; a whole-scene sheet
+  at 1 fps and 2 fps sheets over the sprays and over the panel. One defect
+  found and fixed: the dashed line's caption overlapped the curve's rising
+  end, so both purple captions moved above the panel and `M` below it.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c07_sampling_directions/1080p60/C07.mp4`,
+  1920×1080 at 60 fps, 91.7 s, `dead_air.py` clean, whole-scene sheet at 1 fps read; six passages synthesised (about 1,500 characters); Whisper transcribes every "Gauss-ian" as the standard word.
+- Storyboard C07 section rewritten as a viewer-question table; status row,
+  C07→C08 seam and C09's `(1/M) Σ` source updated; `SCRIPT_chapterC.md`
+  regenerated.
+
+### Open, for the owner
+
+- The solid disc in beat 1 reads as a glow through which the cloud is
+  still visible. If it should read as opaque, the 256-set's opacity goes up.
+- `M`'s typical range (32–1024) is still not spoken; say it here or in C10.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C07 — pacing and clarity pass (2026-09-06)
+
+### Owner finding
+
+"We are moving a little too fast, or the explanation is a little unclear.
+Make it clearer; don't just make it longer unless it actually educates."
+
+### Diagnosis, from the Archer clip word timings
+
+Several visuals were squeezed into clauses shorter than they need: the
+second direction's build (arrow, extension, dot, flight, bell, readout) in
+under three seconds; the half-turn sweep that produces the curve in 2.4 s;
+each fan wave of 6 and 24 arrivals inside 1.5 s and 2.4 s clauses; the
+redraw of 32 in 3.4 s. The fairness passage carried a second idea (the
+stretched contrast) on top of the draw, the recipe, fifty landings and the
+ring pulse.
+
+### What changed
+
+- Cut the stretched-Gaussian contrast. The fifty even landings plus "a
+  Gauss-ian is round: it has no preferred direction" carry the point; the
+  counterfactual was a second idea in the densest passage. Its data helper
+  and ledger assertion are removed.
+- "Divide it by its length" became "scale it to length one, so it lands on
+  the ring": the ring's meaning as length one had never been said.
+- The second direction is drawn straight to the ring; the g-arrow stage is
+  not repeated once the recipe is known.
+- The half-turn sweep is its own passage and runs at least six seconds; if
+  the words finish first the passage ends in silence over a curve still
+  being drawn (not dead air: the measurement is the thing to watch).
+- A third draw is shown alone (spoke, reading on the curve, the average of
+  three) before the wave of thirty; the wave to eight and the wave to
+  thirty-two each get the clause that names them.
+- Short settles (`inspect`, 0.6–0.8 s) after the disc clears, after the
+  landings, after the second score, after the dashed line, and after `M`.
+- Sentences cut for the same runtime: "however many we add, the ring still
+  holds more" and "there is no way to sweep a sphere" (the objection is
+  raised once, in P5, where it is answered); "In two dimensions the
+  directions make a ring" (visible).
+- `facts.py` spoken phrases updated; 36/36 hold.
+
+### Verification
+
+- `preflight` clean; `narration_audit` within all budgets.
+- Draft 480p15: 90.5 s (was 88.5 s with more content), `dead_air.py`
+  clean, whole-scene sheet at 1 fps read.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c07_sampling_directions/1080p60/C07.mp4`,
+  1920×1080 at 60 fps, 93 s, `dead_air.py` clean, whole-scene sheet at 1 fps read; seven passages synthesised (about 1,300 characters), plus one re-cut after Whisper heard a sentence-initial "In D dimensions" as "Indeed" (now "and in D dimensions").
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C07 — spoken voice pass (2026-09-07)
+
+### Owner finding
+
+The narration read as slogans and fragments ("one direction, one number";
+"one spoke in the wheel, one reading on the curve, and the average of the
+three"). Wanted: talk like a person walking someone through it ("so we
+sample instead", "if we project the cloud onto it, then we can..."), and
+first be clear what point the scene is making.
+
+### The point, stated once
+
+The test needs every direction, but we can only ever score a handful. So
+we draw directions at random, score each one, and average. That average
+stands in for the average over all directions, it steadies as we draw more,
+and that count is M. Everything on screen serves those three sentences.
+
+### What changed
+
+Every passage rewritten as full spoken sentences with "we", "if", "so",
+"then": "So we sample instead. To draw a direction, we take a random vector
+with a Gauss-ian in every coordinate, and scale it to length one, so it
+lands on the ring." "Now if we project the cloud onto that direction, we
+get a shadow, and we can score it against the bell the way we already do."
+"So we draw a third direction, read its score off the curve, and average
+the three. Then we keep drawing." No fragments, no colon-lists. The
+choreography is unchanged; bookmarks moved to the new clauses. `facts.py`
+spoken phrases updated (36/36 hold).
+
+### Verification
+
+- `preflight` clean; `narration_audit` within all budgets after replacing
+  one ", and that is" appositive.
+- Draft 480p15: 109 s, `dead_air.py` clean, whole-scene sheet at 1 fps read.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c07_sampling_directions/1080p60/C07.mp4`,
+  1920×1080 at 60 fps, 113.6 s, `dead_air.py` clean, whole-scene sheet at 1 fps read; seven passages synthesised (about 1,700 characters); Whisper transcribes every passage as written apart from its usual "in D dimensions" mishearing.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C08 — `K` frequency knots, first build (2026-09-07)
+
+### Brief
+
+Owner: "use everything you have learned and make C08, high quality." Built
+the way C07 ended up: the point stated once, each beat answering one
+viewer question, full spoken sentences, one visual event per clause with
+settles after reveals, every number computed on the batch shown and checked
+in the ledger.
+
+### Design
+
+- Hard cut from C07 to B11's formula, then the gap picture for the second
+  sampled direction's shadow, whose score `0.049` the viewer just saw. The
+  area is the dense trapezoid integral over Chapter B's `[0.2, 4]` window,
+  doubled for negative frequencies; it rounds to the same three decimals as
+  the full-grid score, so nothing on screen contradicts C07.
+- Four knots first, so the viewer sees a sum that is plainly wrong (`0.071`,
+  44% off) before one that is right; eight already within 0.05%; sixteen
+  within 0.01%. `K` is named after that.
+- The formula's integral becomes `\sum_{k=1}^{K}` and `dt` becomes
+  `\Delta t` on the last clause; `\approx` replaces `=`.
+- The source's 0.04% / 0.01% / `O(1/K²)` figures are not spoken: on this
+  batch the errors are 0.03% and 0.004%, and the drop from eight to sixteen
+  is eightfold, not fourfold. Two ledger claims cover the area identity and
+  the three sums.
+
+### Verification
+
+- `preflight` clean; `narration_audit` within all budgets on the first pass.
+- Draft 480p15: 56.6 s, `dead_air.py` clean; whole-scene sheet at 1 fps and
+  a 2 fps sheet over the knots. Three fixes from the sheets: the area's
+  `Indicate` washed the fill to white (now a fill-opacity pulse); `K`, `sum`
+  and `off by` labels jumbled mid-`ReplacementTransform` (now shifted
+  crossfades); `0.049` was spoken before its readout appeared (readout now
+  enters with the axes and pulses when the area fills).
+- Archer pass, three cuts. Whisper heard "0.049" as "0 toins a UR4-9":
+  bare decimals are now spelled ("zero point zero four nine"), as B11 does.
+  Then the second passage came back twice with a spurious utterance after
+  its last word ("nor nor steady", then "Kasi"): a silent gap, then 0.6 s at
+  full speech level. Moving the "with eight knots" sentence across the
+  passage boundary changed the ending and the artefact did not recur.
+- New `tools/clip_tail_check.py`: decodes each recent clip, finds the last
+  word the passage actually contains, and flags any burst at speech level
+  after a silence beyond it. It flags exactly the three bad C08 cuts and
+  nothing else across three days of C06/C07 audio. Run it after every
+  Archer pass; Whisper transcripts alone would have shown the stray words
+  only to someone reading them.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c08_frequency_knots/1080p60/C08.mp4`,
+  1920×1080 at 60 fps, 60.8 s, `dead_air.py` clean, `clip_tail_check.py` clean on the final cuts (the three bad cuts purged from the cache), sheets over the knots read; six passages synthesised across the cuts, about 1,600 characters.
+- Storyboard C08 section rewritten as a viewer-question table; status row,
+  both seam rows, claim 13 and the remaining sequence updated;
+  `SCRIPT_chapterC.md` regenerated. 38/38 claims hold.
+
+### Open, for the owner
+
+- The picture shows `t ≥ 0` under a formula whose integral runs over all
+  `t`, as B11 did. If that should be said, one clause ("the curve is the
+  same on the negative side") would do it.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C08 — spoken voice pass (2026-09-07)
+
+### Owner finding
+
+"Missing the conversational language that was not LLM-like that made C07
+good." The first cut's lines were compact and declarative ("Take the second
+direction, whose score was…", "With four knots the sum comes out at…, well
+off.").
+
+### What changed
+
+All four passages rewritten in the walking-through voice: "Now, each of
+those scores is still an integral, so we have the same problem one level
+down." "If we compare its shadow's fingerprint with the Gauss-ian's at
+every frequency, square the gap, and weight it with the taper from before,
+we get this curve, and the score is the area underneath it. But we can't
+actually add up over every frequency, any more than we could visit every
+direction." "If we try that with just four knots, the sum comes out at zero
+point zero seven one, which is a long way off." "And if we double that to
+sixteen, the trapezoids hug the curve so closely that the sum matches the
+area to every digit we're showing." Choreography unchanged; bookmarks moved
+to the new clauses.
+
+### Verification
+
+`preflight` and `narration_audit` clean; Archer 1080p60 master 76.2 s,
+`dead_air.py` clean, `clip_tail_check.py` clean on all four new cuts,
+Whisper transcribes every passage as written, whole-scene sheet at 1 fps
+read. Four passages re-synthesised, about 1,100 characters.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+
+## Chapter C C08 — derivation pass (2026-09-07)
+
+### Owner finding
+
+"I think you need to include the animation of doing everything where we
+get the curve of the Epps–Pulley thing as we are saying it; the script
+should stay the same, but it might be more helpful to show that as we are
+talking." Passage one said "compare its shadow's fingerprint with the
+Gaussian's at every frequency, square the gap, and weight it with the
+taper from before, we get this curve" while the finished curve simply
+drew itself.
+
+### What changed
+
+Script unchanged; four free bookmarks added (`compare`, `gap`, `weight`,
+`curve`) so each clause owns one motion on the same panel:
+
+- "Take the second direction": axes at fingerprint scale (0–1), the
+  shadow's `\hat\varphi_N(t)` draws in `CLOUD`.
+- "compare … with the Gaussian's at every frequency": `\varphi_0(t)` draws
+  over it in `TARGET` (they nearly coincide, which is what a score of
+  `0.049` looks like); a probe walks `t` from 0 to 5 with a dot on each
+  fingerprint and the gap between them.
+- "square the gap": fingerprints fade; `N|\hat\varphi_N-\varphi_0|^2`
+  rises in `COLLAPSE`, largest at high `t` where the fingerprint is pure
+  sampling noise (Chapter B's reason for the taper, now seen again); the
+  formula's red term pulses.
+- "weight it with the taper from before": `w_\lambda(t)` draws in
+  `TARGET`, the formula's amber term pulses, and the red curve is crushed
+  under the taper by a `ReplacementTransform` to the product.
+- "we get this curve": the y-axis cross-fades to the 0–0.03 scale and the
+  crushed product grows into the score curve. The rest of the scene is
+  unchanged.
+
+The product table is asserted equal to the integrand table, so the curve
+the knots are later read from is exactly the one the viewer watched being
+built. The `N` factor is in the picture (the formula's `N`) but not spoken;
+the script did not change.
+
+### Verification
+
+- `preflight` clean; no new voice clips (bookmark-only change; the clip
+  count in `media/voiceovers` was 1560 before and after).
+- Archer 480p15: passage-one sheets at 1.5 fps and 3 fps read; each motion
+  lands on its clause; nothing overlaps the column.
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c08_frequency_knots/1080p60/C08.mp4`,
+  76 s; `dead_air.py` clean.
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`
+
+## Chapter C C09 — Assembling SIGReg, first build (2026-09-08)
+
+### Brief
+
+Owner: "go ahead and make C09, remember everything, be critical of
+yourself." Built the way C07 and C08 ended up: the point stated once, each
+beat answering one viewer question, full spoken sentences, one motion per
+clause, every number computed on the batch shown and checked in the ledger.
+The architect was asked to critique the plan before any code was written.
+
+### Self-critique of the storyboard plan, and what changed
+
+- "Every piece of this is already on screen" was false on both candidate
+  opening frames (K and the knots are not on C07's frame; the cloud and
+  the directions are not on C08's). The line was dropped.
+- Restoring C07's last frame by hand (64 marks, ghosted lines, the redraw
+  readout) with nothing enforcing agreement is exactly what VISUAL_SYSTEM
+  §7 forbids. C09 instead continues C08's frame through a shared builder
+  (`c08_frequency_knots.build_frame` / `final_frame`, extracted from C08's
+  `construct` with a byte-identical last frame), and brings back compact
+  copies of C07's two pictures.
+- `TransformFromCopy` off a cloud or a fan of marks jumbles. Rule adopted:
+  pictures indicate, labels transform. Each symbol arrives from a small text
+  proxy that moves into its slot and cross-fades.
+- The formula string lives in `common/formula.py`, verbatim from
+  `SOURCE_MAP.md` §8 with `;λ` (the slot where B11 once shipped a mutilated
+  𝒯), and C10 will import the same parked object.
+- The name SIGReg had never been spoken in the explainer (grep over both
+  chapters). Naming it is the event of the scene, so it is written as it is
+  said, with a held beat after.
+- The number: shown as agreement, not magnitude. `facts.py` `c09` asserts
+  the K=16 knot average over the redraw directions prints the same three
+  decimals as C07's full-grid purple readout (0.0897 vs 0.0900 → 0.090).
+
+### Draft iteration (SayService, 480p15, three passes)
+
+- Pass 1: the wheel and the panel were placed under their symbols and
+  collided; the rim plot at 0.4 scale was illegible; four still stretches
+  of 4–7 s. Fixed by fixed picture positions (wheel left, panel right),
+  a `plot_scale` argument on the new `common.wheel.rim_plot`, and
+  bookmarks on "K knots", "the taper", "thirty-two directions", "sixteen
+  knots" so each clause moves something.
+- Pass 2: `M = 32` under the panel fell off the bottom of the frame;
+  `M = 32, K = 16` floated like a subscript before the value arrived; the
+  value sat below the line's baseline. Fixed (label to the panel's top
+  right, note above the value, `match_y`).
+- Pass 3: clean; `still_frames.py --min 4` reports none.
+
+### Verification
+
+- `preflight` clean; `narration_audit` within all budgets; `facts.py`
+  39/39.
+- C08 → C09 seam: last/first frame difference is codec noise (mean 0.44/255,
+  best alignment at zero shift, blurred max 11/255).
+- C08 re-rendered after the extraction: last frame identical (0 pixels
+  differ).
+- Archer 1080p60 master:
+  `media/videos/sigreg_explainer/chapterC/c09_assembling_sigreg/1080p60/C09.mp4`,
+  84.2 s; `dead_air.py` clean; `clip_tail_check.py --days 1` 0 flagged of
+  40; six passages synthesised (about 1,450 characters). Whisper hears
+  "LeJEPA" as "The Jeepa" (as on the approved C02 clip), "SIGReg" as
+  "SIGRAG", and "K knots" as "K-NUPS" — the last is worth a listen at
+  about 0:33; C08's "four knots" was heard correctly.
+
+### Open
+
+- The acronym expansion "sketched isotropic Gaussian regularization" is
+  from the paper's title, not `SOURCE_MAP.md`; confirm before assembly.
+- `common.wheel.rim_plot` now exists; C06 and C07 still carry their own
+  copies inside `construct` (left untouched to protect their masters).
+
+### Verdict — `MASTER RENDERED — AWAITING OWNER REVIEW`

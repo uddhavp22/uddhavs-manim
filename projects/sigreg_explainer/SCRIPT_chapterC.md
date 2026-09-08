@@ -17,7 +17,7 @@ source order, which tracks playback order but
 is not guaranteed to equal it: on-screen text is often constructed a few
 lines before the passage that reveals it.
 
-**6 scenes · 2,302 spoken words · 0:00**
+**9 scenes · 3,496 spoken words · 0:00**
 
 | Scene | Words | Duration | Words/min |
 |---|---:|---:|---:|
@@ -26,7 +26,10 @@ lines before the passage that reveals it.
 | [`c03_one_shadow`](#c03-one-shadow) | 413 | — | — |
 | [`c04_one_shadow_is_not_enough`](#c04-one-shadow-is-not-enough) | 192 | — | — |
 | [`c05_gaussian_marginals`](#c05-gaussian-marginals) | 177 | — | — |
-| [`c06_every_direction`](#c06-every-direction) | 813 | — | — |
+| [`c06_every_direction`](#c06-every-direction) | 910 | — | — |
+| [`c07_sampling_directions`](#c07-sampling-directions) | 453 | — | — |
+| [`c08_frequency_knots`](#c08-frequency-knots) | 302 | — | — |
+| [`c09_assembling_sigreg`](#c09-assembling-sigreg) | 342 | — | — |
 
 ---
 
@@ -287,47 +290,47 @@ u go all the way around, we get one characteristic function for every
 direction there is. One direction was enough to catch this cloud lying on a
 line. Does the whole family pin the cloud down completely?
 
-<sub>cues: turn, fill, ask</sub>
+<sub>cues: turn, fill, ask, line, family</sub>
 
 > **ON SCREEN** — u^\top Z\sim\mathcal N(0,\,u^\top I u)=\mathcal N(0,1)
 
 > **ON SCREEN** — \mathrm{Var}[u^\top Z]\approx
 
-Suppose the cloud itself is standard Gaussian. Then its covariance is the
+Suppose the cloud itself is standard Gauss-ian. Then its co-variance is the
 identity, so if we project onto any unit direction, the variance is exactly
 one. We can turn u wherever we like, and that number does not move. So every
-direction gives the same standard Gaussian shadow, and that one bell is the
+direction gives the same standard Gauss-ian shadow, and that one bell is the
 target every shadow has to match.
 
 <sub>cues: gaussian, spread, hold, turn</sub>
 
 > **ON SCREEN** — \varphi_{u^\top Z}(t)
 
-> **ON SCREEN** — \varphi_{u^\top Z}(t)=\mathbb E\!\left[e^{it(u^\top Z)}\right]=\varphi_Z(tu)
+> **ON SCREEN** — \varphi_{u^\top Z}(t)=\mathbb E\!\left[e^{it(u^\top Z)}\right]
+
+> **ON SCREEN** — =\mathbb E\!\left[e^{i(tu)^\top Z}\right]
 
 > **ON SCREEN** — frequency space
 
-Now take one shadow on its own. Its characteristic function averages a unit
-arrow whose angle is t times u transpose z. But that angle is also z dotted
-with t u. That is the whole cloud's characteristic function, evaluated at the
-single point t u. That means u picks out a ray from the origin of frequency
-space, and t says how far out along that ray we are. So as t grows, the
-shadow's curve reads off the cloud's characteristic function along that one
-ray.
+Now take one shadow on its own. Its characteristic function wraps each shadow
+value, u transpose z, at frequency t. But t and u only ever reach the cloud
+together, so we can gather them into one vector, t u. That turns the average
+into the cloud's own characteristic function, at that single vector. So u
+chooses a ray out of the origin, and t is how far along it we are. Run t up,
+and the shadow's curve is reading the cloud along that one ray.
 
-<sub>cues: one, meaning, trace</sub>
+<sub>cues: one, cf, regroup, point, meaning, trace</sub>
 
-So far that is one ray, and the rest of the plane is still blank. The curve
-gives us each value as a height, but we can just as well draw it as
-brightness, right at the point t u. Then the whole curve becomes one line of
-light along the ray, bright at the origin and fading as the curve falls. Now,
-if we turn u, the ray turns with it, and since every point of frequency space
-sits at some distance along some direction, the sweep fills in the whole
-plane. This is the cloud's characteristic function, drawn everywhere at once.
+That curve gives us each value as a height. But we can lay the same value down
+as brightness instead, right at the point t u. Then the whole curve becomes
+one line of light along the ray, bright at the origin and fading as the curve
+falls. So turn u. Every point of frequency space lies along some direction, at
+some distance, so the sweep leaves nothing out. And that is the cloud's
+characteristic function, everywhere at once.
 
-<sub>cues: encode, lit, sweep, fill</sub>
+<sub>cues: encode, at, lit, sweep, fill, plane</sub>
 
-> **ON SCREEN** — \varphi_{u^\top X}(t)
+> **ON SCREEN** — \varphi_{u^\top Z}(t)
 
 > **ON SCREEN** — Gaussian cloud
 
@@ -337,61 +340,218 @@ plane. This is the cloud's characteristic function, drawn everywhere at once.
 
 > **ON SCREEN** — \varphi_{u^\top Y}(t)
 
-> **ON SCREEN** — \mathbb E[X]=\mathbb E[Y]=0
+> **ON SCREEN** — \mathbb E[Z]=\mathbb E[Y]=0
 
-Now suppose we take a second cloud. We start from the same points, and push
-them outward until they sit on a ring instead of piling up in the middle. Its
-mean is still zero, and its covariance is still the identity. So any test
-built on those two numbers gives the same answer for both clouds, even though
-the ring and the Gaussian are two different distributions.
+Now a second cloud. We take the same points and push them out onto a ring, so
+the middle empties. Its mean is still zero, and its co-variance is still the
+identity. So we are right back where the last chapter started, now with clouds
+instead of numbers: the summary numbers agree, and the shapes plainly do not.
 
-<sub>cues: second, moments, differ</sub>
+<sub>cues: second, moments, cov, differ</sub>
 
-Project both clouds onto the same direction. The Gaussian's shadow is one
-hump. The ring's shadow is two piles, pushed out to either side, and those two
-batches still share the same mean and variance. But their characteristic
-functions do not agree. The ring's curve dips below zero, where the Gaussian's
-is still falling smoothly. So one direction is already enough to separate two
-clouds that the moments could not. And if we sweep u around the ring as well,
-the difference shows up across the whole plane: the Gaussian's field fades out
-smoothly, while the ring's has a bright core and a dark band where its curve
-goes negative.
+So project both clouds onto the same direction. The Gauss-ian's shadow is one
+hump. The ring's is two piles pushed to the sides. But their characteristic
+functions do tell them apart. The ring's curve dips below zero, where the
+Gauss-ian's is still falling smoothly. That gap is exactly what the Epps-
+Pulley score was built to measure, so one direction already separates two
+clouds the moments could not. Sweep u on the ring too, and the difference
+covers the whole plane: the Gauss-ian's field fades out smoothly, the ring's
+has a bright core, and then a red band where its curve went below zero.
 
-<sub>cues: project, shadows, curves, gap, fields</sub>
+<sub>cues: project, shadows, curves, gap, fields, smooth, core, band</sub>
 
 Now, if we move the ring's points back, a few at a time, into the positions
-the Gaussian's points occupy, then its shadow closes into a single hump, its
-curve climbs toward the Gaussian's, and the dark band in its field fills in.
+the Gauss-ian's points occupy, then its shadow closes into a single hump, its
+curve climbs toward the Gauss-ian's, and the red band in its field fades away.
 The two fields only agree once the two clouds do.
 
 <sub>cues: push, follow, meet</sub>
 
-> **ON SCREEN** — \varphi_X=\varphi_Y\ \Longrightarrow\ X\overset{d}{=}Y
+> **ON SCREEN** — \varphi_{u^\top Z}(t)=\varphi_{u^\top Y}(t)\quad\forall u,t
 
-> **ON SCREEN** — \varphi_{u^\top X}(t)=\varphi_{u^\top Y}(t)\ \ \forall u,t\quad\Longrightarrow\quad X\overset{d}{=}Y
+> **ON SCREEN** — \Longrightarrow\ \varphi_Z(\xi)=\varphi_Y(\xi)\quad\forall\xi
 
-So if two clouds cast the same shadow in every direction, then every ray
+> **ON SCREEN** — \Longrightarrow\ Z\overset{d}{=}Y
+
+So suppose two clouds cast the same shadow in every direction. Then every ray
 carries the same brightness for both, and their characteristic functions agree
 at every point of the plane. And two distributions with the same
-characteristic function everywhere are the same distribution. That means
-matching every one-dimensional shadow, for every direction u and every
-frequency t, forces the two clouds to have the same joint distribution. This
-is the Cramer Wold theorem.
+characteristic function everywhere are the same distribution. Every direction,
+every frequency, and the two clouds have to be the same. That implication is
+the Cramer Wold theorem.
 
-<sub>cues: if, unique, statement, name</sub>
+<sub>cues: if, agree, unique, statement, name</sub>
 
 > **ON SCREEN** — \varphi_{u^\top Z}(t)=e^{-t^2/2}
+
+> **ON SCREEN** — \Longrightarrow\ \varphi_Z(\xi)=e^{-\|\xi\|^2/2}
 
 > **ON SCREEN** — Z\sim\mathcal N(0,I_D)
 
 For our target, every shadow has the same characteristic function, e to the
-minus t squared over two. Read along every ray, that one curve fills the plane
-with e to the minus the squared distance from the origin, over two. And only
-one cloud has that characteristic function: Z itself, standard Gaussian in
-every dimension. That is what the theorem buys us. We never have to look at
-the cloud in D dimensions. If every one-dimensional shadow matches the
-standard bell, then the whole cloud matches the target.
+minus t squared over two. Read along every ray, and the plane fills with e to
+the minus the squared distance from the origin, over two. And only one cloud
+has that characteristic function: Z itself, standard Gauss-ian in every
+dimension.
 
-<sub>cues: specialize, field, resolve, conclude, payoff</sub>
+<sub>cues: specialize, field, resolve, conclude</sub>
+
+That is a bit abstract, so let us bring it back to the problem we actually
+have. We have a cloud of embeddings in D dimensions, and we want it to be a
+standard Gauss-ian. We can never see the whole cloud. But we can pick a
+direction, project every point onto it, and look at the batch of numbers we
+get. That is a one-dimensional batch, and we already know how to score it
+against the standard bell. Turn u, and we can score another. The theorem says
+that if the score passes in every direction, the cloud is the standard Gauss-
+ian, and we never had to look at it in D dimensions.
+
+<sub>cues: ground, cloud, pick, project, batch, test, again, family</sub>
+
+---
+
+## c07_sampling_directions
+
+*Chapter C.07 -- every direction is a sphere, so the loss samples M of them.*
+
+> **ON SCREEN** — Z\sim\mathcal N(0,I_D)
+
+So the test has to pass in every direction. The trouble is that every
+direction is another shadow we would have to score, and there is no end of
+them. In D dimensions, the directions make a whole sphere.
+
+<sub>cues: dense, more, sphere</sub>
+
+> **ON SCREEN** — g\sim\mathcal N(0,I_D)
+
+So we sample instead. To draw a direction, we take a random vector with a
+Gauss-ian in every coordinate, and scale it to length one, so it lands on the
+ring. If we do that fifty times, the landings spread evenly all the way round.
+That is because a Gauss-ian is round, so it has no preferred direction.
+
+<sub>cues: draw, norm, spray, round</sub>
+
+Now if we project the cloud onto that direction, we get a shadow, and we can
+score it against the bell the way we already do. The score measures the
+mismatch, so this direction gives us one number. If we draw a second direction
+and do the same, we get a lower score, because its shadow is different.
+
+<sub>cues: project, gap, score1, second, score2</sub>
+
+> **ON SCREEN** — direction of u
+
+In fact, every direction has its own score. So if we turn u through a half
+turn and keep reading the score as it goes, we get a whole curve.
+
+<sub>cues: room, sweep</sub>
+
+Our two draws were just two readings off this curve. What the loss actually
+wants is the score averaged over every direction, which on this picture is the
+average height of the curve.
+
+<sub>cues: marks, mean</sub>
+
+In two dimensions we could just sweep the whole ring and be done. But in D
+dimensions the sphere has no single sweep, so the loss cannot trace this
+curve. What it can do is read the curve at the directions it happens to draw.
+So we draw a third direction, read its score off the curve, and average the
+three. Then we keep drawing. After the first few draws the average has mostly
+settled, and by thirty-two it barely moves. That number of draws is what we
+call M.
+
+<sub>cues: why, one, onemark, average, more, eight, many, M</sub>
+
+If we draw a different thirty-two, the readings land in different places, but
+the average comes out almost the same. What does not change is the curve
+itself. It belongs to this batch of two hundred points, so drawing more
+directions only reads it more closely, and the only thing that would move it
+is a different batch.
+
+<sub>cues: redraw, same, batch</sub>
+
+---
+
+## c08_frequency_knots
+
+*Chapter C.08 -- each score is an integral over every frequency; K knots.*
+
+> **ON SCREEN** — \mathcal T=
+
+> **ON SCREEN** — \mathcal T\approx
+
+> **ON SCREEN** — [\,0.2,\ 4\,]
+
+Now, each of those scores is still an integral, so we have the same problem
+one level down. Take the second direction, the one that scored zero point zero
+four nine. If we compare its shadow's fingerprint with the Gauss-ian's at
+every frequency, square the gap, and weight it with the taper from before, we
+get this curve, and the score is the area underneath it. But we can't actually
+add up over every frequency, any more than we could visit every direction.
+
+<sub>cues: formula, axes, compare, gap, weight, curve, area, cannot</sub>
+
+So we do the same thing we did with directions. We pick a handful of
+frequencies inside the window, read off the height of the curve at each one,
+and add up the trapezoids in between. If we try that with just four knots, the
+sum comes out at zero point zero seven one, which is a long way off.
+
+<sub>cues: window, read, trap, four</sub>
+
+But if we go up to eight knots, the sum is already zero point zero four nine,
+within a twentieth of a percent of the true area. And if we double that to
+sixteen, the trapezoids hug the curve so closely that the sum matches the area
+to every digit we're showing. Past that there's really nothing left to gain,
+so sixteen is what we use, and that number of knots is what we call K.
+
+<sub>cues: eight, sixteen, enough, name</sub>
+
+So back in the formula, the integral over every frequency turns into a sum
+over our K knots, and now the score is something we can actually compute.
+
+<sub>cues: sum, compute</sub>
+
+---
+
+## c09_assembling_sigreg
+
+*Chapter C.09 -- the whole loss in one line, and its name.*
+
+So now we have everything we need, and we can write the whole loss down in one
+line. Each piece of it is something we have already watched, so let's put them
+together in order.
+
+<sub>cues: clear, park</sub>
+
+We start with the batch Z and one direction u that we drew at random. If we
+project the cloud onto u, every point turns into one number. Written out, that
+is u transpose Z, and the little m just counts which of our draws it was.
+
+<sub>cues: cloud, project, symbol, m</sub>
+
+Then we score those numbers against the standard Gauss-ian. That score is
+exactly the sum we just built, with K knots inside the taper of width lambda,
+so we can fold all of it into one symbol, T, and keep lambda inside the
+brackets so we don't forget it is part of the score.
+
+<sub>cues: score, sum, knots, taper, fold, lambda</sub>
+
+Then we do the same for every direction we drew, all thirty-two of them, and
+take the average. The one over M and the sum are just that average, written
+out.
+
+<sub>cues: panel, average, wrap</sub>
+
+And that is the whole regularizer. LeJEPA calls it SIGReg, for sketched
+isotropic Gauss-ian regularization. Sketched, because we only ever look at M
+directions, and isotropic Gauss-ian, because that is the target every shadow
+gets compared with.
+
+<sub>cues: whole, name, sketched, gaussian</sub>
+
+And for the batch we have been watching, with thirty-two directions and
+sixteen knots, the whole line comes out at zero point zero nine zero, which is
+the number the purple line was already showing. So now we know what it
+computes. What we have not seen yet is what it does to a cloud.
+
+<sub>cues: batch, M, K, number, same, park, tease</sub>
 
 ---

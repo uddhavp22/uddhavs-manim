@@ -1,11 +1,13 @@
 # Chapter C — storyboard
 
-**Status (2026-09-03).** C01–C05 are implemented and have final-quality
-1080p60 Archer renders; C05's is awaiting owner approval. C06 has a
-2026-08-21 review render (154 s) and an in-progress "one continuous proof"
-revision in the working tree, designed in `C06_REVISION_DESIGN.md`, which
-replaces the two-field morph with a single radial-slice comparison. C07–C10
-are planned below and not started.
+**Status (2026-09-05).** C01–C05 are implemented and have final-quality
+1080p60 Archer renders; C05's is awaiting owner approval. C06 went through
+three owner review rounds (2026-09-04/05) and its 1080p60 master is awaiting
+the owner. C07 was implemented on 2026-09-05 on C06's last frame, rebuilt on
+2026-09-06 around the score-versus-angle curve, and its 1080p60 master is
+awaiting the owner; `RENDER_REVIEW.md` has the findings.
+C08 was implemented on 2026-09-07 and C09 on 2026-09-08; both masters are
+awaiting the owner. C10 is planned below and not started.
 
 The narration authority for implemented scenes is `SCRIPT_chapterC.md`,
 generated from the scene source by `tools/script_dump.py` after every
@@ -92,10 +94,10 @@ Shared apparatus, all in `common/`:
 | 3 | `c03_one_shadow.py` | the rig returns on one shadow | 1:50 final |
 | 4 | `c04_one_shadow_is_not_enough.py` | turn `u`, the shadow lies | 0:47 final |
 | 5 | `c05_gaussian_marginals.py` | `Z = (X, X)` | 0:52 review |
-| 6 | `c06_every_direction.py` | every direction; Cramér–Wold | 2:34 review, revision in progress |
-| 7 | `c07_sampling_directions.py` | `M` | planned ~1:50 |
-| 8 | `c08_frequency_knots.py` | `K` | planned ~1:20 |
-| 9 | `c09_sigreg.py` | assemble the formula | planned ~1:30 |
+| 6 | `c06_every_direction.py` | every direction; Cramér–Wold | 4:04 master (2026-09-05), awaiting owner |
+| 7 | `c07_sampling_directions.py` | `M` | 1:54 master (2026-09-07, spoken voice), awaiting owner |
+| 8 | `c08_frequency_knots.py` | `K` | 1:16 master (2026-09-07, derivation pass), awaiting owner |
+| 9 | `c09_assembling_sigreg.py` | assemble the line, name it | 1:24 master (2026-09-08), awaiting owner |
 | 10 | `c10_what_it_claims.py` | anti-collapse, population limit, honest scope | planned ~2:00 |
 
 Per-scene estimates have not tracked delivered runtimes (C04 came in at 0:47
@@ -119,7 +121,7 @@ against 1:30) and are not a forecast.
 ## 3. Scene contracts
 
 Each: causal beat, persistent objects, claim flags. Narration is in
-`SCRIPT_chapterC.md` for C01–C06 and drafted here for C07–C10 (drafts, not
+`SCRIPT_chapterC.md` for C01–C08 and drafted here for C09–C10 (drafts, not
 yet audited).
 
 Spoken aliases, decided once: "Cramer Wold" spoken, `Cramér–Wold` displayed;
@@ -272,12 +274,15 @@ Spine of the current revision (`C06_REVISION_DESIGN.md` has the beat sheet):
 ```text
 turn u → target: every projection is N(0,1)
        → ONE shadow's CF is a radial slice φ_Z(tu)          [derivation, on screen]
-       → two clouds, same mean & covariance, different slices  [the stake: the ring]
-       → deform until the slices agree                       [the attempt]
-       → every u ⇒ every slice ⇒ the whole CF                [field built HERE, once]
-       → Chapter B uniqueness ⇒ same distribution            [citation]
-       → that implication is Cramér–Wold                     [the name]
-       → specialise to Z ~ N(0, I_D)                         [the payoff]
+       → height becomes brightness; turn u; the field        [field built HERE, once]
+       → two clouds, same mean & covariance                   [back where B started]
+       → their CFs differ: the Epps–Pulley gap, one direction  [the stake: the ring]
+       → deform the ring until the slices and fields agree     [the attempt]
+       → same shadow ∀u ⇒ same field ⇒ same distribution      [chain, field left, statement right]
+       → that implication is Cramér–Wold                       [the name]
+       → specialise to Z ~ N(0, I_D); the cloud condenses out of the field
+       → back to the problem: pick u, project, score the batch, turn, repeat
+       → the family closes as u goes round; "in every direction" hands to C07
 ```
 
 Design decisions that bind the revision: the 1-D radial slice is the object
@@ -299,100 +304,124 @@ Fourier uniqueness, cited from Chapter B, stated in plain language, never
 re-derived. `SOURCE_MAP.md` §6e holds the derived/cited split. Never
 "therefore" across the cited half.
 
-### C07 — `M` sampled directions *(planned · density: medium)*
+### C07 — `M` sampled directions *(implemented 2026-09-05, rebuilt 2026-09-06 · density: medium)*
 
-Inherited: the test needs every direction.
-Experiment: draw a direction the only unbiased way available — a Gaussian
-vector divided by its length — and score its shadow. Then another. Then many.
-Observation: individual scores scatter; their average steadies as more are
-drawn.
+Inherited: the test needs every direction; C06's last frame.
+Experiment: make "every direction" cost something, draw one direction the
+only unbiased way available (a Gaussian vector divided by its length) and
+show the draw is fair, score two of them, reveal the score as a function of
+direction, then let sampled directions read that function.
+Observation: the score-versus-angle curve spans `0.03–0.19`; two draws of
+32 average `0.088` and `0.090` against the curve's mean of `0.095`.
 Conclusion: replace the expectation over directions with an average over `M`
-sampled ones. `M` is introduced here and nowhere earlier.
-Handed on: each score is still an integral over every frequency.
+sampled ones. `M` is named after the settling has been watched, and nowhere
+earlier.
+Handed on: each score is still an integral over every frequency (C08 says
+it; C07 does not).
 
-> Every direction is a whole sphere of them, and a computer can't visit a sphere. <bookmark mark='draw'/>It can draw one: take a Gaussian vector and divide by its length, and you land somewhere on the sphere with no direction favoured.
->
-> <bookmark mark='first'/>Each one gives a shadow and a score. <bookmark mark='second'/>Here's another, and it disagrees with the first, because the two directions see different things.
->
-> <bookmark mark='many'/>Draw M of them and average. <bookmark mark='M'/>More directions steady that average. They don't turn a finite batch into a proof.
+Narration authority: `SCRIPT_chapterC.md`. Beats, each answering one
+question a first-time viewer has at that moment:
 
-Choreography from `_2017/nn/part3.py::ConstructGradientFromAllTrainingExamples`
-(show two → show all → average → collapse into one), paced as fixed pulses:
+| Beat | Viewer's question | Screen |
+|---|---|---|
+| 1 | why not every direction? | the sixteen spokes densify to 32, 64, 256 until the disc is solid and the eight plots are buried; the disc clears to the bare ring, named as the sphere of directions; a sphere has no single sweep |
+| 2 | how do you pick one fairly? | `g` grows from the origin, `u = g/‖g‖` writes, the arrow is scaled to length one and lands on the ring as `u_1`; fifty round draws are pushed to the ring and land evenly; "round" is said only after that is seen |
+| 3 | what does one direction give? | the 36 sample points fly onto `u_1`'s rim plot, the bell draws, the mismatch pulses, `score(u_1) = 0.101`; `u_2` is drawn straight to the ring (the recipe is known), its plot and `0.049` |
+| 4 | why do they differ, and what is the average of? | the wheel slides left; a score-versus-angle panel enters (C04's object); u sweeps a half turn over at least six seconds while a pen traces `score(u)` (its own passage, ending in silence if the words run out); then the two numbers sit on the curve and a dashed `AVERAGE` line marks the curve's mean, captioned `every direction = 0.095` |
+| 5 | so why sample at all? | said: a sphere in D dimensions has no single sweep, so the loss reads the curve where its draws land; a third draw is shown alone (spoke, reading, the average of three), then thirty more in two waves; a solid `AVERAGE` line with a live `average =` readout settles against the dashed one; `M = 32` written after |
+| 6 | what does more `M` buy, and what not? | a different thirty-two from `REDRAW_SEED` land elsewhere and average almost the same; the cloud pulses, the dashed line pulses: the curve belongs to the batch, only a different batch would move it |
 
-| Stage | Screen |
-|---|---|
-| 1 | one Gaussian vector appears inside the cloud, snaps outward to unit length on a faint sphere; ~1.2 s, settled |
-| 2 | its shadow and score `𝒯₁` in `DIRECTION`; settled |
-| 3 | a second direction, same rhythm, different score |
-| 4 | ~30 more at ~0.15 s each in a `LaggedStart` fan, each dropping its score into a growing column |
-| 5 | the column collapses into one `AVERAGE` number |
-| 6 | `M` is written beside the column as the count of rows |
+Geometry shared with C06 and C09 lives in `common/wheel.py`. Every draw is
+a named seed in `common/data.py` (`sampled_directions`, `REDRAW_SEED`,
+`direction_spray`) so the scene and `facts.py` draw the
+same points. C09 assembles `(1/M) Σ` from a compact copy of the score panel
+(the redraw's marks, purple line, `average` readout and `M = 32`), so the
+number it writes is the one this scene's last frame shows.
 
-Active direction bright, earlier ones dimmed. Reuses `CloudProjectionRig`,
-`common/score.py`; the fan and column are scene-local.
+Flags: `SOURCE_MAP.md` §8 verbatim: `u ~ N(0, I_D)`, `u ← u/‖u‖`
+(`facts.py`: a million normalised draws within 1.4% of uniform over 36
+sectors; the fifty shown put 5–7 in each of eight). `QUALIFICATION`, required: more `M`
+reduces Monte Carlo variation, not finite-batch uncertainty — shown as the
+redraw and spoken as "only a different batch would move it"; `facts.py`
+checks both draw averages against the curve's mean. `1/√M` is not said
+(C10). Typical `M` range is not said.
 
-Flags: `SOURCE_MAP.md` §8 verbatim: `u ~ N(0, I_D)`, `u ← u/‖u‖`.
-`QUALIFICATION`, required: more `M` reduces Monte Carlo variation, not
-finite-batch uncertainty. Do **not** state `1/√M` here (deferred to C10).
-Typical `M` is 32–1024; say once if at all.
+### C08 — `K` frequency knots *(implemented 2026-09-07 · density: medium)*
 
-### C08 — `K` frequency knots *(planned · density: medium)*
+Inherited: `M` scores, each an integral over every frequency.
+Experiment: take the second sampled direction's score from C07 (`0.049`),
+draw its weighted squared gap over frequency as the area B11 defined, and
+replace the area by trapezoids on `K` knots inside Chapter B's window.
+Observation, on this batch: four knots give `0.071` (44% off), eight give
+`0.049` (within 0.05%), sixteen match every shown digit (within 0.01%).
+Conclusion: replace each integral with `K` knots. `K` is named after the
+convergence has been watched.
+Handed on: both approximations are in place; the integral in the formula is
+now a sum.
 
-Inherited: `M` scores, each an integral.
-Experiment: return to one scalar score — B11's weighted squared-gap area,
-reconstructed identically — and evaluate the integrand at finitely many
-frequencies.
-Observation: at `K = 16` the finite sum already tracks a dense reference.
-Conclusion: replace each integral with `K` knots. `K` is introduced here.
-Handed on: both approximations are in place; assemble.
+The point, once: each direction's score is an integral over every frequency,
+and we cannot compute that either. So we read the integrand at K frequencies
+and add up the trapezoids. A handful of knots already reproduces the area,
+and that count is K.
 
-> One of those scores is still an integral over every frequency, and a computer can't visit those either. <bookmark mark='knots'/>Evaluate the integrand at K frequencies inside the window from Chapter B, and add up what you find.
->
-> <bookmark mark='eight'/>Eight knots already follow the shape. <bookmark mark='sixteen'/>Sixteen tracks a far denser reference to within a hundredth of a percent, on this batch. The error falls like one over K squared, so there's not much left to gain.
+| Beat | Viewer's question | Screen |
+|---|---|---|
+| 1 | which integral, and where does that curve come from? | B11's formula returns at the top; axes over `t` at fingerprint scale (0–1) with `score(u_2) = 0.049` beside them; `u_2`'s shadow fingerprint `\hat\varphi_N(t)` draws in `CLOUD`; the Gaussian's `\varphi_0(t)` draws over it in `TARGET` and a probe (dashed line, two dots, the gap between them in `COLLAPSE`) walks `t` from 0 to 5 on "at every frequency"; on "square the gap" both fingerprints fade and `N|\hat\varphi_N-\varphi_0|^2` rises in `COLLAPSE`, growing towards high `t` where the fingerprint is only noise, while the formula's red term pulses; on "weight it with the taper" `w_\lambda(t)` draws in `TARGET`, the formula's amber term pulses, and the red curve is crushed under it; on "we get this curve" the y-axis relabels to 0–0.03 and the crushed curve grows into the score curve; the area fills; on "we cannot add up over every frequency" the fill pulses |
+| 2 | how do you add up with finitely many? | Chapter B's `[0.2, 4]` bracket under the axis; four `TARGET` knot lines and dots; the trapezoid polygon fills over the area; `K = 4`, `sum = 0.071`, `off by 44%` |
+| 3 | how many is enough? | eight knots, polygon reshapes, `sum = 0.049`, `off by 0.03%`; sixteen, `off by 0.004%`; the sum and the score pulse together; `K` pulses when named |
+| 4 | what changed in the formula? | the integral and `dt` become `\sum_{k=1}^{K}` and `\Delta t`, `t` becomes `t_k` |
 
-| | |
-|---|---|
-| Enters | B11's gap picture — `gap_axes`, the `COLLAPSE` curve, the filled area, the amber `w_λ(t)` taper |
-| Transforms | `K = 8` knots drop onto the `t` axis as `TARGET` ticks with sampled values; then `K = 16`; the finite sum ticks against the dense reference |
-| Remains | `K` and the discretised score expression |
-| Exits | the gap axes at the cut |
+Hard cut from C07 (a different picture, deliberately). The batch is
+`data.sampled_directions()[1][1]` applied to the C06 cloud, so the number on
+screen is the one C07 spoke; the area is the dense trapezoid integral over
+the window, doubled for `t < 0`, which rounds to the same three decimals as
+the full-grid score.
 
-Do not reopen hard-bounds-versus-smooth-weights; the `[0.2, 4]` window and
-`w_λ(t) = e^{−t²/(2λ²)}` are settled inputs. Trapezoidal weights stay
-deferred. Reuses `CharacteristicFunctionPlot`, `layout.frequency_axes`,
-`common/score.py`.
+Flags: the source's `K = 16 → 0.01%`, `K = 8 → 0.04%` and `O(1/K²)` are
+**not** spoken; the narration says what this batch gives ("on this batch"
+is implicit in "the area" being the one on screen) and `facts.py` checks
+the three sums and their errors. The window and the weight are settled
+inputs and are not reopened; trapezoidal end-weights are not shown (the
+formula reads `\Delta t`, with `\approx`).
 
-Flags: the `K = 16 → 0.01%`, `K = 8 → 0.04%`, `O(1/K²)` figures are source
-facts whose batch, `λ` and window `SOURCE_MAP.md` §8 does not record.
-**Before this scene renders:** `facts.py` recomputes the relative error on
-the batch actually shown at `λ = 1` over `[0.2, 4]` and the narration says
-"on this batch" (the draft assumes this); or the narration attributes the
-figure to the source and the demo shows only qualitative agreement.
+### C09 — Assembling SIGReg *(implemented 2026-09-08 · density: low)*
 
-### C09 — Assembling SIGReg *(planned · density: low)*
-
-Inherited: two motivated finite approximations.
+Inherited: two motivated finite approximations, and C08's last frame.
 Experiment: write down what has been happening; each symbol already has a
 picture attached.
-Conclusion: `SIGReg(Z) = (1/M) Σₘ 𝒯(u⁽ᵐ⁾ᵀ Z; λ)`.
-Handed on: what does it do, and what does it promise?
+Conclusion: `SIGReg(Z) = (1/M) Σ_{m=1}^{M} 𝒯(u^{(m)T} Z; λ)`, named here for the
+first time in the explainer, and evaluated on the batch on screen: `0.090`,
+the number C07's purple line already showed.
+Handed on: the line alone, parked small at the top, where C10 finds it.
 
-> Every piece of this is already on screen. <bookmark mark='project'/>The projection u transpose z turns the batch into numbers. <bookmark mark='score'/>The score compares those numbers with the standard Gaussian, using K knots inside the weighted window. <bookmark mark='average'/>And the average over M directions is the whole regularizer.
+The point, once: everything the loss does has now been watched one piece at a
+time. Written in order, the pieces are one line. LeJEPA calls that line
+SIGReg, and on the batch on screen it comes out at the number the purple line
+was already showing.
 
-| Step | Symbol | Arrives from |
+| Beat | Viewer's question | Screen |
 |---|---|---|
-| 1 | `u^{(m)T} z_i` | `TransformFromCopy` off the projection arrow and one shadow dot, still on screen from C07 |
-| 2 | `𝒯( · ; λ)` wraps it | `TransformFromCopy` off the score meter |
-| 3 | `(1/M) Σ_{m=1}^{M}` wraps that | the purple score column collapsing again |
-| 4 | held | the source's one-line form |
+| 0 | what is left to do? | C08's last frame, continued through the shared builder in `c08_frequency_knots.py` (exact seam); the knot panel and its numbers clear; the discretised score formula shrinks and parks at the top |
+| 1 | where does the argument come from? | bottom-left, a compact cloud in its ring with one drawn direction `u` (the one C08 scored), the projection line, and its rim shadow against the bell, labelled `u^T Z`; the label rises into the line and cross-fades into `u^{(m)T} Z`; the argument pulses on "the little m just counts which of our draws it was" |
+| 2 | what is `𝒯`? | the bell pulses on "score those numbers against the standard Gaussian"; the parked formula pulses, then its `Σ_k` and `w_λ` on "K knots" and "the taper of width lambda"; the whole formula folds into `𝒯( · ; λ)` around the argument; `;λ)` pulses on "keep lambda inside the brackets" |
+| 3 | what is `(1/M) Σ`? | bottom-right, the compact score-versus-angle panel: curve, the redraw's thirty-two marks, `M = 32`; the purple average line and `average = 0.090` on "take the average"; copies of the readout and `M` rise into `1/M` and `Σ_{m=1}^{M}` |
+| 4 | what is it called? | the line pulses on "the whole regularizer"; `SIGReg(Z) =` writes as the name is spoken for the first time; the `Σ` and the marks pulse on "sketched", the bell and `𝒯(` on "isotropic Gaussian" |
+| 5 | what does it give on the batch we watched? | the cloud pulses; `M = 32, K = 16` above the line's right end, one at a time as spoken; `= 0.090` after the line; the purple readout, the purple line and the value pulse together on "the number the purple line was already showing"; pictures and numbers leave; the line shrinks to its parked position while the last sentence is spoken |
 
-Optionally `𝒯` expands once into its `K`-knot sum and collapses back. Symbols
-isolated at construction for `TransformMatchingTex`. Nothing structural is
-new; the C07 frame is held from the previous cut.
+Pictures indicate, labels transform: every symbol arrives from a small text
+proxy (`u^T Z`, the parked formula, the `average` readout, `M = 32`) that
+moves into its slot and cross-fades, never from the cloud or the fan of
+marks, so nothing jumbles. The line is laid out once (`common/formula.py`,
+shared with C10, verbatim `SOURCE_MAP.md` §8 including `;λ`) and does not
+move until it parks.
 
-Flags: the formula must match `SOURCE_MAP.md` §8 character for character,
-including `λ` — B11 once shipped `𝒯` without its `N` prefactor. No new claim
-is made here; if a sentence asserts something, it is in the wrong scene.
+Flags: the acronym expansion "sketched isotropic Gaussian regularization" is
+spoken; it is not in `SOURCE_MAP.md` §8 and should be checked against the
+paper's abstract before the chapter is assembled. The number is framed as
+agreement, not magnitude — `facts.py` (`c09`) asserts that the `K = 16` knot
+average over the redraw directions prints the same three decimals as C07's
+full-grid readout (`0.0897` vs `0.0900`); calibration is C10's. `N` is in
+the picture (the parked formula's prefactor) but not spoken.
 
 ### C10 — What the loss opposes, and what it promises *(planned · density: high · highest-risk scene)*
 
@@ -459,10 +488,10 @@ phoneme. There are no crossfades; a cut is a cut.
 | **C03 → C04** | "…but it cannot tell us whether the whole cloud does." | cloud at `phi=76°, theta=12°`, `u_3`, its shadow, `score(u_3)=0.872` | "Now suppose the cloud has structure." | the identical frame | C03's apparatus fades on the first beat before the cloud changes. |
 | **C04 → C05** | "…It tells you nothing about the cloud behind it." | two-clump cloud, arrow, trace | "One direction wasn't enough. The coordinate axes give us two natural directions to try next…" | axes pulse, then the `y=x` cloud | Genuine reset; the narration carries the argument across. |
 | **C05 → C06** | "…test directions that mix the coordinates." | bare diagonal cloud on a plane, `y=x` | "Keep turning the direction u." | the identical frame, direction returning | Exact visual seam. |
-| **C06 → C07** | "…the loss needs a finite sample." | Gaussian cloud, eight retained spokes, four plots | "Every direction is a whole sphere of them…" | the same finite-direction problem | C06 performs the continuum-to-finite collapse itself. |
-| **C07 → C08** | "They don't turn a finite batch into a proof." | cloud, fan, purple average | "One of those scores is still an integral…" | B11's gap axes | Deliberate object return; hard cut. |
-| **C08 → C09** | "…not much left to gain." | knots on the gap axes, `K` | "Every piece of this is already on screen." | the C07 frame restored | Hard cut; C09 assembles from visible objects. |
-| **C09 → C10** | "…the whole regularizer." | the formula | "Run it on the shapes from earlier." | formula pinned small, C02's rig entering | Formula persists, demoted; rig returns. |
+| **C06 → C07** | "…and we never had to look at it in D dimensions." | Gaussian cloud in the wheel, u at 45°, eight plots, `Z ~ N(0, I_D)` | "So the test has to pass in every direction." | the identical frame, rebuilt from `common/wheel.py` and the same seeds (last/first-frame diff checked 2026-09-05) | Exact visual seam; C07 opens the continuum-to-finite question. |
+| **C07 → C08** | "…and the only thing that would move it is a different batch." | wheel left with two rim plots and two dimmed fans; score panel right with the curve, its marks, dashed `every direction = 0.095`, solid `average = 0.090`, `M = 32` | "Now, each of those scores is still an integral…" | B11's formula, then the gap axes | Deliberate object return; hard cut. |
+| **C08 → C09** | "…and now the score is something we can actually compute." | sixteen knots on the gap axes, `K = 16`, `sum = 0.049`, `score(u_2) = 0.049`, the discretised formula | "So now we have everything we need, and we can write the whole loss down in one line." | the same frame, built by `c08_frequency_knots.final_frame` | Continuity seam through shared code; last/first frame diff is codec noise only (mean 0.44/255, no shift). |
+| **C09 → C10** | "…What we have not seen yet is what it does to a cloud." | the line alone, parked at `common/formula.py`'s `PARK` (font 34, top centre) | "Run it on the shapes from earlier." | the same parked line (`parked_sigreg_formula()`), C02's rig entering | Line persists through shared code; rig returns. |
 | **C10 → end** | "…before a batch counts as Gaussian." | the honest-scope statement | — | — | `clear_beat()`. |
 
 ---
@@ -491,7 +520,7 @@ narration audit check against this.
 | 10 | Every projection standard Gaussian ⟹ joint is `N(0, I_D)` | C06 | **`theorem_statement`** — Cramér–Wold via Fourier uniqueness, cited, never "therefore" |
 | 11 | `u ~ N(0, I_D)`, `u ← u/‖u‖` is uniform on the sphere | C07 | `SOURCE_MAP.md` §8 |
 | 12 | Larger `M` reduces Monte Carlo variation, not finite-batch uncertainty | C07 | `QUALIFICATION`, required |
-| 13 | `K = 16 → 0.01%` vs `K = 2000`; `K = 8 → 0.04%`; `O(1/K²)` | C08 | source fact, **provenance unresolved** (C08 flags) |
+| 13 | on the shown batch: `K = 4 → 0.071` (44% off), `K = 8 → 0.049` (0.03%), `K = 16` (0.004%) vs `K = 2000` | C08 | `exact_computation`, `facts.py`; the source's 0.04% / 0.01% figures are not spoken |
 | 14 | `SIGReg(Z) = (1/M) Σₘ 𝒯(u⁽ᵐ⁾ᵀ Z; λ)` | C09 | `SOURCE_MAP.md` §8, verbatim |
 | 15 | Collapsed and low-rank clouds receive a high score | C10 | empirical evidence, this run — never "guarantee" |
 | 16 | `SIGReg_pop = 0 ⟺ u^T Z ~ N(0,1) ∀u ⟺ Z ~ N(0, I_D)` | C10 | `theorem_statement`, §6g |
@@ -505,9 +534,10 @@ narration audit check against this.
 
 1. Ship the C06 revision: render, review against `RENDER_REVIEW_SPEC.md`,
    owner sign-off, then delete `C06_REVISION_DESIGN.md`.
-2. C07, C08, C09 — the formula assembly last because it consumes their
-   objects. Resolve the `K = 16` provenance (C08 flags) before C08 renders.
-3. C10, reviewed against the claim ledger line by line.
+2. ~~C09~~ — done 2026-09-08; it continues C08's frame and brings back
+   compact copies of C07's objects rather than restoring C07's last frame.
+3. C10, reviewed against the claim ledger line by line; it must open on
+   `common.formula.parked_sigreg_formula()` exactly as C09 leaves it.
 4. `tools/script_dump.py` → `SCRIPT_chapterC.md`, `tools/narration_audit.py`,
    `facts.py`, the Archer pass, then `build.sh chapterC -qh --voice eleven`
    and the seam checks.

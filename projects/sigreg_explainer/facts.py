@@ -647,7 +647,198 @@ def one_shadow_can_be_innocent():
            f"coordinate sd ({sd[0]:.3f}, {sd[1]:.3f})"
 
 
+# ------------------------------------------------------------ C08 knots
+def _c08_batch_and_integrand():
+    from common.score import EP_LAMBDA
+    points = data.whiten(data.gaussian_2d(n=len(data.diagonal_2d())))
+    _g, u = data.sampled_directions()
+    batch = points @ u[1]
+
+    def integrand(t):
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        weight = np.exp(-t ** 2 / (2 * EP_LAMBDA ** 2))
+        return len(batch) * weight * np.abs(ecf(batch, t) - gaussian_cf(t)) ** 2
+
+    return batch, integrand
+
+
+def _c08_knot_sum(integrand, k: int) -> float:
+    knots = np.linspace(0.2, 4.0, k)
+    return float(2.0 * np.trapezoid(integrand(knots), knots))
+
+
+@claim("c08", "take the second direction, whose score was 0.049; the score is "
+              "the area under that curve")
+def windowed_area_is_the_second_direction_score():
+    """The area shown is the dense trapezoid integral of the weighted squared
+    gap over Chapter B's window, doubled for negative frequencies. It rounds
+    to the same three decimals as the full-grid score C07 spoke."""
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+    batch, integrand = _c08_batch_and_integrand()
+    full = epps_pulley(batch, EP_LAMBDA, EP_GRID)
+    dense = _c08_knot_sum(integrand, 2000)
+    assert f"{dense:.3f}" == f"{full:.3f}" == "0.049", (dense, full)
+    return f"full-grid score {full:.5f}, windowed area {dense:.5f}, both 0.049"
+
+
+@claim("c08", "with four knots the sum comes out at 0.071, well off; with "
+              "eight it is already 0.049, within a twentieth of a percent; "
+              "sixteen matches the area to every digit we show")
+def knot_sums_converge_on_this_batch():
+    """Recomputed on the batch actually shown (storyboard C08 flag): the
+    source's 0.04% / 0.01% figures are not reused. On this batch four knots
+    are 44% off, eight are within 0.05%, sixteen within 0.01%."""
+    _batch, integrand = _c08_batch_and_integrand()
+    dense = _c08_knot_sum(integrand, 2000)
+    sums = {k: _c08_knot_sum(integrand, k) for k in (4, 8, 16)}
+    errors = {k: abs(v - dense) / dense for k, v in sums.items()}
+    assert f"{sums[4]:.3f}" == "0.071", sums[4]
+    assert errors[4] > 0.2, errors[4]
+    assert f"{sums[8]:.3f}" == "0.049" and errors[8] < 0.0005, (sums[8], errors[8])
+    assert f"{sums[16]:.3f}" == "0.049" and errors[16] < 0.0001, (sums[16], errors[16])
+    return (f"sums 4: {sums[4]:.4f} ({errors[4]:.1%}), 8: {sums[8]:.4f} "
+            f"({errors[8]:.3%}), 16: {sums[16]:.4f} ({errors[16]:.4%}); "
+            f"dense {dense:.4f}")
+
+
 # ---------------------------------------------------------------------- main
+# ------------------------------------------------------------ C07 sampling
+@claim("c07", "a Gauss-ian is round, so it has no preferred direction")
+def normalised_gaussian_is_uniform_on_the_sphere():
+    """SOURCE_MAP.md section 8: u ~ N(0, I_D), u <- u / ||u||.
+
+    In two dimensions the angle of a normalised Gaussian vector must be
+    uniform on the circle. Bin one million draws into 36 sectors: each
+    sector expects 27,778 with a binomial spread of 0.6%, so the worst of
+    36 sectors sits below 2.5% unless the angles are not uniform.
+    """
+    rng = np.random.default_rng(0)
+    g = rng.standard_normal((1_000_000, 2))
+    angles = np.arctan2(g[:, 1], g[:, 0]) % (2 * np.pi)
+    counts, _ = np.histogram(angles, bins=36, range=(0.0, 2 * np.pi))
+    expected = len(g) / 36
+    worst = float(np.max(np.abs(counts / expected - 1.0)))
+    assert worst < 0.025, worst
+    return f"36 sectors of 1M normalised draws: worst deviation {worst:.3%}"
+
+
+def _c07_scores():
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+    points = data.whiten(data.gaussian_2d(n=len(data.diagonal_2d())))
+    # The same stream the scene draws: seed and count live in common/data.py.
+    _g, u = data.sampled_directions()
+    scores = np.array([
+        epps_pulley(points @ direction, EP_LAMBDA, EP_GRID) for direction in u
+    ])
+    return scores, np.cumsum(scores) / np.arange(1, len(scores) + 1)
+
+
+@claim("c07", "we get a lower score, because its shadow is different")
+def second_sampled_direction_scores_lower():
+    scores, _ = _c07_scores()
+    assert scores[1] < scores[0] - 0.04, scores[:2]
+    return f"score(u_1) = {scores[0]:.3f}, score(u_2) = {scores[1]:.3f}"
+
+
+@claim("c07", "after the first few draws the average has mostly settled, and "
+              "by thirty-two it barely moves")
+def running_average_settles_by_thirty_two():
+    """QUALIFICATION (storyboard claim 12): more directions reduce the
+    Monte Carlo scatter of the average, not the finite-batch score itself.
+    The average over 32 directions is within 0.006 of the average over 8,
+    while the individual scores keep spreading over more than 0.1."""
+    scores, running = _c07_scores()
+    early_jump = float(np.max(np.abs(np.diff(running[:4]))))
+    late_drift = float(abs(running[31] - running[7]))
+    spread = float(scores.max() - scores.min())
+    assert late_drift < 0.006, late_drift
+    assert spread > 0.1, spread
+    assert running[31] > 0.05, running[31]
+    return (f"average: M=2 {running[1]:.3f}, M=8 {running[7]:.3f}, "
+            f"M=32 {running[31]:.3f}; early step up to {early_jump:.3f}, "
+            f"late drift {late_drift:.3f}, score spread {spread:.3f}")
+
+
+def _c07_curve():
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+    points = data.whiten(data.gaussian_2d(n=len(data.diagonal_2d())))
+    theta = np.deg2rad(np.arange(0.0, 180.0, 0.5))
+    curve = np.array([
+        epps_pulley(points @ np.array([np.cos(a), np.sin(a)]), EP_LAMBDA, EP_GRID)
+        for a in theta
+    ])
+    return theta, curve
+
+
+@claim("c07", "the score averaged over every direction is the average height "
+              "of the curve; draw a different thirty-two and the average "
+              "comes out almost the same")
+def sampled_averages_sit_near_the_curve_mean():
+    """The dashed line is the mean of score(u) over the half turn (u and -u
+    cast the same shadow, so a half turn is every direction). Both draws of
+    32 land within 0.008 of it and within 0.003 of each other, while the
+    curve itself spans more than 0.1: the directions are the estimator's
+    luck, the curve is the batch's."""
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+    points = data.whiten(data.gaussian_2d(n=len(data.diagonal_2d())))
+    _theta, curve = _c07_curve()
+    mean = float(curve.mean())
+    averages = []
+    for seed in (data.DIRECTION_SEED, data.REDRAW_SEED):
+        _g, u = data.sampled_directions(seed=seed)
+        averages.append(float(np.mean([
+            epps_pulley(points @ d, EP_LAMBDA, EP_GRID) for d in u
+        ])))
+    assert abs(averages[0] - mean) < 0.008, (averages[0], mean)
+    assert abs(averages[1] - mean) < 0.008, (averages[1], mean)
+    assert abs(averages[0] - averages[1]) < 0.003, averages
+    assert curve.max() - curve.min() > 0.1, (curve.min(), curve.max())
+    assert mean > 0.05, mean
+    return (f"curve mean {mean:.4f}, span {curve.min():.3f}-{curve.max():.3f}; "
+            f"32-draw averages {averages[0]:.4f} and {averages[1]:.4f}")
+
+
+@claim("c07", "if we do that fifty times, the landings spread evenly all the "
+              "way round")
+def shown_spray_lands_evenly():
+    """The fifty round draws on screen put 5 to 7 landings in each of the
+    eight 45-degree sectors."""
+    round_draws = data.direction_spray()
+    angles = np.degrees(np.arctan2(round_draws[:, 1], round_draws[:, 0])) % 360.0
+    counts, _ = np.histogram(angles, bins=8, range=(0.0, 360.0))
+    assert counts.min() >= 5 and counts.max() <= 7, counts.tolist()
+    return f"round sectors {counts.tolist()}"
+
+
+
+# ------------------------------------------------------------------ C09
+def _c09_knot_score(batch: np.ndarray, k: int = 16) -> float:
+    """The score C08 settled on: K knots across the window, doubled for t<0."""
+    from common import layout
+    lo, hi = layout.FREQUENCY_WINDOW
+    t = np.linspace(lo, hi, k)
+    v = len(batch) * np.exp(-t ** 2 / 2) * np.abs(ecf(batch, t) - gaussian_cf(t)) ** 2
+    return float(2.0 * np.trapezoid(v, t))
+
+
+@claim("c09", "with thirty-two directions and sixteen knots, the whole line "
+              "comes out at 0.090, which is the number the purple line was "
+              "already showing")
+def assembled_line_reproduces_the_purple_readout():
+    """C07's last frame shows the average over the *redraw* directions
+    (seed data.REDRAW_SEED), computed on the full frequency grid. The line
+    C09 writes averages the K=16 knot score over the same directions. Both
+    must print the same three decimals, or the number is not shown."""
+    from common.score import EP_GRID, EP_LAMBDA, epps_pulley
+    points = data.whiten(data.gaussian_2d(n=len(data.diagonal_2d())))
+    _g, u = data.sampled_directions(seed=data.REDRAW_SEED)
+    shown = np.mean([epps_pulley(points @ d, EP_LAMBDA, EP_GRID) for d in u])
+    line = np.mean([_c09_knot_score(points @ d) for d in u])
+    assert f"{shown:.3f}" == f"{line:.3f}", (shown, line)
+    assert abs(shown - line) < 0.001, abs(shown - line)
+    return f"C07 purple readout {shown:.4f}, C09 line with K=16 {line:.4f}, both print {line:.3f}"
+
+
 def main() -> int:
     print("=" * 74)
     print("CLAIMS LEDGER — sigreg_explainer")
